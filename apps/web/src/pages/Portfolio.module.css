@@ -1,0 +1,215 @@
+.page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 32px;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 20px;
+  backdrop-filter: blur(var(--blur));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.statCard h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.statValue {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profit {
+  color: #4ade80;
+}
+
+.loss {
+  color: #f87171;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty svg {
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.empty h2 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 24px;
+}
+
+.empty p {
+  margin: 0 0 24px;
+  font-size: 16px;
+}
+
+/* Cards grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  position: relative;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 12px;
+  backdrop-filter: blur(var(--blur));
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
+  border-color: var(--primary);
+}
+
+.cardImageWrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.cardImage {
+  width: 100%;
+  border-radius: var(--radii-sm);
+  display: block;
+}
+
+.quantity {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gradeBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+.cardInfo {
+  margin-bottom: 8px;
+}
+
+.cardName {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.cardSet {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cardRarity {
+  margin: 0 0 4px;
+  font-size: 11px;
+  color: var(--violet);
+  font-weight: 500;
+}
+
+.cardValue {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.deleteBtn {
+  flex: 1;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  padding: 8px;
+  color: #f87171;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteBtn:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+}

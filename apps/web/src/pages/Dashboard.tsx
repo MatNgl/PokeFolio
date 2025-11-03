@@ -1,53 +1,31 @@
-import { useNavigate } from 'react-router-dom';
-
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import styles from './Dashboard.module.css';
 
-export function Dashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
+export default function Dashboard() {
   return (
-    <div className={styles.container}>
-      <nav className={styles.nav}>
-        <h2 className={styles.logo}>PokéFolio</h2>
-        <Button variant="ghost" onClick={handleLogout}>
-          Se déconnecter
-        </Button>
-      </nav>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Dashboard</h1>
+        <p className={styles.subtitle}>
+          Bienvenue sur ton Pokéfolio. Commence par rechercher des cartes pour les ajouter à ton
+          portfolio.
+        </p>
+      </header>
 
-      <div className={styles.content}>
-        <Card>
-          <h1 className={styles.welcome}>
-            Bienvenue, <span className={styles.email}>{user?.email}</span>
-          </h1>
-          <p className={styles.info}>Votre portfolio est prêt à être rempli !</p>
-
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <div className={styles.statValue}>0</div>
-              <div className={styles.statLabel}>Cartes</div>
-            </div>
-            <div className={styles.stat}>
-              <div className={styles.statValue}>0</div>
-              <div className={styles.statLabel}>Distinctes</div>
-            </div>
-            <div className={styles.stat}>
-              <div className={styles.statValue}>0€</div>
-              <div className={styles.statLabel}>Valeur</div>
-            </div>
-          </div>
-
-          <p className={styles.comingSoon}>🚧 Le module Portfolio arrive bientôt (Phase 3) !</p>
-        </Card>
-      </div>
-    </div>
+      {/* Ici, plus tard : vraies stats summary via /portfolio/summary */}
+      <section className={styles.cards}>
+        <article className={styles.card}>
+          <h3 className={styles.cardTitle}>Cartes totales</h3>
+          <p className={styles.cardValue}>0</p>
+        </article>
+        <article className={styles.card}>
+          <h3 className={styles.cardTitle}>Cartes distinctes</h3>
+          <p className={styles.cardValue}>0</p>
+        </article>
+        <article className={styles.card}>
+          <h3 className={styles.cardTitle}>Coût total (achat)</h3>
+          <p className={styles.cardValue}>0 €</p>
+        </article>
+      </section>
+    </main>
   );
 }

@@ -76,18 +76,10 @@
   font-size: 1.125rem;
 }
 
-/* Loading spinner */
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Loader wrapper */
+.loaderWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
 }

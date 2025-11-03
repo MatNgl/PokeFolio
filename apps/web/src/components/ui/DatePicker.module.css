@@ -1,0 +1,91 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radii-sm);
+  padding: 12px 14px;
+  transition: all 0.2s var(--anim);
+}
+
+.wrapper:hover {
+  border-color: rgba(124, 243, 255, 0.5);
+}
+
+.wrapper.focused {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 243, 255, 0.1);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  margin-right: 10px;
+  pointer-events: none;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+/* Cacher l'input natif quand une date est sélectionnée */
+.wrapper:has(.displayValue) .input {
+  opacity: 0;
+  position: absolute;
+}
+
+.displayValue {
+  flex: 1;
+  color: var(--text);
+  font-size: 14px;
+  pointer-events: none;
+  position: absolute;
+  left: 50px;
+  right: 14px;
+}
+
+/* Style du calendrier natif */
+.input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+/* Support Firefox */
+.input[type='date']::-moz-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+}

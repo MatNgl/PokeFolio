@@ -1,28 +1,35 @@
-// packages/types/src/auth.ts
+// Auth types
+export type UserRole = 'user' | 'admin';
 
-import type { UserRole } from './user';
+export interface AuthUser {
+  id: string;
+  email: string;
+  pseudo: string;
+  role: UserRole;
+}
 
-/** --- Tokens --- */
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: UserRole;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken?: string;
 }
 
-/** --- JWT Payload --- */
-export interface JwtPayload {
-  sub: string; // user id
-  email: string;
-  role: UserRole;
+export interface LoginResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
 }
 
-/** --- Login DTO --- */
 export interface LoginDto {
   email: string;
   password: string;
   rememberMe?: boolean;
 }
 
-/** --- Register DTO --- */
 export interface RegisterDto {
   email: string;
   pseudo: string;
@@ -30,13 +37,10 @@ export interface RegisterDto {
   confirmPassword: string;
 }
 
-/** --- Login / Register Response --- */
-export interface LoginResponse {
-  user: {
-    id: string;
-    email: string;
-    pseudo: string;
-    role: UserRole;
-  };
-  tokens: AuthTokens;
+export interface User extends AuthUser {
+  createdAt: Date;
+  updatedAt: Date;
 }
+
+// Card types
+export * from './card.types';

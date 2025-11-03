@@ -1,0 +1,326 @@
+/* ========= Container global ========= */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  backdrop-filter: blur(var(--blur));
+  border-bottom: var(--border);
+}
+
+.brand {
+  justify-self: start;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-self: end;
+}
+
+/* ========= Marque ========= */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: var(--border);
+  background: linear-gradient(180deg, #0e1528, #0b0f1a);
+  transition:
+    box-shadow var(--anim-duration) var(--anim),
+    transform var(--anim-duration) var(--anim);
+  justify-self: start;
+}
+.brand:hover,
+.brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 16px var(--primary);
+  transform: translateY(-1px);
+}
+.dot {
+  color: var(--primary);
+}
+
+/* ========= Glass Radio Group (2 onglets) - CENTRÉ ========= */
+.radioWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.glassGroup {
+  --bg: rgba(255, 255, 255, 0.06);
+  --text: var(--text);
+
+  display: flex;
+  position: relative;
+  background: var(--bg);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 1px 1px 4px rgba(255, 255, 255, 0.2),
+    inset -1px -1px 6px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.glassGroup input {
+  display: none;
+}
+
+.glassGroup label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  font-size: 14px;
+  padding: 0.8rem 1.6rem;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text);
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease-in-out;
+  user-select: none;
+}
+
+.glassGroup label:hover {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(124, 243, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Glider pour 2 options: largeur 50% */
+.glider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  border-radius: 1rem;
+  z-index: 1;
+  transition:
+    transform 0.5s cubic-bezier(0.37, 1.95, 0.66, 0.56),
+    background 0.4s ease-in-out,
+    box-shadow 0.4s ease-in-out;
+  background: linear-gradient(135deg, #d0e7ff55, #a0d8ff);
+  box-shadow:
+    0 0 18px rgba(160, 216, 255, 0.5),
+    0 0 10px rgba(200, 240, 255, 0.4) inset;
+  transform: translateX(-100%); /* aucun onglet actif (en dehors à gauche) */
+}
+
+/* Position/état du glider selon l'onglet actif */
+.glider[data-active='portfolio'] {
+  transform: translateX(0%);
+}
+.glider[data-active='stats'] {
+  transform: translateX(100%);
+}
+
+/* ========= Search avec dropdown ========= */
+.searchContainer {
+  position: relative;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(15, 20, 36, 0.8);
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.searchWrap:hover {
+  border-color: rgba(124, 243, 255, 0.4);
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.15);
+}
+
+.searchWrap:focus-within {
+  border-color: rgba(124, 243, 255, 0.6);
+  box-shadow: 0 0 30px rgba(124, 243, 255, 0.25);
+}
+
+/* Suppression de tous les éléments décoratifs */
+.white,
+.border,
+.darkBorderBg,
+.glow {
+  display: none;
+}
+
+.input {
+  background: transparent;
+  border: none;
+  width: 280px;
+  height: 40px;
+  border-radius: 8px;
+  color: var(--text);
+  padding-left: 40px;
+  padding-right: 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.input:focus {
+  outline: none;
+}
+
+/* Suppression des masques */
+.inputMask,
+.pinkMask {
+  display: none;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+.searchWrap:focus-within .searchIcon {
+  color: var(--primary);
+}
+
+.searchBtn {
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15), rgba(167, 139, 250, 0.15));
+  color: var(--text);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  height: 40px;
+}
+
+.searchBtn:hover {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.25), rgba(167, 139, 250, 0.25));
+  box-shadow: 0 0 16px rgba(124, 243, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.searchBtn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Dropdown de recherche */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--glass);
+  border: 1px solid rgba(124, 243, 255, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.dropdownLoading {
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background: rgba(124, 243, 255, 0.1);
+}
+
+.dropdownImage {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.dropdownInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdownName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownSet {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ========= Profil ========= */
+.profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 12px;
+  border: var(--border);
+  background: #0b0f1a;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--bg);
+  background: var(--primary);
+  font-weight: 700;
+  box-shadow: var(--glow);
+}
+

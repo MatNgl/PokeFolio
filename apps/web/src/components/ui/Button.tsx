@@ -1,5 +1,6 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 
+import { Loader } from './Loader';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,7 +25,13 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <span className={styles.spinner} /> : children}
+      {loading ? (
+        <div className={styles.loaderWrapper}>
+          <Loader />
+        </div>
+      ) : (
+        children
+      )}
     </button>
   );
 }

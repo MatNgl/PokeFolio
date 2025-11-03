@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@pokefolio/ui/styles';
 import './index.css';
+import './styles/theme.css';
 import { App } from './App';
 
 const rootElement = document.getElementById('root');

@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
+import { Loader } from './ui/Loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,10 +18,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100vh',
-          color: 'var(--primary)',
         }}
       >
-        Chargement...
+        <Loader />
       </div>
     );
   }
