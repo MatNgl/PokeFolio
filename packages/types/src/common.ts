@@ -4,11 +4,6 @@
 export type CardLanguage = 'fr' | 'en' | 'ja' | 'zh';
 
 /**
- * User roles
- */
-export type UserRole = 'user' | 'admin';
-
-/**
  * Currency (EUR only, stored in cents)
  */
 export type Currency = 'EUR';
@@ -43,3 +38,8 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   message?: string;
 }
+
+/**
+ * Re-export shared roles & user types to avoid duplication
+ */
+export type { UserRole } from './user';

@@ -1,37 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-
+import { Model, Document } from 'mongoose';
 import { User } from './schemas/user.schema';
+import type { AuthUser } from '@pokefolio/types';
+
+type UserDoc = User & Document;
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDoc>
+  ) {}
 
-  async create(email: string, passwordHash: string) {
-    const user = new this.userModel({ email, passwordHash });
-    return user.save();
-  }
-
-  async findByEmail(email: string) {
-    return this.userModel.findOne({ email }).exec();
-  }
-
-  async findById(id: string) {
+  async findById(id: string): Promise<UserDoc | null> {
     return this.userModel.findById(id).exec();
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string | null) {
-    return this.userModel.findByIdAndUpdate(userId, { refreshToken }, { new: true }).exec();
+  async findByEmail(email: string): Promise<UserDoc | null> {
+    return this.userModel.findOne({ email: email.toLowerCase().trim() }).exec();
   }
 
-  toUserResponse(user: User) {
+  async findByPseudo(pseudo: string): Promise<UserDoc | null> {
+    return this.userModel.findOne({ pseudo: pseudo.trim() }).exec();
+  }
+
+  async create(email: string, pseudo: string, passwordHash: string): Promise<UserDoc> {
+    return this.userModel.create({
+      email: email.toLowerCase().trim(),
+      pseudo: pseudo.trim(),
+      passwordHash,
+      role: 'user',
+    });
+  }
+
+  async updateRefreshToken(userId: string, token: string | null): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { refreshToken: token }).exec();
+  }
+
+  toUserResponse(user: UserDoc): AuthUser {
     return {
       id: user.id,
       email: user.email,
+      pseudo: user.pseudo, // ✅ plus de "username"
       role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     };
   }
 }

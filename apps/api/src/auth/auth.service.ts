@@ -24,16 +24,27 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<LoginResponse> {
-    const existingUser = await this.usersService.findByEmail(dto.email);
-
-    if (existingUser) {
-      throw new ConflictException('Cet email est déjà utilisé');
+    // Validation métier supplémentaire (au cas où le décorateur n’est pas pris en compte)
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('La confirmation doit correspondre au mot de passe');
     }
 
-    const passwordHash = await this.cryptoService.hashPassword(dto.password);
-    const user = await this.usersService.create(dto.email, passwordHash);
+    const email = dto.email.trim().toLowerCase();
+    const pseudo = dto.pseudo.trim();
 
-    const tokens = await this.generateTokens(user);
+    const existingByEmail = await this.usersService.findByEmail(email);
+    if (existingByEmail) throw new ConflictException('Cet email est déjà utilisé');
+
+    const existingByPseudo = await this.usersService.findByPseudo(pseudo);
+    if (existingByPseudo) throw new ConflictException('Ce pseudo est déjà utilisé');
+
+    const passwordHash = await this.cryptoService.hashPassword(dto.password);
+
+    // Adapter la signature create : (email, pseudo, passwordHash)
+    const user = await this.usersService.create(email, pseudo, passwordHash);
+
+    // Par défaut on génère aussi un refresh token (souvent appréciable après signup)
+    const tokens = await this.generateTokens(user, true);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
 
     return {
@@ -44,31 +55,22 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<LoginResponse> {
     const user = await this.usersService.findByEmail(dto.email);
-
-    if (!user) {
-      throw new UnauthorizedException('Email ou mot de passe incorrect');
-    }
+    if (!user) throw new UnauthorizedException('Email ou mot de passe incorrect');
 
     const isPasswordValid = await this.cryptoService.verifyPassword(
       user.passwordHash,
       dto.password
     );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Email ou mot de passe incorrect');
-    }
+    if (!isPasswordValid) throw new UnauthorizedException('Email ou mot de passe incorrect');
 
     const tokens = await this.generateTokens(user, dto.rememberMe);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
 
-    return {
-      user: this.usersService.toUserResponse(user),
-      tokens,
-    };
+    return { user: this.usersService.toUserResponse(user), tokens };
   }
 
   async refresh(user: User): Promise<AuthTokens> {
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user, true);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
     return tokens;
   }
@@ -78,11 +80,7 @@ export class AuthService {
   }
 
   private async generateTokens(user: User, rememberMe = false): Promise<AuthTokens> {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
+    const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
@@ -90,7 +88,6 @@ export class AuthService {
     });
 
     let refreshToken: string | undefined;
-
     if (rememberMe) {
       refreshToken = this.jwtService.sign(payload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),

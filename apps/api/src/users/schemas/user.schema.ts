@@ -7,6 +7,9 @@ export class User extends Document {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email!: string;
 
+  @Prop({ required: true, trim: true, unique: true, minlength: 3, maxlength: 24 })
+  pseudo!: string;
+
   @Prop({ required: true })
   passwordHash!: string;
 
@@ -22,5 +25,6 @@ export class User extends Document {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Index for faster email lookups
+// Index pour recherches rapides
 UserSchema.index({ email: 1 });
+UserSchema.index({ pseudo: 1 }, { unique: true });

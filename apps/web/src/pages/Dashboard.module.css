@@ -1,0 +1,95 @@
+.container {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--glass);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.welcome {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.email {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.info {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-2xl) 0;
+}
+
+.stat {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radii-md);
+  transition: all var(--transition-fast);
+}
+
+.stat:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-4px);
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comingSoon {
+  margin-top: var(--spacing-2xl);
+  padding: var(--spacing-lg);
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: var(--radii-md);
+  color: var(--violet);
+  text-align: center;
+  font-weight: 500;
+}

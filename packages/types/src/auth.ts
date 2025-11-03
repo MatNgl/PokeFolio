@@ -1,56 +1,42 @@
-import { type UserRole } from './common';
+// packages/types/src/auth.ts
 
-/**
- * User entity
- */
-export interface User {
-  id: string;
+import type { UserRole } from './user';
+
+/** --- Tokens --- */
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken?: string;
+}
+
+/** --- JWT Payload --- */
+export interface JwtPayload {
+  sub: string; // user id
   email: string;
   role: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-/**
- * Registration request
- */
-export interface RegisterDto {
-  email: string;
-  password: string;
-}
-
-/**
- * Login request
- */
+/** --- Login DTO --- */
 export interface LoginDto {
   email: string;
   password: string;
   rememberMe?: boolean;
 }
 
-/**
- * Auth tokens response
- */
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-}
-
-/**
- * Login response
- */
-export interface LoginResponse {
-  user: User;
-  tokens: AuthTokens;
-}
-
-/**
- * JWT payload
- */
-export interface JwtPayload {
-  sub: string;
+/** --- Register DTO --- */
+export interface RegisterDto {
   email: string;
-  role: UserRole;
-  iat?: number;
-  exp?: number;
+  pseudo: string;
+  password: string;
+  confirmPassword: string;
+}
+
+/** --- Login / Register Response --- */
+export interface LoginResponse {
+  user: {
+    id: string;
+    email: string;
+    pseudo: string;
+    role: UserRole;
+  };
+  tokens: AuthTokens;
 }
