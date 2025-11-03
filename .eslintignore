@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.turbo
+coverage
+*.config.ts
+*.config.js
+.eslintrc.js
+.eslintrc.cjs
