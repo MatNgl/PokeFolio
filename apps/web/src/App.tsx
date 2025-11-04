@@ -7,16 +7,12 @@ import { Register } from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import { Header } from './components/layout/Header';
 import Portfolio from './pages/Portfolio';
+import Discover from './pages/Discover';
 
 // Redirection racine vers Portfolio si connecté, sinon Login
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
   return <Navigate to={isAuthenticated ? '/portfolio' : '/login'} replace />;
-}
-
-// Placeholder "Découvrir" (publique pour l’instant)
-function Decouvrir() {
-  return <div style={{ padding: 24 }}>Découvrir — bientôt</div>;
 }
 
 // Rend le Header sauf sur /login et /register
@@ -53,8 +49,15 @@ function AppInner() {
           }
         />
 
-        {/* Découvrir (publique) */}
-        <Route path="/decouvrir" element={<Decouvrir />} />
+        {/* Découvrir (protégée) */}
+        <Route
+          path="/decouvrir"
+          element={
+            <ProtectedRoute>
+              <Discover />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

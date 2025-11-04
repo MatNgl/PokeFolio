@@ -131,7 +131,8 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
       img = `${img}/high.webp`;
     }
 
-    return img || 'https://via.placeholder.com/200x280/0f1424/7cf3ff?text=Pas+d%27image';
+    // Image de dos de carte Pokémon par défaut
+    return img || 'https://images.pokemontcg.io/swsh1/back.png';
   };
 
   const onSubmit = async (data: FormData) => {
@@ -205,7 +206,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
                 className={styles.selectedCardImage}
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
-                  target.src = 'https://via.placeholder.com/200x280/0f1424/7cf3ff?text=Erreur';
+                  target.src = 'https://images.pokemontcg.io/swsh1/back.png';
                 }}
               />
               <div>

@@ -2,7 +2,7 @@
   position: relative;
   padding: var(--spacing-md) var(--spacing-xl);
   background: var(--glass);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(124, 243, 255, 0.3);
   border-radius: var(--radii-md);
   color: var(--text);
   font-size: 1rem;
@@ -22,7 +22,7 @@
 .button:hover:not(:disabled) {
   transform: translateY(-2px);
   border-color: var(--primary);
-  box-shadow: var(--glow-primary);
+  background: rgba(124, 243, 255, 0.05);
 }
 
 .button:active:not(:disabled) {
@@ -37,17 +37,26 @@
 /* Variants */
 .primary {
   background: linear-gradient(135deg, var(--primary), var(--violet));
-  border: none;
+  border: 1px solid rgba(124, 243, 255, 0.5);
   color: var(--bg);
 }
 
 .primary:hover:not(:disabled) {
-  box-shadow: var(--glow-primary-lg);
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(124, 243, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 .secondary {
   background: var(--glass-light);
-  border-color: var(--border-light);
+  border: 1px solid rgba(124, 243, 255, 0.25);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--glass-light);
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
 .ghost {

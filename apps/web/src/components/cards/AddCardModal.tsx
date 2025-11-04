@@ -12,6 +12,7 @@ import styles from './AddCardModal.module.css';
 interface AddCardModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  card?: Card; // Carte pré-sélectionnée (optionnel)
 }
 
 interface FormData {
@@ -74,10 +75,10 @@ const GRADING_COMPANIES = [
   },
 ] as const;
 
-export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
+export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Card[]>([]);
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(card || null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -125,7 +126,8 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
       img = `${img}/high.webp`;
     }
 
-    return img;
+    // Image de dos de carte Pokémon par défaut
+    return img || 'https://images.pokemontcg.io/swsh1/back.png';
   };
 
   // Recherche dynamique
@@ -290,16 +292,12 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
                       aria-label={`Sélectionner ${card.name}`}
                     >
                       <img
-                        src={
-                          getCardImageUrl(card) ||
-                          'https://via.placeholder.com/150x210/0f1424/7cf3ff?text=Pas+d%27image'
-                        }
+                        src={getCardImageUrl(card)}
                         alt={card.name}
                         className={styles.cardImage}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          target.src =
-                            'https://via.placeholder.com/150x210/0f1424/7cf3ff?text=Erreur';
+                          target.src = 'https://images.pokemontcg.io/swsh1/back.png';
                         }}
                       />
                       <div className={styles.cardInfo}>
@@ -318,15 +316,12 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
             <form onSubmit={handleSubmit(onSubmit)} className={styles.detailsForm}>
               <div className={styles.selectedCard}>
                 <img
-                  src={
-                    getCardImageUrl(selectedCard) ||
-                    'https://via.placeholder.com/200x280/0f1424/7cf3ff?text=Pas+d%27image'
-                  }
+                  src={getCardImageUrl(selectedCard)}
                   alt={selectedCard.name}
                   className={styles.selectedCardImage}
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
-                    target.src = 'https://via.placeholder.com/200x280/0f1424/7cf3ff?text=Erreur';
+                    target.src = 'https://images.pokemontcg.io/swsh1/back.png';
                   }}
                 />
                 <div>
