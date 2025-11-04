@@ -14,19 +14,16 @@ export interface JwtPayload {
   role: UserRole;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-}
-
+// Plus d'AuthTokens avec refresh — on simplifie
 export interface LoginResponse {
   user: AuthUser;
-  tokens: AuthTokens;
+  accessToken: string;
 }
 
 export interface LoginDto {
   email: string;
   password: string;
+  // Peut rester si tu l'utilises côté UI, mais ignoré côté API
   rememberMe?: boolean;
 }
 

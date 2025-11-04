@@ -94,6 +94,7 @@ export interface UserCard {
   setId?: string;
   setName?: string;
   number?: string;
+  setCardCount?: number; // Nombre total de cartes dans le set
   rarity?: string;
   imageUrl?: string;
   imageUrlHiRes?: string;
@@ -118,6 +119,7 @@ export interface AddCardDto {
   setId?: string;
   setName?: string;
   number?: string;
+  setCardCount?: number; // Nombre total de cartes dans le set
   rarity?: string;
   imageUrl?: string;
   imageUrlHiRes?: string;

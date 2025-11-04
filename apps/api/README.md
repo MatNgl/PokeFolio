@@ -33,7 +33,6 @@ NODE_ENV=development
 PORT=4000
 MONGODB_URI=mongodb://localhost:27017/pokefolio
 JWT_SECRET=your-secret-key
-JWT_REFRESH_SECRET=your-refresh-secret
 TCGDEX_BASE_URL=https://api.tcgdex.net/v2
 CORS_ORIGIN=http://localhost:3000
 ```

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
@@ -9,99 +9,115 @@ import {
   IsDateString,
   IsArray,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class AddCardDto {
-  @ApiProperty({ description: 'ID de la carte depuis Pokemon TCG API' })
+  @ApiProperty({
+    description: 'Identifiant unique de la carte depuis TCGdex / Pokémon TCG API',
+    example: 'sv3-189',
+  })
   @IsString()
   @IsNotEmpty()
   cardId!: string;
 
-  @ApiProperty({ description: 'Nom de la carte' })
+  @ApiProperty({ description: 'Nom complet de la carte', example: 'Dracaufeu ex' })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ description: 'ID du set', required: false })
+  @ApiPropertyOptional({ description: 'Identifiant du set', example: 'sv3' })
   @IsString()
   @IsOptional()
   setId?: string;
 
-  @ApiProperty({ description: 'Nom du set', required: false })
+  @ApiPropertyOptional({ description: 'Nom du set', example: 'Écarlate & Violet 151' })
   @IsString()
   @IsOptional()
   setName?: string;
 
-  @ApiProperty({ description: 'Numéro dans le set', required: false })
+  @ApiPropertyOptional({ description: 'Numéro de la carte dans le set', example: '189' })
   @IsString()
   @IsOptional()
   number?: string;
 
-  @ApiProperty({ description: 'Rareté', required: false })
+  @ApiPropertyOptional({ description: 'Nombre total de cartes dans le set', example: 165 })
+  @IsNumber()
+  @IsOptional()
+  setCardCount?: number;
+
+  @ApiPropertyOptional({ description: 'Rareté de la carte', example: 'Double Rare' })
   @IsString()
   @IsOptional()
   rarity?: string;
 
-  @ApiProperty({ description: 'URL image petite', required: false })
+  @ApiPropertyOptional({ description: "URL d'image standard" })
   @IsString()
   @IsOptional()
   imageUrl?: string;
 
-  @ApiProperty({ description: 'URL image haute résolution', required: false })
+  @ApiPropertyOptional({ description: "URL d'image haute résolution" })
   @IsString()
   @IsOptional()
   imageUrlHiRes?: string;
 
-  @ApiProperty({ description: 'Types', required: false })
+  @ApiPropertyOptional({ description: 'Types élémentaires de la carte', example: ['Feu'] })
   @IsArray()
   @IsOptional()
   types?: string[];
 
-  @ApiProperty({ description: 'Supertype', required: false })
+  @ApiPropertyOptional({ description: 'Supertype de la carte', example: 'Pokémon' })
   @IsString()
   @IsOptional()
   supertype?: string;
 
-  @ApiProperty({ description: 'Subtypes', required: false })
+  @ApiPropertyOptional({ description: 'Sous-types de la carte', example: ['ex'] })
   @IsArray()
   @IsOptional()
   subtypes?: string[];
 
-  @ApiProperty({ description: 'Quantité', default: 1, minimum: 1 })
+  @ApiProperty({ description: 'Quantité à ajouter', example: 1, minimum: 1, default: 1 })
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   quantity!: number;
 
-  @ApiProperty({ description: 'Carte gradée', default: false })
+  @ApiProperty({ description: 'Carte gradée ?', example: false, default: false, required: false })
+  @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
   isGraded?: boolean;
 
-  @ApiProperty({ description: 'Entreprise de grading (PSA, BGS, CGC...)', required: false })
+  @ApiPropertyOptional({
+    description: 'Entreprise de gradation (PSA, BGS, CGC, etc.)',
+    example: 'PSA',
+  })
   @IsString()
   @IsOptional()
   gradeCompany?: string;
 
-  @ApiProperty({ description: 'Note de grading (ex: 10, 9.5, 10+)', required: false })
+  @ApiPropertyOptional({ description: 'Note de gradation (ex. 10, 9.5, 10+)', example: '10' })
   @IsString()
   @IsOptional()
   gradeScore?: string;
 
-  @ApiProperty({ description: "Prix d'achat", required: false })
-  @IsNumber()
+  @ApiPropertyOptional({ description: "Prix d'achat en euros", example: 149.9 })
+  @Type(() => Number)
+  @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   purchasePrice?: number;
 
-  @ApiProperty({ description: "Date d'achat", required: false })
+  @ApiPropertyOptional({ description: "Date d'achat (format ISO 8601)", example: '2025-10-15' })
   @IsDateString()
   @IsOptional()
   purchaseDate?: string;
 
-  @ApiProperty({ description: 'Valeur actuelle estimée', required: false })
+  @ApiPropertyOptional({ description: 'Valeur actuelle estimée en euros', example: 180 })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   currentValue?: number;
 
-  @ApiProperty({ description: 'Notes personnelles', required: false })
+  @ApiPropertyOptional({ description: 'Notes personnelles sur la carte' })
   @IsString()
   @IsOptional()
   notes?: string;

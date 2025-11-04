@@ -11,13 +11,13 @@ export class LoginDto {
 
   @ApiProperty({
     description: 'Mot de passe',
-    example: 'Password123!',
+    example: 'StrongPassw0rd!',
   })
   @IsString()
   password!: string;
 
   @ApiProperty({
-    description: 'Rester connecté (refresh token 30j)',
+    description: 'Préférence côté UI (optionnel). Sans effet serveur en l’absence de refresh.',
     example: true,
     required: false,
   })

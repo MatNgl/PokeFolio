@@ -34,10 +34,6 @@ export class UsersService {
     });
   }
 
-  async updateRefreshToken(userId: string, token: string | null): Promise<void> {
-    await this.userModel.findByIdAndUpdate(userId, { refreshToken: token }).exec();
-  }
-
   toUserResponse(user: UserDoc): AuthUser {
     return {
       id: user.id,

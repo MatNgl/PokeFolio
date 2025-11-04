@@ -6,9 +6,9 @@ export class UserCard extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId!: Types.ObjectId;
 
-  // Données de la carte Pokemon TCG API
+  // Données de la carte
   @Prop({ required: true })
-  cardId!: string; // ID de l'API Pokemon TCG
+  cardId!: string; // ID TCGdex / Card.id
 
   @Prop({ required: true })
   name!: string;
@@ -20,7 +20,10 @@ export class UserCard extends Document {
   setName?: string;
 
   @Prop()
-  number?: string;
+  number?: string; // localId
+
+  @Prop()
+  setCardCount?: number; // Nombre total de cartes dans le set
 
   @Prop()
   rarity?: string;
@@ -40,7 +43,7 @@ export class UserCard extends Document {
   @Prop()
   subtypes?: string[];
 
-  // Données spécifiques à l'utilisateur
+  // Données spécifiques utilisateur
   @Prop({ required: true, default: 1, min: 1 })
   quantity!: number;
 
@@ -48,10 +51,10 @@ export class UserCard extends Document {
   isGraded!: boolean;
 
   @Prop()
-  gradeCompany?: string; // PSA, BGS, CGC, etc.
+  gradeCompany?: string; // PSA, BGS, ...
 
   @Prop()
-  gradeScore?: string;
+  gradeScore?: string; // string pour supporter "10+", "9.5", etc.
 
   @Prop()
   purchasePrice?: number;

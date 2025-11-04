@@ -6,13 +6,19 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { type JwtPayload, type LoginResponse, type AuthTokens } from '@pokefolio/types';
 
 import { UsersService } from '../users/users.service';
 import { User } from '../users/schemas/user.schema';
 import { CryptoService } from './crypto.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
+type UserDto = ReturnType<UsersService['toUserResponse']>;
+export interface AuthResult {
+  // <= export !
+  user: UserDto;
+  accessToken: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -23,8 +29,7 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {}
 
-  async register(dto: RegisterDto): Promise<LoginResponse> {
-    // Validation métier supplémentaire (au cas où le décorateur n’est pas pris en compte)
+  async register(dto: RegisterDto): Promise<AuthResult> {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('La confirmation doit correspondre au mot de passe');
     }
@@ -39,22 +44,14 @@ export class AuthService {
     if (existingByPseudo) throw new ConflictException('Ce pseudo est déjà utilisé');
 
     const passwordHash = await this.cryptoService.hashPassword(dto.password);
-
-    // Adapter la signature create : (email, pseudo, passwordHash)
     const user = await this.usersService.create(email, pseudo, passwordHash);
 
-    // Par défaut on génère aussi un refresh token (souvent appréciable après signup)
-    const tokens = await this.generateTokens(user, true);
-    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
-
-    return {
-      user: this.usersService.toUserResponse(user),
-      tokens,
-    };
+    const accessToken = this.generateAccessToken(user);
+    return { user: this.usersService.toUserResponse(user), accessToken };
   }
 
-  async login(dto: LoginDto): Promise<LoginResponse> {
-    const user = await this.usersService.findByEmail(dto.email);
+  async login(dto: LoginDto): Promise<AuthResult> {
+    const user = await this.usersService.findByEmail(dto.email.trim().toLowerCase());
     if (!user) throw new UnauthorizedException('Email ou mot de passe incorrect');
 
     const isPasswordValid = await this.cryptoService.verifyPassword(
@@ -63,38 +60,19 @@ export class AuthService {
     );
     if (!isPasswordValid) throw new UnauthorizedException('Email ou mot de passe incorrect');
 
-    const tokens = await this.generateTokens(user, dto.rememberMe);
-    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
-
-    return { user: this.usersService.toUserResponse(user), tokens };
+    const accessToken = this.generateAccessToken(user);
+    return { user: this.usersService.toUserResponse(user), accessToken };
   }
 
-  async refresh(user: User): Promise<AuthTokens> {
-    const tokens = await this.generateTokens(user, true);
-    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken as string);
-    return tokens;
+  async logout(_userId: string): Promise<void> {
+    return;
   }
 
-  async logout(userId: string): Promise<void> {
-    await this.usersService.updateRefreshToken(userId, null);
-  }
-
-  private async generateTokens(user: User, rememberMe = false): Promise<AuthTokens> {
-    const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
-
-    const accessToken = this.jwtService.sign(payload, {
+  private generateAccessToken(user: User): string {
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '6000'), // garde ta valeur
     });
-
-    let refreshToken: string | undefined;
-    if (rememberMe) {
-      refreshToken = this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'),
-      });
-    }
-
-    return { accessToken, refreshToken };
   }
 }

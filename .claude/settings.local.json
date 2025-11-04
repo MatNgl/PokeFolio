@@ -11,7 +11,8 @@
       "Bash(cmd /c \"dir /S /B c:\\Users\\Matthéo\\Documents\\EFREI\\M2\\PokeFolio\\apps\\web\\src\\*.tsx c:\\Users\\Matthéo\\Documents\\EFREI\\M2\\PokeFolio\\apps\\api\\src\\*.ts 2>nul\")",
       "Bash(pnpm run dev:*)",
       "Bash(curl:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

@@ -1,48 +1,48 @@
-import * as dotenv from 'dotenv'; // ⬅️ AJOUT
-dotenv.config({ path: '.env.local' }); // charge .env.local en priorité
-dotenv.config(); // fallback .env si présent
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-
 import { AppModule } from './app.module';
+
+function parseOrigins(src: string | undefined, fallback: string[]): string[] {
+  if (!src) return fallback;
+  return src
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Security
   app.use(helmet());
 
-  // Cookie parser
-  app.use(cookieParser());
-
-  // ==== CORS (multi-origins + credentials) ====
-  const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000,http://localhost:3001')
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const allowedOrigins = new Set(
+    parseOrigins(process.env.CORS_ORIGINS, [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://localhost:4000',
+    ])
+  );
+  console.info('✅ CORS allowed origins:', Array.from(allowedOrigins).join(', '));
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // Autoriser Postman / SSR sans Origin
-      if (!origin) return callback(null, true);
-
-      const allowedOrigins = (process.env.CORS_ORIGIN ?? '').split(',').map((o) => o.trim());
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      console.warn(`❌ CORS blocked for origin: ${origin}`);
-      return callback(new Error(`Not allowed by CORS: ${origin}`), false);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: false, // <— plus de cookies refresh
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      if (/^http:\/\/localhost:\d+$/i.test(origin)) return callback(null, true);
+      console.warn(`❌ CORS blocked for origin: ${origin}`);
+      return callback(null, false);
+    },
   });
-
-  // ============================================
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -63,7 +63,6 @@ async function bootstrap() {
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'JWT', in: 'header' },
       'JWT-auth'
     )
-    .addCookieAuth('refreshToken', { type: 'apiKey', in: 'cookie', name: 'refreshToken' })
     .addTag('auth', 'Authentification')
     .addTag('health', 'Health check')
     .build();

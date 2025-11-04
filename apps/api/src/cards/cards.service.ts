@@ -21,16 +21,31 @@ export class CardsService {
   async searchCards(dto: SearchCardsDto): Promise<CardSearchResult> {
     const query = dto.q?.trim() || '';
     const lang = dto.lang || 'fr';
-    const page = dto.page || 1;
-    const limit = dto.limit || 20;
+    const pageRaw = dto.page ?? 1;
+    const limitRaw = dto.limit ?? 20;
+
+    // bornes sécurisées
+    const page = Math.max(1, pageRaw);
+    const limit = Math.min(Math.max(1, limitRaw), 100);
 
     if (!query) {
       return { cards: [], total: 0, page, limit };
     }
 
+    // Détecter si la recherche contient un numéro (ex: "hyporoi 010" ou "012")
+    const numberMatch = query.match(/\b(\d{1,3})\b/);
+    const searchNumber = numberMatch ? numberMatch[1] : null;
+
+    // Extraire le nom (tout sauf le numéro)
+    const searchName = numberMatch ? query.replace(/\b\d{1,3}\b/g, '').trim() : query;
+
+    if (searchNumber) {
+      this.logger.log(`Recherche détectée - Nom: "${searchName}", Numéro: "${searchNumber}"`);
+    }
+
     const cacheKey = `search:${lang}:${query.toLowerCase()}`;
 
-    // Check cache
+    // ==== Cache check ====
     const cached = await this.getCachedData<Card[]>(cacheKey);
     if (cached) {
       this.logger.log(`Cache HIT: ${cacheKey}`);
@@ -39,18 +54,55 @@ export class CardsService {
 
     this.logger.log(`Cache MISS: ${cacheKey}`);
 
-    // Fetch from TCGdex (FR)
-    let cards = await this.tcgdexService.searchCards(query, lang);
+    let cards: Card[] = [];
 
-    // Fallback EN si vide et lang=fr
-    if (cards.length === 0 && lang === 'fr') {
-      this.logger.log(`Fallback EN pour: ${query}`);
-      cards = await this.tcgdexService.searchCards(query, 'en');
+    // ==== Fetch depuis TCGdex ====
+    if (searchNumber && !searchName) {
+      // Recherche uniquement par numéro : impossible avec TCGdex, on retourne vide
+      // L'utilisateur devra ajouter au moins un nom partiel
+      this.logger.log(`Recherche par numéro seul (${searchNumber}) - retour vide`);
+      cards = [];
+    } else {
+      // Recherche normale par nom
+      cards = await this.tcgdexService.searchCards(searchName || query, lang);
+
+      // Fallback EN si vide et lang=fr
+      if (cards.length === 0 && lang === 'fr') {
+        this.logger.log(`Fallback EN pour: ${searchName || query}`);
+        cards = await this.tcgdexService.searchCards(searchName || query, 'en');
+      }
+
+      // Filtrer par numéro si spécifié
+      if (searchNumber) {
+        this.logger.log(`Filtrage par numéro: "${searchNumber}"`);
+        const searchNumInt = parseInt(searchNumber, 10);
+
+        cards = cards.filter((card) => {
+          if (!card.localId) return false;
+
+          const cardNumInt = parseInt(card.localId, 10);
+
+          // Comparer les nombres sans les zéros initiaux
+          const match = cardNumInt === searchNumInt;
+
+          if (match) {
+            this.logger.log(
+              `✓ Match: ${card.name} #${card.localId} (${cardNumInt} === ${searchNumInt})`
+            );
+          }
+
+          return match;
+        });
+        this.logger.log(`${cards.length} carte(s) trouvée(s) avec le numéro ${searchNumber}`);
+      }
     }
 
-    // Save to cache
+    // Normalisation des images
+    cards = this.withImageFallback(cards, lang);
+
+    // ==== Mise en cache (non bloquant) ====
     if (cards.length > 0) {
-      await this.setCachedData(cacheKey, cards);
+      void this.setCachedData(cacheKey, cards);
     }
 
     return this.paginateResults(cards, page, limit);
@@ -59,7 +111,6 @@ export class CardsService {
   async getCardById(cardId: string, lang: CardLanguage = 'fr'): Promise<Card | null> {
     const cacheKey = `card:${lang}:${cardId}`;
 
-    // Check cache
     const cached = await this.getCachedData<Card>(cacheKey);
     if (cached) {
       this.logger.log(`Cache HIT: ${cacheKey}`);
@@ -68,7 +119,7 @@ export class CardsService {
 
     this.logger.log(`Cache MISS: ${cacheKey}`);
 
-    // Fetch from TCGdex
+    // ==== Fetch depuis TCGdex ====
     let card = await this.tcgdexService.getCardById(cardId, lang);
 
     // Fallback EN si null et lang=fr
@@ -77,32 +128,69 @@ export class CardsService {
       card = await this.tcgdexService.getCardById(cardId, 'en');
     }
 
-    // Save to cache
+    // Ajout fallback image (sécurisé)
     if (card) {
-      await this.setCachedData(cacheKey, card);
+      const [patched] = this.withImageFallback([card], lang);
+      if (patched) {
+        card = patched;
+      }
+      void this.setCachedData(cacheKey, card);
     }
 
     return card;
   }
 
-  private async getCachedData<T>(cacheKey: string): Promise<T | null> {
-    const cached = await this.cardCacheModel.findOne({
-      cacheKey,
-      expiresAt: { $gt: new Date() },
-    });
+  // ================================================================
+  // 🧩 HELPERS
+  // ================================================================
 
-    return cached ? (cached.data as T) : null;
+  private withImageFallback(cards: Array<Card | null>, lang: CardLanguage): Card[] {
+    const baseUrl = process.env.TCGDEX_BASE_URL ?? 'https://api.tcgdex.net/v2';
+
+    return cards
+      .filter((c): c is Card => c !== null) // on élimine les nulls
+      .map((c) => {
+        const id = c.id?.trim();
+        const fallback = id ? `${baseUrl}/${lang}/cards/${id}/image` : undefined;
+        const img = c.images?.small ?? c.image ?? fallback;
+
+        return {
+          ...c,
+          image: img,
+          images: {
+            ...(c.images || {}),
+            small: img,
+          },
+        };
+      });
+  }
+
+  private async getCachedData<T>(cacheKey: string): Promise<T | null> {
+    try {
+      const cached = await this.cardCacheModel.findOne({
+        cacheKey,
+        expiresAt: { $gt: new Date() },
+      });
+      return cached ? (cached.data as T) : null;
+    } catch (err) {
+      this.logger.warn(`Cache read failed for ${cacheKey}: ${(err as Error).message}`);
+      return null;
+    }
   }
 
   private async setCachedData<T>(cacheKey: string, data: T): Promise<void> {
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + this.CACHE_TTL_DAYS);
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + this.CACHE_TTL_DAYS);
 
-    await this.cardCacheModel.findOneAndUpdate(
-      { cacheKey },
-      { cacheKey, data, expiresAt },
-      { upsert: true, new: true }
-    );
+      await this.cardCacheModel.findOneAndUpdate(
+        { cacheKey },
+        { cacheKey, data, expiresAt },
+        { upsert: true, new: true }
+      );
+    } catch (err) {
+      this.logger.warn(`Cache write failed for ${cacheKey}: ${(err as Error).message}`);
+    }
   }
 
   private paginateResults(cards: Card[], page: number, limit: number): CardSearchResult {

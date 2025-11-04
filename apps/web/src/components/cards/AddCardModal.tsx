@@ -18,7 +18,7 @@ interface FormData {
   quantity: number;
   isGraded: boolean;
   gradeCompany?: string;
-  gradeScore?: number;
+  gradeScore?: string;
   purchasePrice?: number;
   purchaseDate?: string;
   notes?: string;
@@ -118,9 +118,14 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
     : [];
 
   const getCardImageUrl = (card: Card): string => {
-    if (card.image) return card.image;
-    if (card.images?.small) return card.images.small;
-    return '';
+    let img = card.image || card.images?.small || '';
+
+    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
+    if (img && img.includes('assets.tcgdex.net') && !img.match(/\.(webp|png|jpg|jpeg)$/i)) {
+      img = `${img}/high.webp`;
+    }
+
+    return img;
   };
 
   // Recherche dynamique
@@ -143,6 +148,7 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!searchQuery.trim()) return;
     await handleSearchChange(searchQuery);
   };
@@ -157,36 +163,54 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
     if (!selectedCard) return;
     setSaving(true);
     try {
+      // Récupérer les détails complets de la carte pour avoir le set.name
+      let cardDetails = selectedCard;
+      if (!selectedCard.set?.name) {
+        try {
+          const fullCard = await cardsService.getCardById(selectedCard.id);
+          if (fullCard) {
+            cardDetails = fullCard;
+          }
+        } catch (err) {
+          console.warn('Could not fetch full card details:', err);
+        }
+      }
+
+      // Préparer les URLs d'images avec extension .webp
+      const prepareImageUrl = (url: string | undefined): string | undefined => {
+        if (!url) return undefined;
+        if (url.includes('assets.tcgdex.net') && !url.match(/\.(webp|png|jpg|jpeg)$/i)) {
+          return `${url}/high.webp`;
+        }
+        return url;
+      };
+
       const cardData: AddCardDto = {
-        cardId: selectedCard.id,
-        name: selectedCard.name,
-        setId: selectedCard.set?.id,
-        setName: selectedCard.set?.name,
-        number: selectedCard.localId,
-        rarity: selectedCard.rarity,
-        imageUrl: selectedCard.image || selectedCard.images?.small,
-        imageUrlHiRes: selectedCard.images?.large,
-        types: selectedCard.types,
-        supertype: selectedCard.category,
-        subtypes: selectedCard.stage ? [selectedCard.stage] : undefined,
+        cardId: cardDetails.id,
+        name: cardDetails.name,
+        setId: cardDetails.set?.id,
+        setName: cardDetails.set?.name,
+        number: cardDetails.localId,
+        setCardCount: cardDetails.set?.cardCount?.total || cardDetails.set?.cardCount?.official,
+        rarity: cardDetails.rarity,
+        imageUrl: prepareImageUrl(cardDetails.image || cardDetails.images?.small),
+        imageUrlHiRes: prepareImageUrl(cardDetails.images?.large),
+        types: cardDetails.types,
+        supertype: cardDetails.category,
+        subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
         quantity: data.quantity,
         isGraded: data.isGraded,
         gradeCompany: data.gradeCompany,
-        gradeScore: data.gradeScore, // number
+        gradeScore: data.gradeScore,
         purchasePrice: data.purchasePrice,
         purchaseDate: data.purchaseDate,
         notes: data.notes,
       };
 
       await portfolioService.addCard(cardData);
-      setToast({
-        message: `${selectedCard.name} a été ajouté à votre portfolio ! 🎉`,
-        type: 'success',
-      });
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 1500);
+      // Fermer immédiatement et notifier le succès
+      onSuccess();
+      onClose();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
       setToast({
@@ -201,9 +225,9 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
     }
   };
 
-  // Accessibilité overlay : Enter/Espace
+  // Accessibilité overlay : uniquement Espace (pas Enter pour éviter de fermer pendant la recherche)
   const handleOverlayKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === ' ' && e.target === e.currentTarget) {
       e.preventDefault();
       onClose();
     }
@@ -245,6 +269,12 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
                   placeholder="Tapez au moins 3 caractères..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Empêcher la propagation de Enter pour éviter de fermer le modal
+                    if (e.key === 'Enter') {
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 {loading && <span className={styles.searching}>🔍 Recherche...</span>}
               </form>
@@ -356,13 +386,7 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
                       <label htmlFor="gradeScore" className={styles.label}>
                         Note
                       </label>
-                      <select
-                        id="gradeScore"
-                        className={styles.select}
-                        {...register('gradeScore', {
-                          setValueAs: (v) => (v ? parseFloat(v) : undefined),
-                        })}
-                      >
+                      <select id="gradeScore" className={styles.select} {...register('gradeScore')}>
                         <option value="">Sélectionner une note</option>
                         {availableGrades.map((grade) => (
                           <option key={grade} value={grade}>
@@ -381,7 +405,9 @@ export function AddCardModal({ onClose, onSuccess }: AddCardModalProps) {
                 min="0"
                 step="0.01"
                 placeholder="Optionnel"
-                {...register('purchasePrice', { valueAsNumber: true })}
+                {...register('purchasePrice', {
+                  setValueAs: (v) => (v === '' || v === null ? undefined : parseFloat(v)),
+                })}
               />
 
               <DatePicker

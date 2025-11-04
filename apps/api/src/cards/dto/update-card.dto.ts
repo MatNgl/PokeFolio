@@ -18,12 +18,10 @@ export class UpdateCardDto {
   @IsOptional()
   gradeCompany?: string;
 
-  @ApiProperty({ description: 'Note de grading (1-10)', required: false, minimum: 1, maximum: 10 })
-  @IsNumber()
-  @Min(1)
-  @Max(10)
+  @ApiProperty({ description: 'Note de grading (ex. 10, 9.5, 10+)', required: false })
+  @IsString()
   @IsOptional()
-  gradeScore?: number;
+  gradeScore?: string;
 
   @ApiProperty({ description: "Prix d'achat", required: false })
   @IsNumber()

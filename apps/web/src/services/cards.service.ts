@@ -1,5 +1,4 @@
 import { type Card, type CardSearchResult, type SearchCardsDto } from '@pokefolio/types';
-
 import { api } from './api';
 
 export const cardsService = {

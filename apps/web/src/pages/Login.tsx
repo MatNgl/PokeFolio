@@ -27,7 +27,7 @@ export function Login() {
       setLoading(true);
       setError('');
       await login(data);
-      navigate('/dashboard');
+      navigate('/portfolio');
     } catch (err) {
       setError('Email ou mot de passe incorrect');
       console.error(err);

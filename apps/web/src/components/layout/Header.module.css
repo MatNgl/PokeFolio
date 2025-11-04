@@ -102,12 +102,12 @@
   transform: translateY(-1px);
 }
 
-/* Glider pour 2 options: largeur 50% */
+/* Glider pour 3 options: largeur 33.333% */
 .glider {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 50%;
+  width: 33.3333%;
   border-radius: 1rem;
   z-index: 1;
   transition:
@@ -118,15 +118,24 @@
   box-shadow:
     0 0 18px rgba(160, 216, 255, 0.5),
     0 0 10px rgba(200, 240, 255, 0.4) inset;
-  transform: translateX(-100%); /* aucun onglet actif (en dehors à gauche) */
+  transform: translateX(-100%); /* aucun onglet actif */
 }
 
 /* Position/état du glider selon l'onglet actif */
 .glider[data-active='portfolio'] {
   transform: translateX(0%);
 }
-.glider[data-active='stats'] {
+.glider[data-active='dashboard'] {
   transform: translateX(100%);
+}
+.glider[data-active='decouvrir'] {
+  transform: translateX(200%);
+}
+
+/* Mettre en avant le label de l'onglet sélectionné */
+.glassGroup input:checked + label {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(124, 243, 255, 0.5);
 }
 
 /* ========= Search avec dropdown ========= */
@@ -323,4 +332,3 @@
   font-weight: 700;
   box-shadow: var(--glow);
 }
-

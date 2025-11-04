@@ -195,6 +195,25 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.editBtn {
+  flex: 1;
+  background: rgba(124, 243, 255, 0.1);
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editBtn:hover {
+  background: rgba(124, 243, 255, 0.2);
+  border-color: var(--primary);
+}
+
 .deleteBtn {
   flex: 1;
   background: rgba(248, 113, 113, 0.1);

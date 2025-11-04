@@ -15,7 +15,7 @@ export function Home() {
 
         <div className={styles.actions}>
           {isAuthenticated ? (
-            <Link to="/dashboard">
+            <Link to="/portfolio">
               <Button size="lg">Accéder au Portfolio</Button>
             </Link>
           ) : (

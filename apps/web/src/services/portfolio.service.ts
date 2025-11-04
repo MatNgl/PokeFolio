@@ -1,33 +1,65 @@
-import type { UserCard, AddCardDto, UpdateCardDto, PortfolioStats } from '@pokefolio/types';
+import type { AddCardDto } from '@pokefolio/types';
 import { api } from './api';
 
+export type PortfolioCard = {
+  _id: string;
+  userId: string;
+  cardId: string;
+  name: string;
+  setId?: string;
+  setName?: string;
+  number?: string;
+  rarity?: string;
+  imageUrl?: string;
+  imageUrlHiRes?: string;
+  types?: string[];
+  supertype?: string;
+  subtypes?: string[];
+  quantity: number;
+  isGraded: boolean;
+  gradeCompany?: string;
+  gradeScore?: number;
+  purchasePrice?: number;
+  purchaseDate?: string;
+  currentValue?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export const portfolioService = {
-  async addCard(data: AddCardDto): Promise<UserCard> {
-    const response = await api.post<UserCard>('/portfolio/cards', data);
-    return response.data;
+  async addCard(dto: AddCardDto): Promise<PortfolioCard> {
+    const res = await api.post<PortfolioCard>('/portfolio/cards', dto);
+    return res.data;
   },
 
-  async getCards(): Promise<UserCard[]> {
-    const response = await api.get<UserCard[]>('/portfolio/cards');
-    return response.data;
+  async getCards(): Promise<PortfolioCard[]> {
+    const res = await api.get<PortfolioCard[]>('/portfolio/cards');
+    return res.data;
   },
 
-  async getCard(id: string): Promise<UserCard> {
-    const response = await api.get<UserCard>(`/portfolio/cards/${id}`);
-    return response.data;
+  async getCard(id: string): Promise<PortfolioCard> {
+    const res = await api.get<PortfolioCard>(`/portfolio/cards/${id}`);
+    return res.data;
   },
 
-  async updateCard(id: string, data: UpdateCardDto): Promise<UserCard> {
-    const response = await api.put<UserCard>(`/portfolio/cards/${id}`, data);
-    return response.data;
+  async updateCard(id: string, payload: Partial<PortfolioCard>): Promise<PortfolioCard> {
+    const res = await api.put<PortfolioCard>(`/portfolio/cards/${id}`, payload);
+    return res.data;
   },
 
   async deleteCard(id: string): Promise<void> {
     await api.delete(`/portfolio/cards/${id}`);
   },
 
-  async getStats(): Promise<PortfolioStats> {
-    const response = await api.get<PortfolioStats>('/portfolio/stats');
-    return response.data;
+  async getStats(): Promise<{
+    totalCards: number;
+    distinctCards: number;
+    totalCost: number;
+    totalCurrent: number;
+    profit: number;
+  }> {
+    const res = await api.get('/portfolio/stats');
+    return res.data;
   },
 };
