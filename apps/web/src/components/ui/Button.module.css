@@ -137,93 +137,64 @@
   background: linear-gradient(135deg, #7cf3ff, #a78bfa);
 }
 
-/* ========= Intents (hover color for border + text + icon) ========= */
+/* ========= Intents (directement en couleur avec animation au hover) ========= */
 
 /* success */
 .success .buttonInner {
-  background: transparent;
-}
-.success:hover:not(:disabled) .buttonInner {
-  background: transparent;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
   color: #22c55e;
   border-color: #22c55e;
 }
 .success::before {
-  background: transparent;
-  opacity: 0;
-}
-.success:hover:not(:disabled)::before {
   background: linear-gradient(135deg, rgba(34, 197, 94, 1), rgba(16, 185, 129, 1));
   opacity: 1;
+}
+.success:hover:not(:disabled) .buttonInner {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.3));
 }
 
 /* info */
 .info .buttonInner {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: var(--text);
-}
-.info:hover:not(:disabled) .buttonInner {
-  background: transparent;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(56, 189, 248, 0.2));
   color: #60a5fa;
   border-color: #60a5fa;
 }
 .info::before {
-  background: transparent;
-  opacity: 0;
-}
-.info:hover:not(:disabled)::before {
   background: linear-gradient(135deg, rgba(96, 165, 250, 1), rgba(56, 189, 248, 1));
   opacity: 1;
+}
+.info:hover:not(:disabled) .buttonInner {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(56, 189, 248, 0.3));
 }
 
 /* warning */
 .warning .buttonInner {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: var(--text);
-}
-.warning:hover:not(:disabled) .buttonInner {
-  background: transparent;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
   color: #fbbf24;
   border-color: #fbbf24;
 }
 .warning::before {
-  background: transparent;
-  opacity: 0;
-}
-.warning:hover:not(:disabled)::before {
   background: linear-gradient(135deg, rgba(251, 191, 36, 1), rgba(245, 158, 11, 1));
   opacity: 1;
+}
+.warning:hover:not(:disabled) .buttonInner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3));
 }
 
 /* danger */
 .danger .buttonInner {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: var(--text);
-}
-.danger:hover:not(:disabled) .buttonInner {
-  background: transparent;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
   color: #ef4444;
   border-color: #ef4444;
 }
 .danger::before {
-  background: transparent;
-  opacity: 0;
-}
-.danger:hover:not(:disabled)::before {
   background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1));
   opacity: 1;
 }
-
-/* === Remove “double border”: hide inner stroke when outer glow shows === */
-.success:hover:not(:disabled) .buttonInner,
-.info:hover:not(:disabled) .buttonInner,
-.warning:hover:not(:disabled) .buttonInner,
 .danger:hover:not(:disabled) .buttonInner {
-  border-color: transparent; /* keep only the ::before stroke */
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
 }
+
 
 /* ========= Sizes ========= */
 .sm .buttonInner {

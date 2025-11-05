@@ -38,9 +38,28 @@
   width: fit-content;
 }
 
+/* Allonger les boutons à leur taille finale (comme au hover) */
+.searchForm :global(.buttonInner) {
+  padding: var(--spacing-md) calc(var(--spacing-xl) * 1.5);
+}
+
+/* Supprimer le glow externe pour un style plus propre */
+.searchForm :global(.button::before) {
+  display: none;
+}
+
 .addBtn {
-  width: fit-content; /* au lieu de 100% */
+  width: 100%;
   margin-top: auto;
+}
+
+/* Style des boutons dans les cartes */
+.card :global(.button::before) {
+  display: none;
+}
+
+.card :global(.buttonInner) {
+  padding: var(--spacing-sm) calc(var(--spacing-md) * 1.5);
 }
 
 .loading {

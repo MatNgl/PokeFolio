@@ -18,7 +18,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             <polyline points="1 9 7 14 15 4"></polyline>
           </svg>
         </label>
-        {label && <span className={styles.label}>{label}</span>}
+        {label && (
+        <label htmlFor={checkboxId} className={styles.label}>
+          {label}
+        </label>
+      )}
       </div>
     );
   }
