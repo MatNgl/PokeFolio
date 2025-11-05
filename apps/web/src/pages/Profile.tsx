@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Toast } from '../components/ui/Toast';
 import { userService } from '../services/user.service';
 import styles from './Profile.module.css';
 
@@ -43,7 +44,7 @@ export function Profile() {
     setLoading(true);
     try {
       await userService.updatePseudo({ pseudo });
-      showToast('✅ Pseudo mis à jour avec succès', 'success');
+      showToast('Pseudo mis à jour avec succès', 'success');
     } catch (error) {
       console.error('Error updating pseudo:', error);
       const errorMessage =
@@ -61,12 +62,12 @@ export function Profile() {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      showToast('❌ Les mots de passe ne correspondent pas', 'error');
+      showToast('Les mots de passe ne correspondent pas', 'error');
       return;
     }
 
     if (newPassword.length < 6) {
-      showToast('❌ Le mot de passe doit contenir au moins 6 caractères', 'error');
+      showToast('Le mot de passe doit contenir au moins 6 caractères', 'error');
       return;
     }
 
@@ -76,7 +77,7 @@ export function Profile() {
         currentPassword,
         newPassword,
       });
-      showToast('✅ Mot de passe mis à jour avec succès', 'success');
+      showToast('Mot de passe mis à jour avec succès', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -124,8 +125,6 @@ export function Profile() {
         <h1 className={styles.title}>Mon Profil</h1>
         <p className={styles.email}>{user?.email}</p>
       </div>
-
-      {toast && <div className={`${styles.toast} ${styles[toast.type]}`}>{toast.message}</div>}
 
       <div className={styles.sections}>
         {/* Section Pseudo */}
@@ -242,6 +241,18 @@ export function Profile() {
           )}
         </section>
       </div>
+
+      {/* Toast UI */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={3500}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
