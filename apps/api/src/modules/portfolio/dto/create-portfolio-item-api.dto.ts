@@ -15,11 +15,10 @@ import {
 import { Type } from 'class-transformer';
 import { GradingDto } from '../../../cards/dto/grading.dto';
 import type { CreatePortfolioItemDto, PortfolioVariant, CardLanguage } from '@pokefolio/types';
-import { eurosToCents } from '../utils/price-converter';
 
 /**
  * DTO pour une variante avec prix en EUROS (API input)
- * Sera converti vers PortfolioVariant (prix en cents) avant stockage
+ * Sera converti vers PortfolioVariant (prix en euros) avant stockage
  */
 export class PortfolioVariantApiDto {
   @ApiPropertyOptional({ description: "Prix d'achat en euros", example: 149.9 })
@@ -58,11 +57,11 @@ export class PortfolioVariantApiDto {
   notes?: string;
 
   /**
-   * Convertit ce DTO API (euros) vers PortfolioVariant (cents)
+   * Convertit ce DTO API vers PortfolioVariant
    */
   toPortfolioVariant(): PortfolioVariant {
     return {
-      purchasePriceCents: eurosToCents(this.purchasePrice),
+      purchasePrice: this.purchasePrice,
       purchaseDate: this.purchaseDate,
       booster: this.booster,
       graded: this.graded,
@@ -74,7 +73,7 @@ export class PortfolioVariantApiDto {
 
 /**
  * DTO API pour créer un item portfolio - accepte les prix en EUROS
- * Sera converti vers CreatePortfolioItemDto (prix en cents) avant passage au service
+ * Sera converti vers CreatePortfolioItemDto (prix en euros) avant passage au service
  */
 export class CreatePortfolioItemApiDto {
   @ApiProperty({ description: 'ID de la carte', example: 'sv3-189' })
@@ -152,7 +151,7 @@ export class CreatePortfolioItemApiDto {
   variants?: PortfolioVariantApiDto[];
 
   /**
-   * Convertit ce DTO API (euros) vers CreatePortfolioItemDto (cents)
+   * Convertit ce DTO API vers CreatePortfolioItemDto
    */
   toCreateDto(): CreatePortfolioItemDto {
     // Mode B : variantes
@@ -172,7 +171,7 @@ export class CreatePortfolioItemApiDto {
       booster: this.booster,
       graded: this.graded,
       grading: this.grading,
-      purchasePriceCents: eurosToCents(this.purchasePrice),
+      purchasePrice: this.purchasePrice,
       purchaseDate: this.purchaseDate,
       notes: this.notes,
     };

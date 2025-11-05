@@ -150,7 +150,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
                 grade: data.gradeScore?.toString(),
               }
             : undefined,
-        purchasePriceCents: data.purchasePrice ? Math.round(data.purchasePrice * 100) : undefined,
+        purchasePrice: data.purchasePrice,
         purchaseDate: data.purchaseDate,
         notes: data.notes,
       } as any);

@@ -70,7 +70,7 @@ export class PortfolioService {
         ...base,
         quantity: dto.variants.length, // Toujours déduit de variants.length
         variants: dto.variants.map((v) => ({
-          purchasePriceCents: v.purchasePriceCents, // Déjà en centimes depuis le type
+          purchasePrice: v.purchasePrice, // En euros
           purchaseDate: v.purchaseDate ? new Date(v.purchaseDate) : undefined,
           booster: v.booster,
           graded: v.graded,
@@ -90,7 +90,7 @@ export class PortfolioService {
       ...base,
       quantity: dto.quantity,
       booster: dto.booster,
-      purchasePriceCents: dto.purchasePriceCents, // Déjà en centimes depuis le type
+      purchasePrice: dto.purchasePrice, // En euros
       purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : undefined,
       graded: dto.graded,
       grading: normalizeGrading(dto.grading),
@@ -121,7 +121,7 @@ export class PortfolioService {
     // Passage/maj en Mode B (variants) ?
     if (dto.variants) {
       item.variants = dto.variants.map((v) => ({
-        purchasePriceCents: v.purchasePriceCents,
+        purchasePrice: v.purchasePrice,
         purchaseDate: v.purchaseDate ? new Date(v.purchaseDate) : undefined,
         booster: v.booster,
         graded: v.graded,
@@ -132,7 +132,7 @@ export class PortfolioService {
 
       // On neutralise les champs unitaires (Mode A)
       item.booster = undefined;
-      item.purchasePriceCents = undefined;
+      item.purchasePrice = undefined;
       item.purchaseDate = undefined;
       item.graded = undefined;
       item.grading = undefined;
@@ -141,7 +141,7 @@ export class PortfolioService {
       // Mise à jour Mode A (champs unitaires)
       if (dto.quantity !== undefined) item.quantity = Math.max(1, dto.quantity);
       if (dto.booster !== undefined) item.booster = dto.booster;
-      if (dto.purchasePriceCents !== undefined) item.purchasePriceCents = dto.purchasePriceCents;
+      if (dto.purchasePrice !== undefined) item.purchasePrice = dto.purchasePrice;
       if (dto.purchaseDate !== undefined) {
         item.purchaseDate = dto.purchaseDate ? new Date(dto.purchaseDate) : undefined;
       }
@@ -167,7 +167,7 @@ export class PortfolioService {
 
     let nbCartes = 0;
     let nbCartesDistinctes = 0;
-    let coutTotalAchatCents = 0;
+    let coutTotalAchat = 0;
     let nbSets = 0;
     let nbGraded = 0;
 
@@ -178,13 +178,13 @@ export class PortfolioService {
       nbCartesDistinctes += 1;
 
       if (Array.isArray(it.variants) && it.variants.length > 0) {
-        // Somme des prix d’achat par variante
-        coutTotalAchatCents += it.variants.reduce((acc, v) => acc + (v.purchasePriceCents || 0), 0);
+        // Somme des prix d'achat par variante
+        coutTotalAchat += it.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
         // Nombre de variantes gradées
         nbGraded += it.variants.filter((v) => v.graded).length;
       } else {
-        const unit = it.purchasePriceCents || 0;
-        coutTotalAchatCents += unit * (it.quantity ?? 0);
+        const unit = it.purchasePrice || 0;
+        coutTotalAchat += unit * (it.quantity ?? 0);
         if (it.graded) nbGraded += it.quantity ?? 0;
       }
 
@@ -197,7 +197,7 @@ export class PortfolioService {
     return {
       nbCartes,
       nbCartesDistinctes,
-      coutTotalAchatCents,
+      coutTotalAchat,
       nbSets,
       nbGraded,
     };

@@ -13,7 +13,6 @@ import {
 import { Type } from 'class-transformer';
 import { GradingDto } from '../../../cards/dto/grading.dto';
 import type { UpdatePortfolioItemDto, PortfolioVariant, CardLanguage } from '@pokefolio/types';
-import { eurosToCents } from '../utils/price-converter';
 
 /**
  * DTO pour une variante avec prix en EUROS (API input) - Update
@@ -55,11 +54,11 @@ export class PortfolioVariantUpdateApiDto {
   notes?: string;
 
   /**
-   * Convertit ce DTO API (euros) vers PortfolioVariant (cents)
+   * Convertit ce DTO API vers PortfolioVariant
    */
   toPortfolioVariant(): PortfolioVariant {
     return {
-      purchasePriceCents: eurosToCents(this.purchasePrice),
+      purchasePrice: this.purchasePrice,
       purchaseDate: this.purchaseDate,
       booster: this.booster,
       graded: this.graded,
@@ -131,7 +130,7 @@ export class UpdatePortfolioItemApiDto {
   variants?: PortfolioVariantUpdateApiDto[];
 
   /**
-   * Convertit ce DTO API (euros) vers UpdatePortfolioItemDto (cents)
+   * Convertit ce DTO API vers UpdatePortfolioItemDto
    */
   toUpdateDto(): UpdatePortfolioItemDto {
     const dto: UpdatePortfolioItemDto = {};
@@ -141,7 +140,7 @@ export class UpdatePortfolioItemApiDto {
     if (this.booster !== undefined) dto.booster = this.booster;
     if (this.graded !== undefined) dto.graded = this.graded;
     if (this.grading !== undefined) dto.grading = this.grading;
-    if (this.purchasePrice !== undefined) dto.purchasePriceCents = eurosToCents(this.purchasePrice);
+    if (this.purchasePrice !== undefined) dto.purchasePrice = this.purchasePrice;
     if (this.purchaseDate !== undefined) dto.purchaseDate = this.purchaseDate;
     if (this.notes !== undefined) dto.notes = this.notes;
     if (this.variants !== undefined) {

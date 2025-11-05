@@ -11,7 +11,7 @@ import { HydratedDocument } from 'mongoose';
 @Schema({ _id: false })
 export class PortfolioVariant {
   @Prop({ type: Number, required: false })
-  purchasePriceCents?: number;
+  purchasePrice?: number;
 
   @Prop({ type: Date, required: false })
   purchaseDate?: Date;
@@ -60,7 +60,7 @@ export class PortfolioItem {
   booster?: boolean;
 
   @Prop({ type: Number, required: false })
-  purchasePriceCents?: number;
+  purchasePrice?: number;
 
   @Prop({ type: Date, required: false })
   purchaseDate?: Date;
