@@ -7,6 +7,9 @@ import { Toast } from '../components/ui/Toast';
 import { userService } from '../services/user.service';
 import styles from './Profile.module.css';
 
+// Icônes pro
+import { UserRoundPen, KeyRound, LogOut, Trash2, XCircle, CheckCircle } from 'lucide-react';
+
 export function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +49,7 @@ export function Profile() {
       await userService.updatePseudo({ pseudo });
       showToast('Pseudo mis à jour avec succès', 'success');
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error updating pseudo:', error);
       const errorMessage =
         error && typeof error === 'object' && 'response' in error
@@ -82,6 +86,7 @@ export function Profile() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error updating password:', error);
       const errorMessage =
         error && typeof error === 'object' && 'response' in error
@@ -112,6 +117,7 @@ export function Profile() {
       setShowDeleteConfirm(false);
       setDeleteConfirmText('');
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error clearing portfolio:', error);
       showToast('Erreur lors de la suppression du portfolio', 'error');
     } finally {
@@ -140,7 +146,8 @@ export function Profile() {
               placeholder="Votre pseudo"
               required
             />
-            <Button type="submit" disabled={loading}>
+            <Button variant="warning">
+              <UserRoundPen size={18} aria-hidden />
               Mettre à jour le pseudo
             </Button>
           </form>
@@ -180,7 +187,8 @@ export function Profile() {
               showPasswordToggle
               required
             />
-            <Button type="submit" disabled={loading}>
+            <Button variant="info">
+              <KeyRound size={18} aria-hidden />
               Changer le mot de passe
             </Button>
           </form>
@@ -190,7 +198,8 @@ export function Profile() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Déconnexion</h2>
           <p className={styles.description}>Déconnectez-vous de votre compte PokéFolio</p>
-          <Button onClick={handleLogout} variant="secondary">
+          <Button onClick={handleLogout} variant="action">
+            <LogOut size={18} aria-hidden />
             Se déconnecter
           </Button>
         </section>
@@ -203,7 +212,8 @@ export function Profile() {
           </p>
 
           {!showDeleteConfirm ? (
-            <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">
+            <Button variant="danger">
+              <Trash2 size={18} aria-hidden />
               Vider le portfolio
             </Button>
           ) : (
@@ -225,6 +235,7 @@ export function Profile() {
                   variant="danger"
                   disabled={loading || deleteConfirmText !== 'SUPPRIMER'}
                 >
+                  <CheckCircle size={18} aria-hidden />
                   Confirmer la suppression
                 </Button>
                 <Button
@@ -232,8 +243,9 @@ export function Profile() {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmText('');
                   }}
-                  variant="secondary"
+                  variant="action"
                 >
+                  <XCircle size={18} aria-hidden />
                   Annuler
                 </Button>
               </div>

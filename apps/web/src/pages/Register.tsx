@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { type RegisterDto } from '@pokefolio/types';
+import type { RegisterDto } from '@pokefolio/types';
 
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ui/Card';
@@ -9,6 +9,9 @@ import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { Button } from '../components/ui/Button';
 import styles from './Auth.module.css';
+
+// Icône pro
+import { UserPlus } from 'lucide-react';
 
 type RegisterFormData = RegisterDto; // email, pseudo, password, confirmPassword
 
@@ -45,10 +48,10 @@ export function Register() {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData): Promise<void> => {
+    if (loading) return;
     try {
       setLoading(true);
       setError('');
-      // on envoie bien confirmPassword au backend (aligné avec DTO)
       await registerUser({
         email: data.email.trim(),
         pseudo: data.pseudo.trim(),
@@ -137,7 +140,15 @@ export function Register() {
             </div>
           )}
 
-          <Button type="submit" loading={loading} size="lg" aria-busy={loading}>
+          <Button
+            type="submit"
+            loading={loading}
+            size="lg"
+            variant="success"
+            disabled={loading}
+            aria-busy={loading}
+          >
+            <UserPlus size={18} aria-hidden />
             Créer mon compte
           </Button>
         </form>

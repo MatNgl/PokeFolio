@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Loader } from '../components/ui/Loader';
 import { Toast } from '../components/ui/Toast';
 import styles from './Discover.module.css';
+import { Search, Eraser, PlusCircle } from 'lucide-react';
 
 export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -165,16 +166,21 @@ export default function Discover() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <Button type="submit">Rechercher</Button>
+        <Button type="submit" variant="info" size="md">
+          <Search size={18} aria-hidden />
+          Rechercher
+        </Button>
         {searchQuery && (
           <Button
             type="button"
-            variant="secondary"
+            variant="warning"
+            size="md"
             onClick={() => {
               setSearchQuery('');
               void loadRandomCards();
             }}
           >
+            <Eraser size={18} aria-hidden />
             Effacer
           </Button>
         )}
@@ -231,8 +237,11 @@ export default function Discover() {
                 onClick={() => handleAddCard(card)}
                 className={styles.addBtn}
                 aria-label={`Ajouter ${card.name} au portfolio`}
+                variant="success"
+                size="sm"
               >
-                + Ajouter
+                <PlusCircle size={18} aria-hidden />
+                Ajouter
               </Button>
             </article>
           ))}

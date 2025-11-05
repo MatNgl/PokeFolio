@@ -25,6 +25,9 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+
+  /* ✅ Laisse dépasser l’halo/contour des boutons */
+  overflow: visible;
 }
 
 .section {
@@ -33,6 +36,9 @@
   border-radius: 12px;
   padding: 1.5rem;
   backdrop-filter: blur(10px);
+
+  /* ✅ Empêche tout clipping des arrondis/contours des enfants */
+  overflow: visible;
 }
 
 .dangerZone {
@@ -53,10 +59,27 @@
   margin-bottom: 1rem;
 }
 
+/* ✅ Formulaires : grille simple qui aligne bien inputs + boutons,
+   et évite que le bouton se colle aux bords ou soit rogné */
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: end;
+
+  /* Le bouton d’action peut déborder (bordure/halo) sans être coupé */
+  overflow: visible;
+}
+
+/* ✅ Les boutons gardent leur largeur naturelle et ne s’étirent pas */
+.form :global(button) {
+  width: fit-content;
+  justify-self: start; /* mets 'end' si tu préfères l’aligner à droite */
+}
+
+/* Optionnel : si ton composant Input crée un wrapper div, on le laisse prendre toute la largeur */
+.form > div:first-child {
+  width: 100%;
 }
 
 .confirmBox {
@@ -106,6 +129,9 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+
+  /* Laisse l’animation/contour des boutons s’afficher normalement */
+  overflow: visible;
 }
 
 @media (max-width: 640px) {

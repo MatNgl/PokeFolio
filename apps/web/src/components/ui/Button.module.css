@@ -1,5 +1,6 @@
 .button {
   position: relative;
+  isolation: isolate;
   padding: 0;
   font-weight: 600;
   font-family: var(--font-sans);
@@ -8,58 +9,62 @@
   border: none;
   border-radius: var(--radii-md);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.25s ease-in-out;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
+
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .button:hover:not(:disabled) {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
-
 .button:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
-/* Gradient border effect */
+/* ========= Outer glow (only on hover) ========= */
 .button::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: var(--radii-md);
-  background: linear-gradient(
-    135deg,
-    rgba(124, 243, 255, 0.8),
-    rgba(124, 140, 243, 0.8),
-    rgba(167, 139, 250, 0.8)
-  );
   padding: 1px;
   opacity: 0;
-  transition: opacity 0.5s;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  transition: opacity 0.25s ease;
+  /* stroke outside using masking */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+  pointer-events: none;
+  background: transparent;
 }
 
-.button:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-/* Inner button content */
+/* ========= Inner content ========= */
 .buttonInner {
   position: relative;
-  z-index: 10;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--radii-md);
-  background: var(--glass);
-  backdrop-filter: blur(var(--blur-md));
-  -webkit-backdrop-filter: blur(var(--blur-md));
-  transition: all 0.5s;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+  /* fine white border by default */
+  border: 1px solid #ffffff;
+  color: var(--text);
 }
 
 .button:disabled {
@@ -67,63 +72,201 @@
   cursor: not-allowed;
 }
 
-/* Variants */
+/* Icon alignment */
+.buttonInner svg {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-top: 1px;
+}
+
+/* ========= Variants ========= */
 .primary .buttonInner {
   background: linear-gradient(135deg, var(--primary), var(--violet));
   color: var(--bg);
+  border-color: transparent;
+}
+.primary:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.primary::before {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.9), rgba(167, 139, 250, 0.9));
 }
 
 .secondary .buttonInner {
   background: var(--glass-light);
-  color: var(--text);
+}
+.secondary:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.secondary::before {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.6), rgba(167, 139, 250, 0.6));
 }
 
 .ghost {
   box-shadow: none;
 }
-
 .ghost .buttonInner {
   background: transparent;
-  color: var(--text);
 }
-
 .ghost:hover:not(:disabled) .buttonInner {
   background: var(--glass);
 }
+.ghost:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.ghost::before {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.35), rgba(167, 139, 250, 0.35));
+}
 
+/* neutral */
+.action {
+  box-shadow: none;
+  transform: none;
+}
+.action .buttonInner {
+  background: #0c1220;
+}
+.action:hover:not(:disabled) .buttonInner {
+  background: #0f1528;
+}
+.action:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.action::before {
+  background: linear-gradient(135deg, #7cf3ff, #a78bfa);
+}
+
+/* ========= Intents (hover color for border + text + icon) ========= */
+
+/* success */
+.success .buttonInner {
+  background: transparent;
+}
+.success:hover:not(:disabled) .buttonInner {
+  background: transparent;
+  color: #22c55e;
+  border-color: #22c55e;
+}
+.success::before {
+  background: transparent;
+  opacity: 0;
+}
+.success:hover:not(:disabled)::before {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 1), rgba(16, 185, 129, 1));
+  opacity: 1;
+}
+
+/* info */
+.info .buttonInner {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text);
+}
+.info:hover:not(:disabled) .buttonInner {
+  background: transparent;
+  color: #60a5fa;
+  border-color: #60a5fa;
+}
+.info::before {
+  background: transparent;
+  opacity: 0;
+}
+.info:hover:not(:disabled)::before {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 1), rgba(56, 189, 248, 1));
+  opacity: 1;
+}
+
+/* warning */
+.warning .buttonInner {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text);
+}
+.warning:hover:not(:disabled) .buttonInner {
+  background: transparent;
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+.warning::before {
+  background: transparent;
+  opacity: 0;
+}
+.warning:hover:not(:disabled)::before {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 1), rgba(245, 158, 11, 1));
+  opacity: 1;
+}
+
+/* danger */
 .danger .buttonInner {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text);
 }
-
-.danger::before {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(220, 38, 38, 0.8));
-}
-
 .danger:hover:not(:disabled) .buttonInner {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  background: transparent;
+  color: #ef4444;
+  border-color: #ef4444;
+}
+.danger::before {
+  background: transparent;
+  opacity: 0;
+}
+.danger:hover:not(:disabled)::before {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1));
+  opacity: 1;
 }
 
-/* Sizes */
+/* === Remove “double border”: hide inner stroke when outer glow shows === */
+.success:hover:not(:disabled) .buttonInner,
+.info:hover:not(:disabled) .buttonInner,
+.warning:hover:not(:disabled) .buttonInner,
+.danger:hover:not(:disabled) .buttonInner {
+  border-color: transparent; /* keep only the ::before stroke */
+}
+
+/* ========= Sizes ========= */
 .sm .buttonInner {
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: 0.875rem;
 }
-
 .md .buttonInner {
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: 1rem;
 }
-
 .lg .buttonInner {
   padding: var(--spacing-lg) var(--spacing-2xl);
   font-size: 1.125rem;
 }
 
-/* Loader wrapper */
+/* Loader */
 .loaderWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 24px;
+}
+
+/* ========= Form alignment (search bar) ========= */
+.searchForm {
+  display: flex;
+  align-items: stretch; /* ✅ Les éléments s’alignent à la même hauteur */
+  gap: 0; /* ✅ pas d’espace entre input et bouton */
+  margin-bottom: 32px;
+}
+
+/* L’input prend toute la largeur */
+.searchForm > :global(div:first-child) {
+  flex: 1;
+}
+
+/* ✅ Le bouton colle à droite, même hauteur que l’input */
+.searchForm :global(button) {
+  border-radius: 0 var(--radii-md) var(--radii-md) 0; /* angle droit à gauche, arrondi à droite */
+  height: auto; /* s’étire automatiquement */
+  padding: 0 1.5rem;
+}
+
+.searchForm :global(input) {
+  border-radius: var(--radii-md) 0 0 var(--radii-md);
 }

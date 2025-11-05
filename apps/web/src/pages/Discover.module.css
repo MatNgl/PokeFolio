@@ -26,10 +26,21 @@
   gap: 12px;
   margin-bottom: 32px;
   align-items: flex-end;
+  overflow: visible;
 }
 
 .searchForm > div:first-child {
   flex: 1;
+}
+
+/* Boutons compacts dans la barre de recherche */
+.searchForm :global(button) {
+  width: fit-content;
+}
+
+.addBtn {
+  width: fit-content; /* au lieu de 100% */
+  margin-top: auto;
 }
 
 .loading {

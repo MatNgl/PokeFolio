@@ -1,11 +1,18 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
-
 import { Loader } from './Loader';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'ghost'
+    | 'danger'
+    | 'action'
+    | 'success'
+    | 'info'
+    | 'warning';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 }

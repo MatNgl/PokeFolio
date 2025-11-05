@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { type LoginDto } from '@pokefolio/types';
+import type { LoginDto } from '@pokefolio/types';
 
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ui/Card';
@@ -10,6 +10,9 @@ import { PasswordInput } from '../components/ui/PasswordInput';
 import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import styles from './Auth.module.css';
+
+// Icône pro
+import { LogIn } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ export function Login() {
   } = useForm<LoginDto>();
 
   const onSubmit = async (data: LoginDto) => {
+    if (loading) return; // évite double submit
     try {
       setLoading(true);
       setError('');
@@ -45,7 +49,7 @@ export function Login() {
           <p className={styles.subtitle}>Bienvenue sur PokéFolio</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
           <Input
             label="Email"
             type="email"
@@ -69,11 +73,23 @@ export function Login() {
             })}
           />
 
-          <Checkbox label="Rester connecté (30 jours)" {...register('rememberMe')} />
+          <Checkbox label="Rester connecté" {...register('rememberMe')} />
 
-          {error && <div className={styles.error}>{error}</div>}
+          {error && (
+            <div className={styles.error} role="alert">
+              {error}
+            </div>
+          )}
 
-          <Button type="submit" loading={loading} size="lg">
+          <Button
+            type="submit"
+            loading={loading}
+            size="lg"
+            variant="info" // ✅ halo/teinte bleue au hover
+            disabled={loading}
+            aria-busy={loading}
+          >
+            <LogIn size={18} aria-hidden />
             Se connecter
           </Button>
         </form>
