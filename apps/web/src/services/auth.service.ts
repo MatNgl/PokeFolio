@@ -26,7 +26,7 @@ export const authService = {
   },
 
   async getMe(): Promise<AuthUser> {
-    const response = await api.get<AuthUser>('/auth/me', { withCredentials: true });
+    const response = await api.get<AuthUser>('/auth/me');
     return response.data;
   },
   getAccessToken(): string | null {

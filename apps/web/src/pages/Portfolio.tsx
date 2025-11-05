@@ -167,6 +167,7 @@ function toUserCardView(entry: PortfolioCard): UserCardView {
     purchaseDate: entry.purchaseDate,
     currentValue: entry.currentValue,
     notes: entry.notes,
+    variants: entry.variants, // Copier les variantes
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
   } as UserCardView;

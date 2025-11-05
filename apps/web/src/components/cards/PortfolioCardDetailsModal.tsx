@@ -26,45 +26,9 @@ type Props = {
   onDelete: (entry: PortfolioCard) => void;
 };
 
-type GroupedVariant = {
-  variant: PortfolioVariant;
-  count: number;
-};
-
 function euro(n?: number | null) {
   if (typeof n !== 'number' || Number.isNaN(n)) return '—';
   return `${n.toFixed(2)} €`;
-}
-
-/**
- * Groupe les variantes identiques ensemble
- * Deux variantes sont identiques si elles ont les mêmes propriétés
- */
-function groupVariants(variants: PortfolioVariant[]): GroupedVariant[] {
-  const grouped: GroupedVariant[] = [];
-
-  for (const variant of variants) {
-    // Chercher si une variante identique existe déjà
-    const existing = grouped.find((g) => {
-      const v = g.variant;
-      return (
-        v.purchasePrice === variant.purchasePrice &&
-        v.purchaseDate === variant.purchaseDate &&
-        v.isGraded === variant.isGraded &&
-        v.gradeCompany === variant.gradeCompany &&
-        v.gradeScore === variant.gradeScore &&
-        v.notes === variant.notes
-      );
-    });
-
-    if (existing) {
-      existing.count += 1;
-    } else {
-      grouped.push({ variant, count: 1 });
-    }
-  }
-
-  return grouped;
 }
 
 function withHiRes(url?: string | null): string | undefined {
@@ -79,6 +43,14 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
   const [card, setCard] = useState<Card | null>(null);
   const [loading, setLoading] = useState(true);
   const dialogRef = useRef<HTMLElement>(null);
+
+  // Bloquer le scroll du body quand le modal est ouvert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   // Focus auto
   useEffect(() => {
@@ -154,13 +126,8 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
     total = unit * qty;
   }
 
-  // Overlay: close on click backdrop
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick} aria-hidden="true">
+    <div className={styles.overlay}>
       <section
         ref={dialogRef}
         className={styles.modal}
@@ -195,131 +162,19 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
             </div>
 
             <div className={styles.right}>
-              {/* --- Bloc Résumé (si variantes, sinon header simple) --- */}
-              {hasVariants ? (
-                <section className={styles.summaryBlock}>
-                  <h4 className={styles.blockTitle}>Résumé</h4>
-                  <div className={styles.summaryGrid}>
-                    <div className={styles.summaryItem}>
-                      <span className={styles.label}>Carte</span>
-                      <span className={styles.value}>{title}</span>
-                    </div>
-                    <div className={styles.summaryItem}>
-                      <span className={styles.label}>Série</span>
-                      <span className={styles.value}>
-                        {setLabel} · #{number}
-                      </span>
-                    </div>
-                    <div className={styles.summaryItem}>
-                      <span className={styles.label}>Nombre de cartes</span>
-                      <span className={styles.value}>{qty}</span>
-                    </div>
-                    <div className={styles.summaryItem}>
-                      <span className={styles.label}>Prix total</span>
-                      <span className={styles.value}>{euro(total ?? undefined)}</span>
-                    </div>
-                    {rarity && (
-                      <div className={styles.summaryItem}>
-                        <span className={styles.label}>Rareté</span>
-                        <span className={styles.value}>{rarity}</span>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              ) : (
-                <>
-                  <h3 className={styles.name}>{title}</h3>
-                  <div className={styles.tags}>
-                    <span className={styles.tag}>{setLabel}</span>
-                    <span className={styles.tag}>#{number}</span>
-                    {rarity && <span className={styles.tag}>{rarity}</span>}
-                  </div>
-                </>
-              )}
+              {/* --- En-tête : nom et série --- */}
+              <h3 className={styles.name}>{title}</h3>
+              <div className={styles.tags}>
+                <span className={styles.tag}>{setLabel}</span>
+                <span className={styles.tag}>#{number}</span>
+                {rarity && <span className={styles.tag}>{rarity}</span>}
+              </div>
 
-              {/* --- Variantes détaillées --- */}
-              {hasVariants && variants ? (
+              {/* --- Carte unique (quantité = 1) --- */}
+              {qty === 1 && !hasVariants ? (
                 <section className={styles.block}>
-                  <h4 className={styles.blockTitle}>Variantes de la carte</h4>
-                  {groupVariants(variants).map((group: GroupedVariant, i: number) => {
-                    const v = group.variant;
-                    const count = group.count;
-                    return (
-                      <div key={i} className={styles.variantCard}>
-                        <div className={styles.variantHeader}>
-                          <span className={styles.variantTitle}>
-                            {count > 1 ? `${count} cartes identiques` : `Carte #${i + 1}`}
-                          </span>
-                        </div>
-                        <div className={styles.grid}>
-                          {v.purchasePrice !== undefined && (
-                            <div className={styles.item}>
-                              <span className={styles.label}>Prix d&apos;achat unitaire</span>
-                              <span className={styles.value}>{euro(v.purchasePrice)}</span>
-                            </div>
-                          )}
-                          {count > 1 && v.purchasePrice !== undefined && (
-                            <div className={styles.item}>
-                              <span className={styles.label}>Prix total (×{count})</span>
-                              <span className={styles.value}>{euro(v.purchasePrice * count)}</span>
-                            </div>
-                          )}
-                          {v.purchaseDate && (
-                            <div className={styles.item}>
-                              <span className={styles.label}>Date d&apos;achat</span>
-                              <span className={styles.value}>
-                                {new Date(v.purchaseDate).toLocaleDateString()}
-                              </span>
-                            </div>
-                          )}
-                          {v.isGraded && (
-                            <>
-                              <div className={styles.item}>
-                                <span className={styles.label}>Gradée</span>
-                                <span className={styles.value}>Oui</span>
-                              </div>
-                              {v.gradeCompany && (
-                                <div className={styles.item}>
-                                  <span className={styles.label}>Société</span>
-                                  <span className={styles.value}>{v.gradeCompany}</span>
-                                </div>
-                              )}
-                              {v.gradeScore !== undefined && (
-                                <div className={styles.item}>
-                                  <span className={styles.label}>Note</span>
-                                  <span className={styles.value}>{v.gradeScore}</span>
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {v.notes && (
-                            <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
-                              <span className={styles.label}>Notes</span>
-                              <p className={styles.noteText}>{v.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </section>
-              ) : (
-                /* --- Bloc Portfolio (mode simple) --- */
-                <section className={styles.block}>
-                  <h4 className={styles.blockTitle}>Dans votre portfolio</h4>
+                  <h4 className={styles.blockTitle}>Informations de la carte</h4>
                   <div className={styles.grid}>
-                    <div className={styles.item}>
-                      <span className={styles.label}>Quantité</span>
-                      <span className={styles.value}>{qty}</span>
-                    </div>
-                    <div className={styles.item}>
-                      <span className={styles.label}>Prix d&apos;achat (unitaire)</span>
-                      <span className={styles.value}>{euro(unit)}</span>
-                    </div>
-                    <div className={styles.item}>
-                      <span className={styles.label}>Total dépensé</span>
-                      <span className={styles.value}>{euro(total ?? undefined)}</span>
-                    </div>
                     {entry.purchaseDate && (
                       <div className={styles.item}>
                         <span className={styles.label}>Date d&apos;achat</span>
@@ -328,15 +183,17 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
                         </span>
                       </div>
                     )}
+                    {unit !== null && (
+                      <div className={styles.item}>
+                        <span className={styles.label}>Prix d&apos;achat</span>
+                        <span className={styles.value}>{euro(unit)}</span>
+                      </div>
+                    )}
                     {entry.isGraded && (
                       <>
-                        <div className={styles.item}>
-                          <span className={styles.label}>Gradée</span>
-                          <span className={styles.value}>Oui</span>
-                        </div>
                         {entry.gradeCompany && (
                           <div className={styles.item}>
-                            <span className={styles.label}>Société</span>
+                            <span className={styles.label}>Société de gradation</span>
                             <span className={styles.value}>{entry.gradeCompany}</span>
                           </div>
                         )}
@@ -348,21 +205,127 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
                         )}
                       </>
                     )}
-                    {entry.currentValue !== undefined && (
-                      <div className={styles.item}>
-                        <span className={styles.label}>Valeur estimée</span>
-                        <span className={styles.value}>{euro(entry.currentValue)}</span>
+                    {entry.notes && (
+                      <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
+                        <span className={styles.label}>Notes</span>
+                        <p className={styles.noteText}>{entry.notes}</p>
                       </div>
                     )}
                   </div>
-
-                  {entry.notes && (
-                    <div className={styles.notes}>
-                      <span className={styles.label}>Notes</span>
-                      <p className={styles.noteText}>{entry.notes}</p>
-                    </div>
-                  )}
                 </section>
+              ) : (
+                /* --- Cartes multiples (quantité >= 2) --- */
+                <>
+                  {/* Box résumé en haut */}
+                  <section className={styles.summaryBlock}>
+                    <h4 className={styles.blockTitle}>Résumé</h4>
+                    <div className={styles.summaryGrid}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.label}>Nombre de cartes</span>
+                        <span className={styles.value}>{qty}</span>
+                      </div>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.label}>Prix total d&apos;achat</span>
+                        <span className={styles.value}>{euro(total ?? undefined)}</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Variantes différentes */}
+                  {hasVariants && variants ? (
+                    <section className={styles.block}>
+                      <h4 className={styles.blockTitle}>Détails des variantes</h4>
+                      {variants.map((v: PortfolioVariant, i: number) => (
+                        <div key={i} className={styles.variantCard}>
+                          <div className={styles.variantHeader}>
+                            <span className={styles.variantTitle}>Variante #{i + 1}</span>
+                          </div>
+                          <div className={styles.grid}>
+                            {v.purchaseDate && (
+                              <div className={styles.item}>
+                                <span className={styles.label}>Date d&apos;achat</span>
+                                <span className={styles.value}>
+                                  {new Date(v.purchaseDate).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                            {v.purchasePrice !== undefined && (
+                              <div className={styles.item}>
+                                <span className={styles.label}>Prix d&apos;achat</span>
+                                <span className={styles.value}>{euro(v.purchasePrice)}</span>
+                              </div>
+                            )}
+                            {v.isGraded && (
+                              <>
+                                {v.gradeCompany && (
+                                  <div className={styles.item}>
+                                    <span className={styles.label}>Société de gradation</span>
+                                    <span className={styles.value}>{v.gradeCompany}</span>
+                                  </div>
+                                )}
+                                {v.gradeScore !== undefined && (
+                                  <div className={styles.item}>
+                                    <span className={styles.label}>Note</span>
+                                    <span className={styles.value}>{v.gradeScore}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {v.notes && (
+                              <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
+                                <span className={styles.label}>Notes</span>
+                                <p className={styles.noteText}>{v.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </section>
+                  ) : (
+                    /* Mode simple sans variantes mais quantité > 1 */
+                    <section className={styles.block}>
+                      <h4 className={styles.blockTitle}>Informations</h4>
+                      <div className={styles.grid}>
+                        {unit !== null && (
+                          <div className={styles.item}>
+                            <span className={styles.label}>Prix unitaire</span>
+                            <span className={styles.value}>{euro(unit)}</span>
+                          </div>
+                        )}
+                        {entry.purchaseDate && (
+                          <div className={styles.item}>
+                            <span className={styles.label}>Date d&apos;achat</span>
+                            <span className={styles.value}>
+                              {new Date(entry.purchaseDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                        {entry.isGraded && (
+                          <>
+                            {entry.gradeCompany && (
+                              <div className={styles.item}>
+                                <span className={styles.label}>Société de gradation</span>
+                                <span className={styles.value}>{entry.gradeCompany}</span>
+                              </div>
+                            )}
+                            {typeof entry.gradeScore !== 'undefined' && (
+                              <div className={styles.item}>
+                                <span className={styles.label}>Note</span>
+                                <span className={styles.value}>{entry.gradeScore}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {entry.notes && (
+                          <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
+                            <span className={styles.label}>Notes</span>
+                            <p className={styles.noteText}>{entry.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  )}
+                </>
               )}
 
               {/* --- Actions --- */}

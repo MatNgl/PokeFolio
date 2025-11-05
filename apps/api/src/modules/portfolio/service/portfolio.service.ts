@@ -9,6 +9,16 @@ import type { CreatePortfolioItemDto, UpdatePortfolioItemDto } from '@pokefolio/
 // Représentation stockée en DB pour la gradation (uniforme)
 type StoredGrading = { company?: string; grade?: string; certificationNumber?: string };
 
+// Type pour les variantes stockées en DB
+type StoredVariant = {
+  purchasePrice?: number;
+  purchaseDate?: Date;
+  booster?: boolean;
+  graded?: boolean;
+  grading?: StoredGrading;
+  notes?: string;
+};
+
 // Type pour cardSnapshot stocké en DB
 interface CardSnapshot {
   name?: string;
@@ -133,6 +143,17 @@ export class PortfolioService {
       // Retourner avec métadonnées aplaties
       const obj = item.toObject();
       const snapshot = cardSnapshot as CardSnapshot;
+
+      // Mapper les variantes vers le format frontend
+      const mappedVariants = obj.variants?.map((v: StoredVariant) => ({
+        purchasePrice: v.purchasePrice,
+        purchaseDate: v.purchaseDate,
+        isGraded: v.graded,
+        gradeCompany: v.grading?.company,
+        gradeScore: v.grading?.grade,
+        notes: v.notes,
+      }));
+
       return {
         ...obj,
         name: snapshot.name,
@@ -146,6 +167,7 @@ export class PortfolioService {
         types: snapshot.types,
         supertype: snapshot.supertype,
         subtypes: snapshot.subtypes,
+        variants: mappedVariants,
       };
     }
 
@@ -194,6 +216,17 @@ export class PortfolioService {
     // Aplatir les données de cardSnapshot pour le frontend
     return items.map((item) => {
       const snapshot = item.cardSnapshot as CardSnapshot;
+
+      // Mapper les variantes vers le format frontend
+      const mappedVariants = item.variants?.map((v) => ({
+        purchasePrice: v.purchasePrice,
+        purchaseDate: v.purchaseDate,
+        isGraded: v.graded,
+        gradeCompany: v.grading?.company,
+        gradeScore: v.grading?.grade,
+        notes: v.notes,
+      }));
+
       return {
         ...item,
         // Ajouter les métadonnées au niveau racine
@@ -216,7 +249,7 @@ export class PortfolioService {
         purchasePrice: item.purchasePrice,
         purchaseDate: item.purchaseDate,
         quantity: item.quantity,
-        variants: item.variants,
+        variants: mappedVariants,
         notes: item.notes,
       };
     });
@@ -225,6 +258,16 @@ export class PortfolioService {
   async findOne(ownerId: string, id: string): Promise<Record<string, unknown>> {
     const item = await this.model.findOne({ ownerId, _id: id }).lean();
     if (!item) throw new NotFoundException('Item not found');
+
+    // Mapper les variantes vers le format frontend
+    const mappedVariants = item.variants?.map((v) => ({
+      purchasePrice: v.purchasePrice,
+      purchaseDate: v.purchaseDate,
+      isGraded: v.graded,
+      gradeCompany: v.grading?.company,
+      gradeScore: v.grading?.grade,
+      notes: v.notes,
+    }));
 
     // Aplatir les données de cardSnapshot pour le frontend
     const snapshot = item.cardSnapshot as CardSnapshot;
@@ -244,6 +287,7 @@ export class PortfolioService {
       isGraded: item.graded,
       gradeCompany: item.grading?.company,
       gradeScore: item.grading?.grade,
+      variants: mappedVariants,
     };
   }
 
@@ -291,6 +335,17 @@ export class PortfolioService {
     // Retourner avec métadonnées aplaties
     const obj = item.toObject();
     const snapshot = obj.cardSnapshot as CardSnapshot;
+
+    // Mapper les variantes vers le format frontend
+    const mappedVariants = obj.variants?.map((v: StoredVariant) => ({
+      purchasePrice: v.purchasePrice,
+      purchaseDate: v.purchaseDate,
+      isGraded: v.graded,
+      gradeCompany: v.grading?.company,
+      gradeScore: v.grading?.grade,
+      notes: v.notes,
+    }));
+
     return {
       ...obj,
       name: snapshot?.name,
@@ -304,6 +359,7 @@ export class PortfolioService {
       types: snapshot?.types,
       supertype: snapshot?.supertype,
       subtypes: snapshot?.subtypes,
+      variants: mappedVariants,
     };
   }
 
