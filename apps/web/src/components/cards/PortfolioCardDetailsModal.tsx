@@ -26,9 +26,45 @@ type Props = {
   onDelete: (entry: PortfolioCard) => void;
 };
 
+type GroupedVariant = {
+  variant: PortfolioVariant;
+  count: number;
+};
+
 function euro(n?: number | null) {
   if (typeof n !== 'number' || Number.isNaN(n)) return '—';
   return `${n.toFixed(2)} €`;
+}
+
+/**
+ * Groupe les variantes identiques ensemble
+ * Deux variantes sont identiques si elles ont les mêmes propriétés
+ */
+function groupVariants(variants: PortfolioVariant[]): GroupedVariant[] {
+  const grouped: GroupedVariant[] = [];
+
+  for (const variant of variants) {
+    // Chercher si une variante identique existe déjà
+    const existing = grouped.find((g) => {
+      const v = g.variant;
+      return (
+        v.purchasePrice === variant.purchasePrice &&
+        v.purchaseDate === variant.purchaseDate &&
+        v.isGraded === variant.isGraded &&
+        v.gradeCompany === variant.gradeCompany &&
+        v.gradeScore === variant.gradeScore &&
+        v.notes === variant.notes
+      );
+    });
+
+    if (existing) {
+      existing.count += 1;
+    } else {
+      grouped.push({ variant, count: 1 });
+    }
+  }
+
+  return grouped;
 }
 
 function withHiRes(url?: string | null): string | undefined {
@@ -188,55 +224,67 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
               {hasVariants && variants ? (
                 <section className={styles.block}>
                   <h4 className={styles.blockTitle}>Variantes de la carte</h4>
-                  {variants.map((v: PortfolioVariant, i: number) => (
-                    <div key={i} className={styles.variantCard}>
-                      <div className={styles.variantHeader}>
-                        <span className={styles.variantTitle}>Carte #{i + 1}</span>
-                      </div>
-                      <div className={styles.grid}>
-                        {v.purchasePrice !== undefined && (
-                          <div className={styles.item}>
-                            <span className={styles.label}>Prix d&apos;achat</span>
-                            <span className={styles.value}>{euro(v.purchasePrice)}</span>
-                          </div>
-                        )}
-                        {v.purchaseDate && (
-                          <div className={styles.item}>
-                            <span className={styles.label}>Date d&apos;achat</span>
-                            <span className={styles.value}>
-                              {new Date(v.purchaseDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                        {v.isGraded && (
-                          <>
+                  {groupVariants(variants).map((group: GroupedVariant, i: number) => {
+                    const v = group.variant;
+                    const count = group.count;
+                    return (
+                      <div key={i} className={styles.variantCard}>
+                        <div className={styles.variantHeader}>
+                          <span className={styles.variantTitle}>
+                            {count > 1 ? `${count} cartes identiques` : `Carte #${i + 1}`}
+                          </span>
+                        </div>
+                        <div className={styles.grid}>
+                          {v.purchasePrice !== undefined && (
                             <div className={styles.item}>
-                              <span className={styles.label}>Gradée</span>
-                              <span className={styles.value}>Oui</span>
+                              <span className={styles.label}>Prix d&apos;achat unitaire</span>
+                              <span className={styles.value}>{euro(v.purchasePrice)}</span>
                             </div>
-                            {v.gradeCompany && (
+                          )}
+                          {count > 1 && v.purchasePrice !== undefined && (
+                            <div className={styles.item}>
+                              <span className={styles.label}>Prix total (×{count})</span>
+                              <span className={styles.value}>{euro(v.purchasePrice * count)}</span>
+                            </div>
+                          )}
+                          {v.purchaseDate && (
+                            <div className={styles.item}>
+                              <span className={styles.label}>Date d&apos;achat</span>
+                              <span className={styles.value}>
+                                {new Date(v.purchaseDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                          {v.isGraded && (
+                            <>
                               <div className={styles.item}>
-                                <span className={styles.label}>Société</span>
-                                <span className={styles.value}>{v.gradeCompany}</span>
+                                <span className={styles.label}>Gradée</span>
+                                <span className={styles.value}>Oui</span>
                               </div>
-                            )}
-                            {v.gradeScore !== undefined && (
-                              <div className={styles.item}>
-                                <span className={styles.label}>Note</span>
-                                <span className={styles.value}>{v.gradeScore}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {v.notes && (
-                          <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
-                            <span className={styles.label}>Notes</span>
-                            <p className={styles.noteText}>{v.notes}</p>
-                          </div>
-                        )}
+                              {v.gradeCompany && (
+                                <div className={styles.item}>
+                                  <span className={styles.label}>Société</span>
+                                  <span className={styles.value}>{v.gradeCompany}</span>
+                                </div>
+                              )}
+                              {v.gradeScore !== undefined && (
+                                <div className={styles.item}>
+                                  <span className={styles.label}>Note</span>
+                                  <span className={styles.value}>{v.gradeScore}</span>
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {v.notes && (
+                            <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
+                              <span className={styles.label}>Notes</span>
+                              <p className={styles.noteText}>{v.notes}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </section>
               ) : (
                 /* --- Bloc Portfolio (mode simple) --- */

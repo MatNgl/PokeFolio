@@ -97,7 +97,7 @@ export interface UpdatePortfolioItemDto {
   variants?: PortfolioVariant[]; // si défini, quantity peut être recalculé
 }
 
-export type PortfolioViewMode = 'grid' | 'compact';
+export type PortfolioViewMode = 'grid' | 'compact' | 'detailed';
 
 export interface PortfolioFilters {
   language?: CardLanguage;

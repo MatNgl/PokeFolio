@@ -241,3 +241,236 @@
   background: rgba(248, 113, 113, 0.2);
   border-color: #f87171;
 }
+
+/* Header actions */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* View selector */
+.viewSelector {
+  display: flex;
+  gap: 8px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 4px;
+  backdrop-filter: blur(var(--blur));
+}
+
+.viewBtn,
+.viewBtnActive {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radii-sm);
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.viewBtn:hover {
+  background: rgba(124, 243, 255, 0.1);
+  color: var(--primary);
+}
+
+.viewBtnActive {
+  background: var(--primary);
+  color: #000;
+}
+
+/* Vue Compact */
+.compact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.compactCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 12px;
+  backdrop-filter: blur(var(--blur));
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.compactCard:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(124, 243, 255, 0.15);
+  border-color: var(--primary);
+}
+
+.compactImage {
+  width: 60px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: var(--radii-sm);
+  flex-shrink: 0;
+}
+
+.compactInfo {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  align-items: center;
+}
+
+.compactName {
+  flex: 2;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.compactNumber {
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.compactPrice {
+  flex: 1;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.compactDate {
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.compactActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Vue Détaillée */
+.detailed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detailedCard {
+  display: flex;
+  gap: 24px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 20px;
+  backdrop-filter: blur(var(--blur));
+  transition: all 0.3s ease;
+}
+
+.detailedCard:hover {
+  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
+  border-color: var(--primary);
+}
+
+.detailedImageWrap {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.detailedImage {
+  width: 200px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: var(--radii);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  display: block;
+}
+
+.detailedImageWrap:hover .detailedImage {
+  transform: scale(1.05);
+}
+
+.detailedInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detailedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detailedName {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.detailedActions {
+  display: flex;
+  gap: 8px;
+}
+
+.detailedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detailedItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailedLabel {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.detailedValue {
+  font-size: 16px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.detailedNotes {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compactInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .detailedCard {
+    flex-direction: column;
+  }
+
+  .detailedImage {
+    width: 100%;
+    height: auto;
+  }
+}
