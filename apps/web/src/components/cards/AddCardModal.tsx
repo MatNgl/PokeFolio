@@ -216,6 +216,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       interface PortfolioApiPayload {
         // Métadonnées de la carte (obligatoires)
         cardId: string;
+        language: string;
         name: string;
         setId?: string;
         setName?: string;
@@ -242,6 +243,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       const portfolioData: PortfolioApiPayload = {
         // Métadonnées de la carte
         cardId: cardDetails.id,
+        language: 'fr', // Langue par défaut (requis par le backend)
         name: cardDetails.name,
         setId: cardDetails.set?.id,
         setName: cardDetails.set?.name,
