@@ -214,22 +214,12 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       // Construire les données pour l'API portfolio
       // Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
       interface PortfolioApiPayload {
-        // Métadonnées de la carte (obligatoires)
+        // Champs obligatoires
         cardId: string;
         language: string;
-        name: string;
-        setId?: string;
-        setName?: string;
-        number?: string;
-        setCardCount?: number;
-        rarity?: string;
-        imageUrl?: string;
-        imageUrlHiRes?: string;
-        types?: string[];
-        supertype?: string;
-        subtypes?: string[];
-        // Données utilisateur
-        quantity: number;
+        // Champs optionnels (données utilisateur)
+        quantity?: number;
+        booster?: boolean;
         graded?: boolean;
         grading?: {
           company?: string;
@@ -241,21 +231,10 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       }
 
       const portfolioData: PortfolioApiPayload = {
-        // Métadonnées de la carte
+        // Champs obligatoires
         cardId: cardDetails.id,
         language: 'fr', // Langue par défaut (requis par le backend)
-        name: cardDetails.name,
-        setId: cardDetails.set?.id,
-        setName: cardDetails.set?.name,
-        number: cardDetails.localId,
-        setCardCount: cardDetails.set?.cardCount?.total || cardDetails.set?.cardCount?.official,
-        rarity: cardDetails.rarity,
-        imageUrl: cardDetails.image || cardDetails.images?.small,
-        imageUrlHiRes: cardDetails.images?.large,
-        types: cardDetails.types,
-        supertype: cardDetails.category,
-        subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
-        // Données utilisateur
+        // Quantité
         quantity: data.quantity || 1,
       };
 
