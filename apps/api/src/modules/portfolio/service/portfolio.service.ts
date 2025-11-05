@@ -202,4 +202,12 @@ export class PortfolioService {
       nbGraded,
     };
   }
+
+  /**
+   * Supprime toutes les cartes du portfolio d'un utilisateur
+   */
+  async clearPortfolio(ownerId: string): Promise<{ deletedCount: number }> {
+    const result = await this.model.deleteMany({ ownerId }).exec();
+    return { deletedCount: result.deletedCount || 0 };
+  }
 }

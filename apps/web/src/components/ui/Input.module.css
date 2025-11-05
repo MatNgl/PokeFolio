@@ -12,6 +12,11 @@
   margin-left: var(--spacing-xs);
 }
 
+.inputContainer {
+  position: relative;
+  width: 100%;
+}
+
 .input {
   width: 100%;
   padding: var(--spacing-md);
@@ -49,4 +54,31 @@
   font-size: 0.75rem;
   color: var(--error);
   margin-left: var(--spacing-xs);
+}
+
+.toggleButton {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  border-radius: 4px;
+}
+
+.toggleButton:hover {
+  color: var(--primary);
+  background: rgba(124, 243, 255, 0.1);
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

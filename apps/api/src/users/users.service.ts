@@ -34,6 +34,18 @@ export class UsersService {
     });
   }
 
+  async updatePseudo(userId: string, newPseudo: string): Promise<UserDoc | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { pseudo: newPseudo.trim() }, { new: true })
+      .exec();
+  }
+
+  async updatePassword(userId: string, newPasswordHash: string): Promise<UserDoc | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { passwordHash: newPasswordHash }, { new: true })
+      .exec();
+  }
+
   toUserResponse(user: UserDoc): AuthUser {
     return {
       id: user.id,

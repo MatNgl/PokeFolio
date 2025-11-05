@@ -4,7 +4,9 @@
       "Bash(cmd /c \"mkdir public 2>nul & copy ..\\..\\assets\\logo-pokefolio.png public\\logo-pokefolio.png & echo OK\")",
       "Bash(cmd /c \"mkdir c:\\Users\\Matthéo\\Documents\\EFREI\\M2\\PokeFolio\\apps\\web\\src\\assets 2>nul & copy c:\\Users\\Matthéo\\Documents\\EFREI\\M2\\PokeFolio\\apps\\web\\assets\\logo-pokefolio.png c:\\Users\\Matthéo\\Documents\\EFREI\\M2\\PokeFolio\\apps\\web\\src\\assets\\logo-pokefolio.png >nul & echo Logo copié vers src/assets\")",
       "Bash(pnpm run type-check:api:*)",
-      "Bash(pnpm run type-check:web:*)"
+      "Bash(pnpm run type-check:web:*)",
+      "Bash(pnpm nest start:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

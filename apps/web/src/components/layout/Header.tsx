@@ -88,11 +88,16 @@ export function Header() {
         </nav>
 
         <div className={styles.right}>
-          <div className={styles.profile} title={user?.email ?? 'Profil'}>
+          <button
+            className={styles.profile}
+            title={user?.email ?? 'Profil'}
+            onClick={() => navigate('/profile')}
+            aria-label="Accéder au profil"
+          >
             <div className={styles.avatar} aria-hidden="true">
               {userInitials}
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
