@@ -44,7 +44,7 @@ export function Profile() {
     setLoading(true);
     try {
       await userService.updatePseudo({ pseudo });
-      showToast('✅ Pseudo mis à jour avec succès', 'success');
+      showToast('Pseudo mis à jour avec succès', 'success');
     } catch (error) {
       console.error('Error updating pseudo:', error);
       const errorMessage =
@@ -62,12 +62,12 @@ export function Profile() {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      showToast('❌ Les mots de passe ne correspondent pas', 'error');
+      showToast('Les mots de passe ne correspondent pas', 'error');
       return;
     }
 
     if (newPassword.length < 6) {
-      showToast('❌ Le mot de passe doit contenir au moins 6 caractères', 'error');
+      showToast('Le mot de passe doit contenir au moins 6 caractères', 'error');
       return;
     }
 
@@ -77,7 +77,7 @@ export function Profile() {
         currentPassword,
         newPassword,
       });
-      showToast('✅ Mot de passe mis à jour avec succès', 'success');
+      showToast('Mot de passe mis à jour avec succès', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
