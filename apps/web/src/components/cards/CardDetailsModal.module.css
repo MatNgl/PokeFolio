@@ -74,6 +74,8 @@
 
 .imageSection {
   flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .cardImage {

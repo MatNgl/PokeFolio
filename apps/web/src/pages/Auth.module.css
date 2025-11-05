@@ -38,29 +38,9 @@
   gap: var(--spacing-lg);
 }
 
-/* ===== Boutons auth : PILLS, full width ===== */
+/* ===== Boutons auth : full width ===== */
 .form :global(.button) {
-  width: 100%; /* pleine largeur */
-  border-radius: 9999px; /* forme "longue" uniforme */
-  box-shadow: none !important; /* retire l'ombre */
-}
-
-.form :global(.buttonInner) {
-  height: 44px; /* légèrement plus bas que les inputs (48px) */
   width: 100%;
-  border-radius: 9999px;
-  padding: 0 2.5rem; /* allongé pour correspondre au hover */
-  border: none !important; /* retire la bordure interne */
-}
-
-/* Supprime le glow externe pour un style plus propre */
-.form :global(.button::before) {
-  display: none !important;
-}
-
-/* Animation hover simplifiée (juste scale) */
-.form :global(.button:hover:not(:disabled)) {
-  transform: scale(1.02) !important;
 }
 
 /* ===== Checkbox ===== */

@@ -36,6 +36,7 @@ export function Login() {
     } catch (err) {
       setError('Email ou mot de passe incorrect');
       console.error(err);
+      // Ne pas réinitialiser les champs, ils restent remplis grâce à react-hook-form
     } finally {
       setLoading(false);
     }

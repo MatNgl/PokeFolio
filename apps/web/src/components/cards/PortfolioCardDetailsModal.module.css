@@ -91,6 +91,7 @@
   padding: 12px;
   display: grid;
   align-content: start;
+  overflow: hidden;
 }
 
 .image {

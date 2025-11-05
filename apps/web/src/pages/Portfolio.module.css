@@ -124,6 +124,8 @@
   position: relative;
   margin-bottom: 12px;
   cursor: pointer;
+  border-radius: var(--radii-sm);
+  overflow: hidden;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -447,6 +449,8 @@
   padding: 0;
   cursor: pointer;
   display: block;
+  border-radius: var(--radii);
+  overflow: hidden;
 }
 
 .detailedImage {
@@ -521,27 +525,6 @@
   line-height: 1.5;
 }
 
-/* Boutons uniformisés */
-.header :global(.button),
-.empty :global(.button) {
-  box-shadow: none !important;
-}
-
-.header :global(.button::before),
-.empty :global(.button::before) {
-  display: none !important;
-}
-
-.header :global(.buttonInner),
-.empty :global(.buttonInner) {
-  padding: var(--spacing-md) calc(var(--spacing-xl) * 1.8);
-  border: none !important;
-}
-
-.header :global(.button:hover:not(:disabled)),
-.empty :global(.button:hover:not(:disabled)) {
-  transform: scale(1.02) !important;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -323,7 +323,9 @@ export default function Portfolio() {
         <div>
           <h1 className={styles.title}>Mon Portfolio</h1>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>+ Ajouter une carte</Button>
+        <Button onClick={() => setShowAddModal(true)} variant="primary">
+          + Ajouter une carte
+        </Button>
       </header>
 
       {stats && (
@@ -397,7 +399,9 @@ export default function Portfolio() {
           </svg>
           <h2>Aucune carte dans votre portfolio</h2>
           <p>Commencez par ajouter des cartes à votre collection</p>
-          <Button onClick={() => setShowAddModal(true)}>+ Ajouter votre première carte</Button>
+          <Button onClick={() => setShowAddModal(true)} variant="primary">
+            + Ajouter votre première carte
+          </Button>
         </div>
       ) : viewMode === 'compact' ? (
         // Vue Compact : petite image + infos sur une ligne
