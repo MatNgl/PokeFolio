@@ -50,9 +50,21 @@ export class PortfolioController {
   @ApiResponse({ status: 400, description: 'Données invalides' })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreatePortfolioItemApiDto) {
     const ownerId = getOwnerId(req);
-    // Conversion euros → cents avant passage au service
-    const serviceDto = dto.toCreateDto();
-    return this.service.create(ownerId, serviceDto);
+    // Passer aussi les métadonnées de la carte au service
+    return this.service.create(ownerId, {
+      ...dto.toCreateDto(),
+      name: dto.name,
+      setId: dto.setId,
+      setName: dto.setName,
+      number: dto.number,
+      setCardCount: dto.setCardCount,
+      rarity: dto.rarity,
+      imageUrl: dto.imageUrl,
+      imageUrlHiRes: dto.imageUrlHiRes,
+      types: dto.types,
+      supertype: dto.supertype,
+      subtypes: dto.subtypes,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

@@ -53,12 +53,45 @@ export class PortfolioService {
     private readonly model: Model<PortfolioItemDocument>
   ) {}
 
-  async create(ownerId: string, dto: CreatePortfolioItemDto) {
+  async create(
+    ownerId: string,
+    dto: CreatePortfolioItemDto & {
+      name?: string;
+      setId?: string;
+      setName?: string;
+      number?: string;
+      setCardCount?: number;
+      rarity?: string;
+      imageUrl?: string;
+      imageUrlHiRes?: string;
+      types?: string[];
+      supertype?: string;
+      subtypes?: string[];
+    }
+  ) {
     const base = {
       ownerId,
       cardId: dto.cardId,
       language: dto.language,
     };
+
+    // Construire le snapshot de la carte avec les métadonnées
+    const cardSnapshot: Record<string, unknown> = {};
+    if (dto.name) cardSnapshot.name = dto.name;
+    if (dto.setId || dto.setName) {
+      cardSnapshot.set = {
+        id: dto.setId,
+        name: dto.setName,
+        cardCount: dto.setCardCount ? { total: dto.setCardCount } : undefined,
+      };
+    }
+    if (dto.number) cardSnapshot.number = dto.number;
+    if (dto.rarity) cardSnapshot.rarity = dto.rarity;
+    if (dto.imageUrl) cardSnapshot.imageUrl = dto.imageUrl;
+    if (dto.imageUrlHiRes) cardSnapshot.imageUrlHiRes = dto.imageUrlHiRes;
+    if (dto.types) cardSnapshot.types = dto.types;
+    if (dto.supertype) cardSnapshot.supertype = dto.supertype;
+    if (dto.subtypes) cardSnapshot.subtypes = dto.subtypes;
 
     // --- Mode B : variantes distinctes ---
     if ('variants' in dto && Array.isArray(dto.variants) && dto.variants.length > 0) {
@@ -77,6 +110,7 @@ export class PortfolioService {
           grading: normalizeGrading(v.grading),
           notes: v.notes,
         })),
+        cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
       });
       return item.toObject();
     }
@@ -95,6 +129,7 @@ export class PortfolioService {
       graded: dto.graded,
       grading: normalizeGrading(dto.grading),
       notes: dto.notes,
+      cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
     });
 
     return item.toObject();

@@ -217,7 +217,19 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         // Champs obligatoires
         cardId: string;
         language: string;
-        // Champs optionnels (données utilisateur)
+        // Métadonnées de la carte (pour affichage)
+        name?: string;
+        setId?: string;
+        setName?: string;
+        number?: string;
+        setCardCount?: number;
+        rarity?: string;
+        imageUrl?: string;
+        imageUrlHiRes?: string;
+        types?: string[];
+        supertype?: string;
+        subtypes?: string[];
+        // Données utilisateur
         quantity?: number;
         booster?: boolean;
         graded?: boolean;
@@ -234,6 +246,18 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         // Champs obligatoires
         cardId: cardDetails.id,
         language: 'fr', // Langue par défaut (requis par le backend)
+        // Métadonnées de la carte
+        name: cardDetails.name,
+        setId: cardDetails.set?.id,
+        setName: cardDetails.set?.name,
+        number: cardDetails.localId,
+        setCardCount: cardDetails.set?.cardCount?.total || cardDetails.set?.cardCount?.official,
+        rarity: cardDetails.rarity,
+        imageUrl: cardDetails.image || cardDetails.images?.small,
+        imageUrlHiRes: cardDetails.images?.large,
+        types: cardDetails.types,
+        supertype: cardDetails.category,
+        subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
         // Quantité
         quantity: data.quantity || 1,
       };

@@ -86,6 +86,65 @@ export class CreatePortfolioItemApiDto {
   @IsNotEmpty()
   language!: CardLanguage;
 
+  /* ----- Métadonnées de la carte (pour affichage) ----- */
+  @ApiPropertyOptional({ description: 'Nom de la carte', example: 'Pikachu' })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ description: 'ID du set', example: 'sv3' })
+  @IsString()
+  @IsOptional()
+  setId?: string;
+
+  @ApiPropertyOptional({ description: 'Nom du set', example: 'Obsidian Flames' })
+  @IsString()
+  @IsOptional()
+  setName?: string;
+
+  @ApiPropertyOptional({ description: 'Numéro de la carte', example: '189' })
+  @IsString()
+  @IsOptional()
+  number?: string;
+
+  @ApiPropertyOptional({ description: 'Nombre de cartes dans le set', example: 230 })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  setCardCount?: number;
+
+  @ApiPropertyOptional({ description: 'Rareté de la carte', example: 'Rare Holo' })
+  @IsString()
+  @IsOptional()
+  rarity?: string;
+
+  @ApiPropertyOptional({ description: "URL de l'image (petite)", example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @ApiPropertyOptional({ description: "URL de l'image (haute résolution)", example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  imageUrlHiRes?: string;
+
+  @ApiPropertyOptional({ description: 'Types de la carte', example: ['Lightning'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  types?: string[];
+
+  @ApiPropertyOptional({ description: 'Supertype de la carte', example: 'Pokémon' })
+  @IsString()
+  @IsOptional()
+  supertype?: string;
+
+  @ApiPropertyOptional({ description: 'Subtypes de la carte', example: ['Basic'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  subtypes?: string[];
+
   /* ----- Mode A : même données pour toutes ----- */
   @ApiPropertyOptional({
     description: 'Quantité (obligatoire en Mode A, ignoré en Mode B)',
