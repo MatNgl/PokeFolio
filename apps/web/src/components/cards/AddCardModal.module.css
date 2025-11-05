@@ -94,6 +94,7 @@
   padding: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  overflow: hidden;
 }
 
 .resultCard:hover {
