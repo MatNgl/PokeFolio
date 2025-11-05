@@ -111,6 +111,15 @@ export interface UserCard {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  // Variantes pour les cartes multiples
+  variants?: Array<{
+    purchasePrice?: number;
+    purchaseDate?: string;
+    isGraded?: boolean;
+    gradeCompany?: string;
+    gradeScore?: string;
+    notes?: string;
+  }>;
 }
 
 export interface AddCardDto {

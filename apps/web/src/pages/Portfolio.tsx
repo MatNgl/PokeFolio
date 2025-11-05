@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { UserCard } from '@pokefolio/types';
+import { useState, useEffect } from 'react';
+import type { UserCard, PortfolioViewMode } from '@pokefolio/types';
 import {
   portfolioService,
   type PortfolioCard,
@@ -167,6 +167,7 @@ function toUserCardView(entry: PortfolioCard): UserCardView {
     purchaseDate: entry.purchaseDate,
     currentValue: entry.currentValue,
     notes: entry.notes,
+    variants: entry.variants, // Copier les variantes
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
   } as UserCardView;
@@ -180,6 +181,7 @@ export default function Portfolio() {
   const [editingCard, setEditingCard] = useState<UserCardView | null>(null);
   const [deletingCard, setDeletingCard] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<PortfolioViewMode>('grid');
 
   // ➕ Nouveau : entrée sélectionnée pour détails
   const [detailsEntry, setDetailsEntry] = useState<PortfolioCard | null>(null);
@@ -256,6 +258,54 @@ export default function Portfolio() {
     return img || PLACEHOLDER_IMG;
   };
 
+  // Fonction pour créer l'entrée complète pour le modal
+  const createEntryLike = (card: UserCardView) => ({
+    _id: (card._id ?? card.id ?? '') as string,
+    ownerId: card.ownerId ?? card.userId ?? '',
+    cardId: card.cardId,
+    language: card.language ?? 'fr',
+    name: card.name,
+    setId: card.setId,
+    setName: card.setName,
+    number: card.number,
+    rarity: card.rarity,
+    imageUrl: card.imageUrl ?? card.image,
+    imageUrlHiRes: card.images?.large,
+    types: card.types,
+    supertype: card.supertype,
+    subtypes: card.subtypes,
+    quantity: card.quantity ?? 1,
+    isGraded: Boolean(card.isGraded),
+    gradeCompany: card.gradeCompany,
+    gradeScore: card.gradeScore ? Number(card.gradeScore) : undefined,
+    purchasePrice: card.purchasePrice,
+    purchaseDate: card.purchaseDate
+      ? typeof card.purchaseDate === 'string'
+        ? new Date(card.purchaseDate)
+        : card.purchaseDate
+      : undefined,
+    currentValue: card.currentValue,
+    notes: card.notes,
+    createdAt: card.createdAt ?? new Date().toISOString(),
+    updatedAt: card.updatedAt ?? new Date().toISOString(),
+    variants: card.variants,
+  });
+
+  // Calcul du prix total pour une carte
+  const calculateCardTotal = (card: UserCardView): number | null => {
+    const hasVariants = card.variants && Array.isArray(card.variants) && card.variants.length > 0;
+
+    if (hasVariants && card.variants) {
+      return card.variants.reduce(
+        (sum: number, v: PortfolioVariant) => sum + (v.purchasePrice ?? 0),
+        0
+      );
+    } else if (typeof card.purchasePrice === 'number') {
+      return card.purchasePrice * (card.quantity ?? 1);
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -294,6 +344,35 @@ export default function Portfolio() {
         </section>
       )}
 
+      {cards.length > 0 && (
+        <div className={styles.viewSelector}>
+          <button
+            className={viewMode === 'compact' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('compact')}
+            aria-label="Vue compacte"
+            title="Vue compacte"
+          >
+            ☰
+          </button>
+          <button
+            className={viewMode === 'grid' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('grid')}
+            aria-label="Vue normale (grille)"
+            title="Vue normale (grille)"
+          >
+            ⊞
+          </button>
+          <button
+            className={viewMode === 'detailed' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('detailed')}
+            aria-label="Vue détaillée"
+            title="Vue détaillée"
+          >
+            ▭
+          </button>
+        </div>
+      )}
+
       {cards.length === 0 ? (
         <div className={styles.empty}>
           <svg
@@ -313,43 +392,180 @@ export default function Portfolio() {
           <p>Commencez par ajouter des cartes à votre collection</p>
           <Button onClick={() => setShowAddModal(true)}>+ Ajouter votre première carte</Button>
         </div>
+      ) : viewMode === 'compact' ? (
+        // Vue Compact : petite image + infos sur une ligne
+        <section className={styles.compact} aria-label="Mes cartes">
+          {cards.map((card) => {
+            const docId = resolveId(card);
+            const img = resolveImage(card);
+            const entryLike = createEntryLike(card);
+            const total = calculateCardTotal(card);
+
+            return (
+              <div
+                key={docId}
+                className={styles.compactCard}
+                onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setDetailsEntry(entryLike as PortfolioCard);
+                  }
+                }}
+              >
+                <img
+                  src={img}
+                  alt={card.name}
+                  className={styles.compactImage}
+                  loading="lazy"
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                  }}
+                />
+                <div className={styles.compactInfo}>
+                  <span className={styles.compactName}>{card.name}</span>
+                  <span className={styles.compactNumber}>#{card.number ?? '—'}</span>
+                  <span className={styles.compactPrice}>{total !== null ? euro(total) : '—'}</span>
+                  <span className={styles.compactDate}>
+                    {card.purchaseDate ? new Date(card.purchaseDate).toLocaleDateString() : '—'}
+                  </span>
+                </div>
+                <div className={styles.compactActions}>
+                  <IconButton
+                    icon="edit"
+                    label={`Modifier ${card.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingCard(card);
+                    }}
+                  />
+                  <IconButton
+                    icon="delete"
+                    label={`Supprimer ${card.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingCard({ id: docId, name: card.name });
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ) : viewMode === 'detailed' ? (
+        // Vue Détaillée : grosses cartes empilées avec détails
+        <section className={styles.detailed} aria-label="Mes cartes">
+          {cards.map((card) => {
+            const docId = resolveId(card);
+            const img = resolveImage(card);
+            const entryLike = createEntryLike(card);
+            const total = calculateCardTotal(card);
+
+            return (
+              <article key={docId} className={styles.detailedCard}>
+                <button
+                  type="button"
+                  className={styles.detailedImageWrap}
+                  onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
+                  aria-label={`Voir les détails de ${card.name}`}
+                >
+                  <img
+                    src={img}
+                    alt={card.name}
+                    className={styles.detailedImage}
+                    loading="lazy"
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }}
+                  />
+                </button>
+                <div className={styles.detailedInfo}>
+                  <div className={styles.detailedHeader}>
+                    <h3 className={styles.detailedName}>{card.name}</h3>
+                    <div className={styles.detailedActions}>
+                      <IconButton
+                        icon="edit"
+                        label={`Modifier ${card.name}`}
+                        onClick={() => setEditingCard(card)}
+                      />
+                      <IconButton
+                        icon="delete"
+                        label={`Supprimer ${card.name}`}
+                        onClick={() => setDeletingCard({ id: docId, name: card.name })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.detailedGrid}>
+                    <div className={styles.detailedItem}>
+                      <span className={styles.detailedLabel}>Set</span>
+                      <span className={styles.detailedValue}>{card.setName || 'Set inconnu'}</span>
+                    </div>
+                    <div className={styles.detailedItem}>
+                      <span className={styles.detailedLabel}>Numéro</span>
+                      <span className={styles.detailedValue}>
+                        #{card.number ?? '—'}
+                        {card.setCardCount && `/${card.setCardCount}`}
+                      </span>
+                    </div>
+                    {card.rarity && (
+                      <div className={styles.detailedItem}>
+                        <span className={styles.detailedLabel}>Rareté</span>
+                        <span className={styles.detailedValue}>{card.rarity}</span>
+                      </div>
+                    )}
+                    <div className={styles.detailedItem}>
+                      <span className={styles.detailedLabel}>Quantité</span>
+                      <span className={styles.detailedValue}>{card.quantity ?? 1}</span>
+                    </div>
+                    {total !== null && (
+                      <div className={styles.detailedItem}>
+                        <span className={styles.detailedLabel}>Prix total</span>
+                        <span className={styles.detailedValue}>{euro(total)}</span>
+                      </div>
+                    )}
+                    {card.purchaseDate && (
+                      <div className={styles.detailedItem}>
+                        <span className={styles.detailedLabel}>Date d&apos;achat</span>
+                        <span className={styles.detailedValue}>
+                          {new Date(card.purchaseDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                    {card.isGraded && (
+                      <>
+                        <div className={styles.detailedItem}>
+                          <span className={styles.detailedLabel}>Gradée</span>
+                          <span className={styles.detailedValue}>
+                            {card.gradeCompany} {card.gradeScore}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {card.notes && (
+                      <div className={styles.detailedItem} style={{ gridColumn: '1 / -1' }}>
+                        <span className={styles.detailedLabel}>Notes</span>
+                        <p className={styles.detailedNotes}>{card.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
       ) : (
+        // Vue Grid (normale) : grille de cartes
         <section className={styles.grid} aria-label="Mes cartes">
           {cards.map((card) => {
             const docId = resolveId(card);
             const img = resolveImage(card);
-
-            // Entry complète pour le modal (PortfolioCard shape)
-            const entryLike = {
-              _id: (card._id ?? card.id ?? '') as string,
-              ownerId: card.ownerId ?? card.userId ?? '',
-              cardId: card.cardId,
-              language: card.language ?? 'fr',
-              name: card.name,
-              setId: card.setId,
-              setName: card.setName,
-              number: card.number,
-              rarity: card.rarity,
-              imageUrl: card.imageUrl ?? card.image,
-              imageUrlHiRes: card.images?.large,
-              types: card.types,
-              supertype: card.supertype,
-              subtypes: card.subtypes,
-              quantity: card.quantity ?? 1,
-              isGraded: Boolean(card.isGraded),
-              gradeCompany: card.gradeCompany,
-              gradeScore: card.gradeScore ? Number(card.gradeScore) : undefined,
-              purchasePrice: card.purchasePrice,
-              purchaseDate: card.purchaseDate
-                ? typeof card.purchaseDate === 'string'
-                  ? new Date(card.purchaseDate)
-                  : card.purchaseDate
-                : undefined,
-              currentValue: card.currentValue,
-              notes: card.notes,
-              createdAt: card.createdAt ?? new Date().toISOString(),
-              updatedAt: card.updatedAt ?? new Date().toISOString(),
-            };
+            const entryLike = createEntryLike(card);
+            const total = calculateCardTotal(card);
 
             return (
               <article key={docId} className={styles.card}>
@@ -388,30 +604,11 @@ export default function Portfolio() {
                     {card.setCardCount && `/${card.setCardCount}`}
                   </p>
                   {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
-                  {(() => {
-                    // Si la carte a des variantes, calculer le prix total
-                    const hasVariants =
-                      card.variants && Array.isArray(card.variants) && card.variants.length > 0;
-
-                    if (hasVariants && card.variants) {
-                      const total = card.variants.reduce(
-                        (sum: number, v: PortfolioVariant) => sum + (v.purchasePrice ?? 0),
-                        0
-                      );
-                      if (total > 0) {
-                        return <p className={styles.cardValue}>Total : {euro(total)}</p>;
-                      }
-                    } else if (typeof card.purchasePrice === 'number') {
-                      // Mode simple
-                      const total = card.purchasePrice * (card.quantity ?? 1);
-                      return (
-                        <p className={styles.cardValue}>
-                          {card.quantity > 1 ? `Total : ${euro(total)}` : euro(card.purchasePrice)}
-                        </p>
-                      );
-                    }
-                    return null;
-                  })()}
+                  {total !== null && (
+                    <p className={styles.cardValue}>
+                      {card.quantity > 1 ? `Total : ${euro(total)}` : euro(total)}
+                    </p>
+                  )}
                 </div>
 
                 <div className={styles.cardActions}>

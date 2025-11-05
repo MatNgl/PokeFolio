@@ -6,7 +6,8 @@
       "Bash(pnpm run type-check:api:*)",
       "Bash(pnpm run type-check:web:*)",
       "Bash(pnpm nest start:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(pnpm exec tsc:*)"
     ],
     "deny": [],
     "ask": []

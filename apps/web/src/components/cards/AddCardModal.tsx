@@ -130,6 +130,14 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
     }
   }, [quantity, setValue, watch]);
 
+  // Bloquer le scroll du body quand le modal est ouvert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
@@ -240,6 +248,18 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         purchasePrice?: number; // En euros (float)
         purchaseDate?: string;
         notes?: string;
+        // Variantes (pour quantity >= 2)
+        variants?: Array<{
+          purchasePrice?: number;
+          purchaseDate?: string;
+          booster?: boolean;
+          graded?: boolean;
+          grading?: {
+            company?: string;
+            grade?: string;
+          };
+          notes?: string;
+        }>;
       }
 
       const portfolioData: PortfolioApiPayload = {
@@ -258,28 +278,46 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         types: cardDetails.types,
         supertype: cardDetails.category,
         subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
-        // Quantité
-        quantity: data.quantity || 1,
       };
 
-      // Ajouter les champs optionnels seulement s'ils sont définis
-      if (data.isGraded) {
-        portfolioData.graded = true;
-        if (data.gradeCompany || data.gradeScore) {
-          portfolioData.grading = {
-            company: data.gradeCompany,
-            grade: data.gradeScore?.toString(),
-          };
+      // Mode variantes si quantity >= 2
+      if (data.quantity >= 2 && data.variants && data.variants.length > 0) {
+        portfolioData.variants = data.variants.map((v) => ({
+          purchasePrice: v.purchasePrice,
+          purchaseDate: v.purchaseDate,
+          graded: v.isGraded,
+          grading:
+            v.isGraded && (v.gradeCompany || v.gradeScore)
+              ? {
+                  company: v.gradeCompany,
+                  grade: v.gradeScore?.toString(),
+                }
+              : undefined,
+          notes: v.notes,
+        }));
+      } else {
+        // Mode simple (quantité = 1 ou pas de variantes)
+        portfolioData.quantity = data.quantity || 1;
+
+        // Ajouter les champs optionnels seulement s'ils sont définis
+        if (data.isGraded) {
+          portfolioData.graded = true;
+          if (data.gradeCompany || data.gradeScore) {
+            portfolioData.grading = {
+              company: data.gradeCompany,
+              grade: data.gradeScore?.toString(),
+            };
+          }
         }
-      }
-      if (data.purchasePrice !== undefined && data.purchasePrice !== null) {
-        portfolioData.purchasePrice = data.purchasePrice;
-      }
-      if (data.purchaseDate) {
-        portfolioData.purchaseDate = data.purchaseDate;
-      }
-      if (data.notes) {
-        portfolioData.notes = data.notes;
+        if (data.purchasePrice !== undefined && data.purchasePrice !== null) {
+          portfolioData.purchasePrice = data.purchasePrice;
+        }
+        if (data.purchaseDate) {
+          portfolioData.purchaseDate = data.purchaseDate;
+        }
+        if (data.notes) {
+          portfolioData.notes = data.notes;
+        }
       }
 
       await portfolioService.addCard(portfolioData as unknown as Record<string, unknown>);
@@ -307,26 +345,8 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
     }
   };
 
-  // Accessibilité overlay : uniquement Espace (pas Enter pour éviter de fermer pendant la recherche)
-  const handleOverlayKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === ' ' && e.target === e.currentTarget) {
-      e.preventDefault();
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className={styles.overlay}
-      // Fermer uniquement si clic direct sur l'overlay
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={handleOverlayKeyDown}
-      role="button"
-      aria-label="Fermer la fenêtre modale"
-      tabIndex={0}
-    >
+    <div className={styles.overlay}>
       <section
         ref={dialogRef}
         className={styles.modal}

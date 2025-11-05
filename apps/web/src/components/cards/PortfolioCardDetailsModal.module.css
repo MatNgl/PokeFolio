@@ -225,18 +225,54 @@
 }
 
 /* === Responsive === */
+
+/* Tablettes et petits écrans */
 @media (max-width: 920px) {
   .content {
-    grid-template-columns: 1fr;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
   }
+}
+
+/* Petites tablettes et mobiles */
+@media (max-width: 768px) {
+  .overlay {
+    padding: 16px;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
   .left {
     order: 0;
+    max-width: 320px;
+    margin: 0 auto;
   }
+
   .right {
     order: 1;
   }
+
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Très petits écrans */
+@media (max-width: 480px) {
+  .left {
+    max-width: 240px;
+  }
+
+  .modal {
+    max-height: 90vh;
+    overflow-y: auto;
   }
 }
 
