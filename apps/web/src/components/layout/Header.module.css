@@ -120,24 +120,29 @@
   z-index: 1;
   transition:
     transform 0.5s cubic-bezier(0.37, 1.95, 0.66, 0.56),
+    opacity 0.3s ease-in-out,
     background 0.4s ease-in-out,
     box-shadow 0.4s ease-in-out;
   background: linear-gradient(135deg, #d0e7ff55, #a0d8ff);
   box-shadow:
     0 0 18px rgba(160, 216, 255, 0.5),
     0 0 10px rgba(200, 240, 255, 0.4) inset;
-  transform: translateX(-100%); /* aucun onglet actif */
+  transform: translateX(0%);
+  opacity: 0; /* caché par défaut quand aucun onglet actif */
 }
 
 /* Position/état du glider selon l'onglet actif */
 .glider[data-active='portfolio'] {
   transform: translateX(0%);
+  opacity: 1;
 }
 .glider[data-active='dashboard'] {
   transform: translateX(100%);
+  opacity: 1;
 }
 .glider[data-active='decouvrir'] {
   transform: translateX(200%);
+  opacity: 1;
 }
 
 /* Mettre en avant le label de l'onglet sélectionné */

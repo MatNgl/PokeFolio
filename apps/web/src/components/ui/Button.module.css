@@ -1,6 +1,6 @@
 .button {
   position: relative;
-  padding: 1px;
+  padding: 0;
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
@@ -35,7 +35,7 @@
     rgba(124, 140, 243, 0.8),
     rgba(167, 139, 250, 0.8)
   );
-  padding: 2px;
+  padding: 1px;
   opacity: 0;
   transition: opacity 0.5s;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -55,7 +55,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: calc(var(--radii-md) - 1px);
+  border-radius: var(--radii-md);
   background: var(--glass);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));

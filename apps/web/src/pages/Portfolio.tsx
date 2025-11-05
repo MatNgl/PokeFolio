@@ -79,7 +79,8 @@ type ApiStats = {
   // Champs de l'API backend
   nbCartes?: number;
   nbCartesDistinctes?: number;
-  coutTotalAchatCents?: number;
+  coutTotalAchat?: number; // En euros (float)
+  coutTotalAchatCents?: number; // Ancien nom
   nbSets?: number;
   nbGraded?: number;
   // Champs de l'ancien système
@@ -124,22 +125,24 @@ const normalizeCard = (c: ApiCard): UserCardView => {
 };
 
 const normalizeStats = (s: ApiStats): PortfolioStats => {
-  const uniqueCards = s.uniqueCards ?? s.distinctCards ?? 0;
-  const totalValue = s.totalValue ?? s.totalCurrent ?? s.totalCost ?? 0; // Utilise totalCost si pas de currentValue
-  const gradedCards = s.gradedCards ?? s.graded ?? 0;
+  // Le backend renvoie nbCartes, nbCartesDistinctes, coutTotalAchat, nbSets, nbGraded
+  const totalCards = s.nbCartes ?? s.totalCards ?? 0;
+  const uniqueCards = s.nbCartesDistinctes ?? s.uniqueCards ?? s.distinctCards ?? 0;
+  const totalCost = s.coutTotalAchat ?? s.totalCost ?? s.coutTotalAchatCents ?? 0;
+  const gradedCards = s.nbGraded ?? s.gradedCards ?? s.graded ?? 0;
 
   return {
     // Champs obligatoires de l'API
-    nbCartes: s.totalCards ?? s.nbCartes ?? 0,
+    nbCartes: totalCards,
     nbCartesDistinctes: uniqueCards,
-    coutTotalAchatCents: s.totalCost ?? s.coutTotalAchatCents ?? 0, // Stocké en euros (float)
+    coutTotalAchatCents: totalCost, // Stocké en euros (float)
     nbSets: s.nbSets ?? 0,
     nbGraded: gradedCards,
     // Champs optionnels pour compatibilité
-    totalCards: s.totalCards ?? 0,
+    totalCards,
     uniqueCards,
-    totalCost: s.totalCost ?? 0,
-    totalValue,
+    totalCost,
+    totalValue: totalCost, // Pour l'instant, même valeur que totalCost
     profit: 0, // hors affichage
     gradedCards,
   };
@@ -345,31 +348,35 @@ export default function Portfolio() {
       )}
 
       {cards.length > 0 && (
-        <div className={styles.viewSelector}>
-          <button
-            className={viewMode === 'compact' ? styles.viewBtnActive : styles.viewBtn}
-            onClick={() => setViewMode('compact')}
-            aria-label="Vue compacte"
-            title="Vue compacte"
-          >
-            ☰
-          </button>
-          <button
-            className={viewMode === 'grid' ? styles.viewBtnActive : styles.viewBtn}
-            onClick={() => setViewMode('grid')}
-            aria-label="Vue normale (grille)"
-            title="Vue normale (grille)"
-          >
-            ⊞
-          </button>
-          <button
-            className={viewMode === 'detailed' ? styles.viewBtnActive : styles.viewBtn}
-            onClick={() => setViewMode('detailed')}
-            aria-label="Vue détaillée"
-            title="Vue détaillée"
-          >
-            ▭
-          </button>
+        <div className={styles.glassGroup}>
+          <input
+            type="radio"
+            id="view-compact"
+            name="viewMode"
+            checked={viewMode === 'compact'}
+            onChange={() => setViewMode('compact')}
+          />
+          <label htmlFor="view-compact">☰ Compact</label>
+
+          <input
+            type="radio"
+            id="view-grid"
+            name="viewMode"
+            checked={viewMode === 'grid'}
+            onChange={() => setViewMode('grid')}
+          />
+          <label htmlFor="view-grid">⊞ Grille</label>
+
+          <input
+            type="radio"
+            id="view-detailed"
+            name="viewMode"
+            checked={viewMode === 'detailed'}
+            onChange={() => setViewMode('detailed')}
+          />
+          <label htmlFor="view-detailed">▭ Détaillé</label>
+
+          <div className={styles.glider} data-active={viewMode} />
         </div>
       )}
 
@@ -427,11 +434,23 @@ export default function Portfolio() {
                 />
                 <div className={styles.compactInfo}>
                   <span className={styles.compactName}>{card.name}</span>
-                  <span className={styles.compactNumber}>#{card.number ?? '—'}</span>
-                  <span className={styles.compactPrice}>{total !== null ? euro(total) : '—'}</span>
-                  <span className={styles.compactDate}>
-                    {card.purchaseDate ? new Date(card.purchaseDate).toLocaleDateString() : '—'}
-                  </span>
+                  <div className={styles.compactField}>
+                    <span className={styles.compactLabel}>Set:</span>
+                    <span className={styles.compactValue}>
+                      #{card.number ?? '—'}
+                      {card.setCardCount ? `/${card.setCardCount}` : ''}
+                    </span>
+                  </div>
+                  <div className={styles.compactField}>
+                    <span className={styles.compactLabel}>Qté:</span>
+                    <span className={styles.compactValue}>{card.quantity ?? 1}</span>
+                  </div>
+                  <div className={styles.compactField}>
+                    <span className={styles.compactLabel}>Total:</span>
+                    <span className={styles.compactValue}>
+                      {total !== null ? euro(total) : '—'}
+                    </span>
+                  </div>
                 </div>
                 <div className={styles.compactActions}>
                   <IconButton

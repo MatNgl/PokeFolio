@@ -204,6 +204,11 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.cardActions > * {
+  flex: 1;
+  min-width: 0;
+}
+
 .editBtn {
   flex: 1;
   background: rgba(124, 243, 255, 0.1);
@@ -248,40 +253,90 @@
   align-items: center;
   gap: 16px;
 }
+/* Glass Radio Group (View selector) — compact */
+.glassGroup {
+  --bg: rgba(255, 255, 255, 0.06);
+  --text: var(--text);
 
-/* View selector */
-.viewSelector {
   display: flex;
-  gap: 8px;
-  background: var(--glass);
-  border: var(--border);
-  border-radius: var(--radii);
-  padding: 4px;
-  backdrop-filter: blur(var(--blur));
-  margin-bottom: 24px;
+  position: relative;
+  background: var(--bg);
+  border-radius: 0.75rem; /* 12px au lieu de 16px */
+  backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 0 2px rgba(255, 255, 255, 0.18),
+    inset 0 0 4px rgba(0, 0, 0, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
   width: fit-content;
+  margin-bottom: 16px; /* moins d’air */
 }
 
-.viewBtn,
-.viewBtnActive {
-  padding: 8px 12px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
+.glassGroup input {
+  display: none;
+}
+
+.glassGroup label {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 100px; /* 140px -> 100px */
+  font-size: 16px; /* 16px -> 13px */
+  padding: 1rem 1.3rem; /* 1rem 2rem -> 0.6rem 1rem */
   cursor: pointer;
-  border-radius: var(--radii-sm);
-  transition: all 0.2s ease;
-  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--text);
+  position: relative;
+  z-index: 2;
+  transition: all 0.25s ease-in-out;
+  user-select: none;
+  white-space: nowrap;
+  line-height: 1;
 }
 
-.viewBtn:hover {
-  background: rgba(124, 243, 255, 0.1);
-  color: var(--primary);
+.glassGroup label:hover {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(124, 243, 255, 0.45);
+  transform: translateY(-1px);
 }
 
-.viewBtnActive {
-  background: var(--primary);
-  color: #000;
+/* Glider pour 3 options: largeur 33.333% (inchangé) */
+.glider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 33.3333%;
+  border-radius: 0.75rem;
+  z-index: 1;
+  transition:
+    transform 0.45s cubic-bezier(0.37, 1.95, 0.66, 0.56),
+    background 0.3s ease-in-out,
+    box-shadow 0.3s ease-in-out;
+  background: linear-gradient(135deg, #3480d140, #005c9e99); /* plus léger */
+  box-shadow:
+    0 0 12px rgba(160, 216, 255, 0.35),
+    0 0 6px rgba(200, 240, 255, 0.3) inset;
+  transform: translateX(0%);
+}
+
+/* Position/état du glider selon l'onglet actif */
+.glider[data-active='compact'] {
+  transform: translateX(0%);
+}
+.glider[data-active='grid'] {
+  transform: translateX(100%);
+}
+.glider[data-active='detailed'] {
+  transform: translateX(200%);
+}
+
+/* Mettre en avant le label de l'onglet sélectionné */
+.glassGroup input:checked + label {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(124, 243, 255, 0.5);
 }
 
 /* Vue Compact */
@@ -332,23 +387,30 @@
   font-size: 15px;
 }
 
-.compactNumber {
+.compactField {
   flex: 1;
-  color: var(--muted);
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.compactPrice {
-  flex: 1;
-  font-weight: 700;
+.compactLabel {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.compactValue {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.compactField:last-child .compactValue {
   color: var(--primary);
-  font-size: 14px;
-}
-
-.compactDate {
-  flex: 1;
-  color: var(--muted);
-  font-size: 14px;
+  font-weight: 700;
 }
 
 .compactActions {
