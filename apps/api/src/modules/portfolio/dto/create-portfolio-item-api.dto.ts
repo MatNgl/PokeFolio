@@ -15,11 +15,10 @@ import {
 import { Type } from 'class-transformer';
 import { GradingDto } from '../../../cards/dto/grading.dto';
 import type { CreatePortfolioItemDto, PortfolioVariant, CardLanguage } from '@pokefolio/types';
-import { eurosToCents } from '../utils/price-converter';
 
 /**
  * DTO pour une variante avec prix en EUROS (API input)
- * Sera converti vers PortfolioVariant (prix en cents) avant stockage
+ * Sera converti vers PortfolioVariant (prix en euros) avant stockage
  */
 export class PortfolioVariantApiDto {
   @ApiPropertyOptional({ description: "Prix d'achat en euros", example: 149.9 })
@@ -58,11 +57,11 @@ export class PortfolioVariantApiDto {
   notes?: string;
 
   /**
-   * Convertit ce DTO API (euros) vers PortfolioVariant (cents)
+   * Convertit ce DTO API vers PortfolioVariant
    */
   toPortfolioVariant(): PortfolioVariant {
     return {
-      purchasePriceCents: eurosToCents(this.purchasePrice),
+      purchasePrice: this.purchasePrice,
       purchaseDate: this.purchaseDate,
       booster: this.booster,
       graded: this.graded,
@@ -74,7 +73,7 @@ export class PortfolioVariantApiDto {
 
 /**
  * DTO API pour créer un item portfolio - accepte les prix en EUROS
- * Sera converti vers CreatePortfolioItemDto (prix en cents) avant passage au service
+ * Sera converti vers CreatePortfolioItemDto (prix en euros) avant passage au service
  */
 export class CreatePortfolioItemApiDto {
   @ApiProperty({ description: 'ID de la carte', example: 'sv3-189' })
@@ -86,6 +85,65 @@ export class CreatePortfolioItemApiDto {
   @IsString()
   @IsNotEmpty()
   language!: CardLanguage;
+
+  /* ----- Métadonnées de la carte (pour affichage) ----- */
+  @ApiPropertyOptional({ description: 'Nom de la carte', example: 'Pikachu' })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ description: 'ID du set', example: 'sv3' })
+  @IsString()
+  @IsOptional()
+  setId?: string;
+
+  @ApiPropertyOptional({ description: 'Nom du set', example: 'Obsidian Flames' })
+  @IsString()
+  @IsOptional()
+  setName?: string;
+
+  @ApiPropertyOptional({ description: 'Numéro de la carte', example: '189' })
+  @IsString()
+  @IsOptional()
+  number?: string;
+
+  @ApiPropertyOptional({ description: 'Nombre de cartes dans le set', example: 230 })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  setCardCount?: number;
+
+  @ApiPropertyOptional({ description: 'Rareté de la carte', example: 'Rare Holo' })
+  @IsString()
+  @IsOptional()
+  rarity?: string;
+
+  @ApiPropertyOptional({ description: "URL de l'image (petite)", example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @ApiPropertyOptional({ description: "URL de l'image (haute résolution)", example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  imageUrlHiRes?: string;
+
+  @ApiPropertyOptional({ description: 'Types de la carte', example: ['Lightning'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  types?: string[];
+
+  @ApiPropertyOptional({ description: 'Supertype de la carte', example: 'Pokémon' })
+  @IsString()
+  @IsOptional()
+  supertype?: string;
+
+  @ApiPropertyOptional({ description: 'Subtypes de la carte', example: ['Basic'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  subtypes?: string[];
 
   /* ----- Mode A : même données pour toutes ----- */
   @ApiPropertyOptional({
@@ -152,7 +210,7 @@ export class CreatePortfolioItemApiDto {
   variants?: PortfolioVariantApiDto[];
 
   /**
-   * Convertit ce DTO API (euros) vers CreatePortfolioItemDto (cents)
+   * Convertit ce DTO API vers CreatePortfolioItemDto
    */
   toCreateDto(): CreatePortfolioItemDto {
     // Mode B : variantes
@@ -172,7 +230,7 @@ export class CreatePortfolioItemApiDto {
       booster: this.booster,
       graded: this.graded,
       grading: this.grading,
-      purchasePriceCents: eurosToCents(this.purchasePrice),
+      purchasePrice: this.purchasePrice,
       purchaseDate: this.purchaseDate,
       notes: this.notes,
     };

@@ -4,8 +4,8 @@ import type { GradingInfo } from './grading';
 
 /** Variante unitaire (1 carte = 1 variante) */
 export interface PortfolioVariant {
-  /** Prix d'achat en cents pour CET exemplaire */
-  purchasePriceCents?: number;
+  /** Prix d'achat en euros pour CET exemplaire */
+  purchasePrice?: number;
   /** Date d'achat (ISO ou Date) pour CET exemplaire */
   purchaseDate?: string | Date;
   /** Boîte/scellé ? (si tu veux le distinguer au niveau variant) */
@@ -34,7 +34,7 @@ export interface PortfolioItem {
 
   /** ===== Mode A : champs unitaires (optionnels si variants[]) ===== */
   booster?: boolean;
-  purchasePriceCents?: number;
+  purchasePrice?: number;
   purchaseDate?: Date;
   graded?: boolean;
   grading?: GradingInfo;
@@ -58,7 +58,7 @@ export type CreatePortfolioItemDto =
       language: CardLanguage;
       quantity: number; // >= 1
       booster?: boolean;
-      purchasePriceCents?: number;
+      purchasePrice?: number;
       purchaseDate?: string | Date;
       graded?: boolean;
       grading?: GradingInfo;
@@ -74,7 +74,7 @@ export type CreatePortfolioItemDto =
       variants: PortfolioVariant[]; // length >= 1
       // champs unitaires ignorés si variants est fourni
       booster?: undefined;
-      purchasePriceCents?: undefined;
+      purchasePrice?: undefined;
       purchaseDate?: undefined;
       graded?: undefined;
       grading?: undefined;
@@ -87,7 +87,7 @@ export interface UpdatePortfolioItemDto {
   /** En Mode A : maj des champs unitaires ; en Mode B, préférer variants */
   quantity?: number;
   booster?: boolean;
-  purchasePriceCents?: number;
+  purchasePrice?: number;
   purchaseDate?: string | Date;
   graded?: boolean;
   grading?: GradingInfo;
@@ -139,7 +139,7 @@ export interface PortfolioQuery {
 export interface PortfolioSummary {
   nbCartes: number;
   nbCartesDistinctes: number;
-  coutTotalAchatCents: number;
+  coutTotalAchat: number;
   nbSets: number;
   nbGraded: number;
 }

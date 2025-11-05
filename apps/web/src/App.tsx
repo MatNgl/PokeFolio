@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import { Header } from './components/layout/Header';
 import Portfolio from './pages/Portfolio';
 import Discover from './pages/Discover';
+import { Profile } from './pages/Profile';
 
 // Redirection racine vers Portfolio si connecté, sinon Login
 function RootRedirect() {
@@ -82,6 +83,16 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <Discover />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile (protégée) */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />

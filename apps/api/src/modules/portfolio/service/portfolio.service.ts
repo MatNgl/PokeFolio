@@ -9,6 +9,23 @@ import type { CreatePortfolioItemDto, UpdatePortfolioItemDto } from '@pokefolio/
 // Représentation stockée en DB pour la gradation (uniforme)
 type StoredGrading = { company?: string; grade?: string; certificationNumber?: string };
 
+// Type pour cardSnapshot stocké en DB
+interface CardSnapshot {
+  name?: string;
+  set?: {
+    id?: string;
+    name?: string;
+    cardCount?: { total?: number };
+  };
+  number?: string;
+  rarity?: string;
+  imageUrl?: string;
+  imageUrlHiRes?: string;
+  types?: string[];
+  supertype?: string;
+  subtypes?: string[];
+}
+
 /**
  * Normalise un GradingInfo inconnu vers { company, grade, certificationNumber }
  * sans utiliser `any` (on passe par `unknown` + garde de type).
@@ -53,12 +70,45 @@ export class PortfolioService {
     private readonly model: Model<PortfolioItemDocument>
   ) {}
 
-  async create(ownerId: string, dto: CreatePortfolioItemDto) {
+  async create(
+    ownerId: string,
+    dto: CreatePortfolioItemDto & {
+      name?: string;
+      setId?: string;
+      setName?: string;
+      number?: string;
+      setCardCount?: number;
+      rarity?: string;
+      imageUrl?: string;
+      imageUrlHiRes?: string;
+      types?: string[];
+      supertype?: string;
+      subtypes?: string[];
+    }
+  ) {
     const base = {
       ownerId,
       cardId: dto.cardId,
       language: dto.language,
     };
+
+    // Construire le snapshot de la carte avec les métadonnées
+    const cardSnapshot: Record<string, unknown> = {};
+    if (dto.name) cardSnapshot.name = dto.name;
+    if (dto.setId || dto.setName) {
+      cardSnapshot.set = {
+        id: dto.setId,
+        name: dto.setName,
+        cardCount: dto.setCardCount ? { total: dto.setCardCount } : undefined,
+      };
+    }
+    if (dto.number) cardSnapshot.number = dto.number;
+    if (dto.rarity) cardSnapshot.rarity = dto.rarity;
+    if (dto.imageUrl) cardSnapshot.imageUrl = dto.imageUrl;
+    if (dto.imageUrlHiRes) cardSnapshot.imageUrlHiRes = dto.imageUrlHiRes;
+    if (dto.types) cardSnapshot.types = dto.types;
+    if (dto.supertype) cardSnapshot.supertype = dto.supertype;
+    if (dto.subtypes) cardSnapshot.subtypes = dto.subtypes;
 
     // --- Mode B : variantes distinctes ---
     if ('variants' in dto && Array.isArray(dto.variants) && dto.variants.length > 0) {
@@ -70,15 +120,33 @@ export class PortfolioService {
         ...base,
         quantity: dto.variants.length, // Toujours déduit de variants.length
         variants: dto.variants.map((v) => ({
-          purchasePriceCents: v.purchasePriceCents, // Déjà en centimes depuis le type
+          purchasePrice: v.purchasePrice, // En euros
           purchaseDate: v.purchaseDate ? new Date(v.purchaseDate) : undefined,
           booster: v.booster,
           graded: v.graded,
           grading: normalizeGrading(v.grading),
           notes: v.notes,
         })),
+        cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
       });
-      return item.toObject();
+
+      // Retourner avec métadonnées aplaties
+      const obj = item.toObject();
+      const snapshot = cardSnapshot as CardSnapshot;
+      return {
+        ...obj,
+        name: snapshot.name,
+        setId: snapshot.set?.id,
+        setName: snapshot.set?.name,
+        setCardCount: snapshot.set?.cardCount?.total,
+        number: snapshot.number,
+        rarity: snapshot.rarity,
+        imageUrl: snapshot.imageUrl,
+        imageUrlHiRes: snapshot.imageUrlHiRes,
+        types: snapshot.types,
+        supertype: snapshot.supertype,
+        subtypes: snapshot.subtypes,
+      };
     }
 
     // --- Mode A : mêmes données pour toutes ---
@@ -90,28 +158,87 @@ export class PortfolioService {
       ...base,
       quantity: dto.quantity,
       booster: dto.booster,
-      purchasePriceCents: dto.purchasePriceCents, // Déjà en centimes depuis le type
+      purchasePrice: dto.purchasePrice, // En euros
       purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : undefined,
       graded: dto.graded,
       grading: normalizeGrading(dto.grading),
       notes: dto.notes,
+      cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
     });
 
-    return item.toObject();
+    // Retourner avec métadonnées aplaties
+    const obj = item.toObject();
+    const snapshot = cardSnapshot as CardSnapshot;
+    return {
+      ...obj,
+      name: snapshot.name,
+      setId: snapshot.set?.id,
+      setName: snapshot.set?.name,
+      setCardCount: snapshot.set?.cardCount?.total,
+      number: snapshot.number,
+      rarity: snapshot.rarity,
+      imageUrl: snapshot.imageUrl,
+      imageUrlHiRes: snapshot.imageUrlHiRes,
+      types: snapshot.types,
+      supertype: snapshot.supertype,
+      subtypes: snapshot.subtypes,
+    };
   }
 
-  async findAll(ownerId: string, query?: { cardId?: string }) {
+  async findAll(ownerId: string, query?: { cardId?: string }): Promise<Record<string, unknown>[]> {
     const filter: FilterQuery<PortfolioItemDocument> = { ownerId };
     if (query?.cardId) filter.cardId = query.cardId;
 
     const items = await this.model.find(filter).sort({ createdAt: -1 }).lean();
-    return items;
+
+    // Aplatir les données de cardSnapshot pour le frontend
+    return items.map((item) => {
+      const snapshot = item.cardSnapshot as CardSnapshot;
+      return {
+        ...item,
+        // Ajouter les métadonnées au niveau racine
+        name: snapshot?.name,
+        setId: snapshot?.set?.id,
+        setName: snapshot?.set?.name,
+        setCardCount: snapshot?.set?.cardCount?.total,
+        number: snapshot?.number,
+        rarity: snapshot?.rarity,
+        imageUrl: snapshot?.imageUrl,
+        imageUrlHiRes: snapshot?.imageUrlHiRes,
+        types: snapshot?.types,
+        supertype: snapshot?.supertype,
+        subtypes: snapshot?.subtypes,
+        // Ajouter isGraded (alias de graded) et les infos de gradation
+        isGraded: item.graded,
+        gradeCompany: item.grading?.company,
+        gradeScore: item.grading?.grade,
+      };
+    });
   }
 
-  async findOne(ownerId: string, id: string) {
+  async findOne(ownerId: string, id: string): Promise<Record<string, unknown>> {
     const item = await this.model.findOne({ ownerId, _id: id }).lean();
     if (!item) throw new NotFoundException('Item not found');
-    return item;
+
+    // Aplatir les données de cardSnapshot pour le frontend
+    const snapshot = item.cardSnapshot as CardSnapshot;
+    return {
+      ...item,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      setCardCount: snapshot?.set?.cardCount?.total,
+      number: snapshot?.number,
+      rarity: snapshot?.rarity,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      types: snapshot?.types,
+      supertype: snapshot?.supertype,
+      subtypes: snapshot?.subtypes,
+      isGraded: item.graded,
+      gradeCompany: item.grading?.company,
+      gradeScore: item.grading?.grade,
+    };
   }
 
   async update(ownerId: string, id: string, dto: UpdatePortfolioItemDto) {
@@ -121,7 +248,7 @@ export class PortfolioService {
     // Passage/maj en Mode B (variants) ?
     if (dto.variants) {
       item.variants = dto.variants.map((v) => ({
-        purchasePriceCents: v.purchasePriceCents,
+        purchasePrice: v.purchasePrice,
         purchaseDate: v.purchaseDate ? new Date(v.purchaseDate) : undefined,
         booster: v.booster,
         graded: v.graded,
@@ -132,7 +259,7 @@ export class PortfolioService {
 
       // On neutralise les champs unitaires (Mode A)
       item.booster = undefined;
-      item.purchasePriceCents = undefined;
+      item.purchasePrice = undefined;
       item.purchaseDate = undefined;
       item.graded = undefined;
       item.grading = undefined;
@@ -141,7 +268,7 @@ export class PortfolioService {
       // Mise à jour Mode A (champs unitaires)
       if (dto.quantity !== undefined) item.quantity = Math.max(1, dto.quantity);
       if (dto.booster !== undefined) item.booster = dto.booster;
-      if (dto.purchasePriceCents !== undefined) item.purchasePriceCents = dto.purchasePriceCents;
+      if (dto.purchasePrice !== undefined) item.purchasePrice = dto.purchasePrice;
       if (dto.purchaseDate !== undefined) {
         item.purchaseDate = dto.purchaseDate ? new Date(dto.purchaseDate) : undefined;
       }
@@ -154,7 +281,24 @@ export class PortfolioService {
     }
 
     await item.save();
-    return item.toObject();
+
+    // Retourner avec métadonnées aplaties
+    const obj = item.toObject();
+    const snapshot = obj.cardSnapshot as CardSnapshot;
+    return {
+      ...obj,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      setCardCount: snapshot?.set?.cardCount?.total,
+      number: snapshot?.number,
+      rarity: snapshot?.rarity,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      types: snapshot?.types,
+      supertype: snapshot?.supertype,
+      subtypes: snapshot?.subtypes,
+    };
   }
 
   async remove(ownerId: string, id: string) {
@@ -167,7 +311,7 @@ export class PortfolioService {
 
     let nbCartes = 0;
     let nbCartesDistinctes = 0;
-    let coutTotalAchatCents = 0;
+    let coutTotalAchat = 0;
     let nbSets = 0;
     let nbGraded = 0;
 
@@ -178,13 +322,13 @@ export class PortfolioService {
       nbCartesDistinctes += 1;
 
       if (Array.isArray(it.variants) && it.variants.length > 0) {
-        // Somme des prix d’achat par variante
-        coutTotalAchatCents += it.variants.reduce((acc, v) => acc + (v.purchasePriceCents || 0), 0);
+        // Somme des prix d'achat par variante
+        coutTotalAchat += it.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
         // Nombre de variantes gradées
         nbGraded += it.variants.filter((v) => v.graded).length;
       } else {
-        const unit = it.purchasePriceCents || 0;
-        coutTotalAchatCents += unit * (it.quantity ?? 0);
+        const unit = it.purchasePrice || 0;
+        coutTotalAchat += unit * (it.quantity ?? 0);
         if (it.graded) nbGraded += it.quantity ?? 0;
       }
 
@@ -197,9 +341,17 @@ export class PortfolioService {
     return {
       nbCartes,
       nbCartesDistinctes,
-      coutTotalAchatCents,
+      coutTotalAchat,
       nbSets,
       nbGraded,
     };
+  }
+
+  /**
+   * Supprime toutes les cartes du portfolio d'un utilisateur
+   */
+  async clearPortfolio(ownerId: string): Promise<{ deletedCount: number }> {
+    const result = await this.model.deleteMany({ ownerId }).exec();
+    return { deletedCount: result.deletedCount || 0 };
   }
 }

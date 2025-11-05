@@ -214,9 +214,11 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       // Construire les données pour l'API portfolio
       // Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
       interface PortfolioApiPayload {
-        // Métadonnées de la carte (obligatoires)
+        // Champs obligatoires
         cardId: string;
-        name: string;
+        language: string;
+        // Métadonnées de la carte (pour affichage)
+        name?: string;
         setId?: string;
         setName?: string;
         number?: string;
@@ -228,7 +230,8 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         supertype?: string;
         subtypes?: string[];
         // Données utilisateur
-        quantity: number;
+        quantity?: number;
+        booster?: boolean;
         graded?: boolean;
         grading?: {
           company?: string;
@@ -240,8 +243,10 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
       }
 
       const portfolioData: PortfolioApiPayload = {
-        // Métadonnées de la carte
+        // Champs obligatoires
         cardId: cardDetails.id,
+        language: 'fr', // Langue par défaut (requis par le backend)
+        // Métadonnées de la carte
         name: cardDetails.name,
         setId: cardDetails.set?.id,
         setName: cardDetails.set?.name,
@@ -253,7 +258,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         types: cardDetails.types,
         supertype: cardDetails.category,
         subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
-        // Données utilisateur
+        // Quantité
         quantity: data.quantity || 1,
       };
 
@@ -288,7 +293,6 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         console.error("📋 Détails de l'erreur:", {
           status: axiosError.response?.status,
           data: axiosError.response?.data,
-          message: axiosError.message,
         });
       }
       setToast({

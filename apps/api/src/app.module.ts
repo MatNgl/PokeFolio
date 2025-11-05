@@ -38,10 +38,10 @@ import { PortfolioModule } from './modules/portfolio/portfolio.module';
     }),
 
     // Features
+    PortfolioModule, // <-- Module portfolio (doit être avant UsersModule)
     UsersModule,
     AuthModule,
     CardsModule,
-    PortfolioModule, // <-- Module portfolio avec système de variantes
   ],
   controllers: [AppController],
   providers: [AppService],
