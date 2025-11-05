@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsBoolean, IsString, IsOptional, Min, Max, IsDateString } from 'class-validator';
+import { IsNumber, IsBoolean, IsString, IsOptional, Min, IsDateString } from 'class-validator';
 
 export class UpdateCardDto {
   @ApiProperty({ description: 'Quantité', required: false, minimum: 1 })
@@ -23,8 +23,12 @@ export class UpdateCardDto {
   @IsOptional()
   gradeScore?: string;
 
-  @ApiProperty({ description: "Prix d'achat", required: false })
-  @IsNumber()
+  @ApiProperty({
+    description: "Prix d'achat en euros (float accepté)",
+    required: false,
+    example: 149.99,
+  })
+  @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   purchasePrice?: number;
 
@@ -33,8 +37,12 @@ export class UpdateCardDto {
   @IsOptional()
   purchaseDate?: string;
 
-  @ApiProperty({ description: 'Valeur actuelle estimée', required: false })
-  @IsNumber()
+  @ApiProperty({
+    description: 'Valeur actuelle estimée en euros (float accepté)',
+    required: false,
+    example: 199.99,
+  })
+  @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   currentValue?: number;
 

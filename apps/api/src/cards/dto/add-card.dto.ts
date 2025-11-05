@@ -1,3 +1,4 @@
+// apps/api/src/cards/dto/add-card.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
@@ -8,14 +9,36 @@ import {
   Min,
   IsDateString,
   IsArray,
+  ValidateIf,
+  ValidateNested,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AddCardVariantDto } from './add-card-variant.dto';
+import { GradingDto } from './grading.dto';
+
+/**
+ * Validateur personnalisé pour s'assurer qu'on n'utilise pas Mode A et Mode B en même temps
+ */
+@ValidatorConstraint({ name: 'ModeExclusivity', async: false })
+export class ModeExclusivityConstraint implements ValidatorConstraintInterface {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  validate(_value: any, args: ValidationArguments) {
+    const obj = args.object as AddCardDto;
+    const isModeB = Array.isArray(obj.variants) && obj.variants.length > 0;
+    return !(isModeB && obj.quantity !== undefined);
+  }
+  defaultMessage(): string {
+    return 'Ne pas fournir quantity en Mode B (variantes) - il sera calculé automatiquement';
+  }
+}
 
 export class AddCardDto {
-  @ApiProperty({
-    description: 'Identifiant unique de la carte depuis TCGdex / Pokémon TCG API',
-    example: 'sv3-189',
-  })
+  /* ----- Métadonnées carte (inchangé) ----- */
+  @ApiProperty({ description: 'Identifiant unique de la carte', example: 'sv3-189' })
   @IsString()
   @IsNotEmpty()
   cardId!: string;
@@ -35,90 +58,124 @@ export class AddCardDto {
   @IsOptional()
   setName?: string;
 
-  @ApiPropertyOptional({ description: 'Numéro de la carte dans le set', example: '189' })
+  @ApiPropertyOptional({ description: 'Numéro dans le set', example: '189' })
   @IsString()
   @IsOptional()
   number?: string;
 
-  @ApiPropertyOptional({ description: 'Nombre total de cartes dans le set', example: 165 })
+  @ApiPropertyOptional({ description: 'Taille du set', example: 165 })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   setCardCount?: number;
 
-  @ApiPropertyOptional({ description: 'Rareté de la carte', example: 'Double Rare' })
+  @ApiPropertyOptional({ description: 'Rareté', example: 'Double Rare' })
   @IsString()
   @IsOptional()
   rarity?: string;
 
-  @ApiPropertyOptional({ description: "URL d'image standard" })
+  @ApiPropertyOptional({ description: "URL d'image" })
   @IsString()
   @IsOptional()
   imageUrl?: string;
 
-  @ApiPropertyOptional({ description: "URL d'image haute résolution" })
+  @ApiPropertyOptional({ description: 'URL image HD' })
   @IsString()
   @IsOptional()
   imageUrlHiRes?: string;
 
-  @ApiPropertyOptional({ description: 'Types élémentaires de la carte', example: ['Feu'] })
+  @ApiPropertyOptional({ description: 'Types', example: ['Feu'] })
   @IsArray()
   @IsOptional()
   types?: string[];
 
-  @ApiPropertyOptional({ description: 'Supertype de la carte', example: 'Pokémon' })
+  @ApiPropertyOptional({ description: 'Supertype', example: 'Pokémon' })
   @IsString()
   @IsOptional()
   supertype?: string;
 
-  @ApiPropertyOptional({ description: 'Sous-types de la carte', example: ['ex'] })
+  @ApiPropertyOptional({ description: 'Sous-types', example: ['ex'] })
   @IsArray()
   @IsOptional()
   subtypes?: string[];
 
-  @ApiProperty({ description: 'Quantité à ajouter', example: 1, minimum: 1, default: 1 })
+  /* ----- Mode A : même données pour toutes ----- */
+  @ApiPropertyOptional({
+    description: 'Quantité (obligatoire en Mode A, ignoré en Mode B car déduit de variants.length)',
+    example: 1,
+    minimum: 1,
+  })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  quantity!: number;
+  @Validate(ModeExclusivityConstraint)
+  quantity?: number;
 
-  @ApiProperty({ description: 'Carte gradée ?', example: false, default: false, required: false })
+  @ApiPropertyOptional({ description: "Carte issue d'un booster/scellé ?", example: false })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
-  isGraded?: boolean;
+  booster?: boolean;
+
+  @ApiPropertyOptional({ description: 'Carte gradée ?', example: false })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  graded?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Entreprise de gradation (PSA, BGS, CGC, etc.)',
-    example: 'PSA',
+    description: 'Informations de gradation (Mode A uniquement)',
+    type: GradingDto,
   })
-  @IsString()
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
+  @ValidateNested()
+  @Type(() => GradingDto)
   @IsOptional()
-  gradeCompany?: string;
+  grading?: GradingDto;
 
-  @ApiPropertyOptional({ description: 'Note de gradation (ex. 10, 9.5, 10+)', example: '10' })
-  @IsString()
-  @IsOptional()
-  gradeScore?: string;
-
-  @ApiPropertyOptional({ description: "Prix d'achat en euros", example: 149.9 })
+  @ApiPropertyOptional({
+    description: "Prix d'achat unitaire en euros (float accepté)",
+    example: 149.99,
+  })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @Type(() => Number)
   @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   purchasePrice?: number;
 
-  @ApiPropertyOptional({ description: "Date d'achat (format ISO 8601)", example: '2025-10-15' })
+  @ApiPropertyOptional({ description: "Date d'achat (ISO 8601)", example: '2025-10-15' })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @IsDateString()
   @IsOptional()
   purchaseDate?: string;
 
-  @ApiPropertyOptional({ description: 'Valeur actuelle estimée en euros', example: 180 })
+  @ApiPropertyOptional({
+    description: 'Valeur estimée en euros (non stockée côté backend actuellement)',
+    example: 180,
+  })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
   currentValue?: number;
 
-  @ApiPropertyOptional({ description: 'Notes personnelles sur la carte' })
+  @ApiPropertyOptional({ description: 'Notes personnelles' })
+  @ValidateIf((o) => !o.variants || o.variants.length === 0)
   @IsString()
   @IsOptional()
   notes?: string;
+
+  /* ----- Mode B : variantes distinctes (quantity implicite) ----- */
+  @ApiPropertyOptional({
+    description: 'Variantes (une par carte, prix/date/gradation distincts)',
+    type: [AddCardVariantDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddCardVariantDto)
+  @IsOptional()
+  variants?: AddCardVariantDto[];
 }

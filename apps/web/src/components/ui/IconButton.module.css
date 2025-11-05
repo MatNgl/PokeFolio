@@ -1,0 +1,40 @@
+.iconButton {
+  /* Fond noir uniforme */
+  background: #0f1419;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radii-md);
+
+  /* Taille */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  /* Flexbox pour centrer l'icône */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Curseur et transition */
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  /* Icône colorée */
+  color: var(--icon-color, #ffffff);
+}
+
+.iconButton:hover:not(:disabled) {
+  /* Légère surbrillance au hover */
+  background: #1a1f2e;
+  border-color: var(--icon-color, rgba(255, 255, 255, 0.3));
+  transform: scale(1.05);
+  box-shadow: 0 0 12px var(--icon-color);
+}
+
+.iconButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -25,13 +25,15 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? (
-        <div className={styles.loaderWrapper}>
-          <Loader />
-        </div>
-      ) : (
-        children
-      )}
+      <span className={styles.buttonInner}>
+        {loading ? (
+          <div className={styles.loaderWrapper}>
+            <Loader />
+          </div>
+        ) : (
+          children
+        )}
+      </span>
     </button>
   );
 }

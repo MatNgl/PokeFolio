@@ -1,105 +1,151 @@
-/* From Uiverse.io by andrew-manzyk - young-walrus-64 */
+/* === Loader — safe circle, perf & a11y === */
 .loader {
-  --clr: var(--primary);
-  width: 50px;
-  height: 50px;
+  --color-one: #ffbf48;
+  --color-two: #be4a1d;
+  --color-three: #ffbf4780;
+  --color-four: #bf4a1d80;
+  --color-five: #ffbf4740;
+  --time-animation: 2s;
+  --d: 100px;
+
   position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--d);
+  height: var(--d);
+  overflow: visible;
+
+  border-radius: 50%;
+  box-shadow:
+    0 0 25px 0 var(--color-three),
+    0 20px 50px 0 var(--color-four);
+
+  animation: colorize calc(var(--time-animation) * 3) ease-in-out infinite;
+
+  /* ✅ rendu/perf */
+  isolation: isolate;
+  backface-visibility: hidden;
+  will-change: filter, transform;
 }
 
-.box1,
-.box2,
-.box3 {
-  border: 5px solid var(--clr);
-  box-sizing: border-box;
+/* couvercle */
+.loader::before {
+  content: '';
   position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--d);
+  height: var(--d);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+
+  border-top: solid 1px var(--color-one);
+  border-bottom: solid 1px var(--color-two);
+  background: linear-gradient(180deg, var(--color-five), var(--color-four));
+  background-blend-mode: screen;
+  box-shadow:
+    inset 0 10px 10px 0 var(--color-three),
+    inset 0 -10px 10px 0 var(--color-four);
+  pointer-events: none;
+}
+
+/* svg */
+.core {
   display: block;
+  width: var(--d);
+  height: var(--d);
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+  will-change: transform, filter;
 }
 
-.box1 {
-  width: 100%;
-  height: 100%;
-  animation: anime1 4s infinite;
+/* vague : un peu plus net (4–6 recommandé) */
+.core defs mask polygon {
+  filter: blur(6px);
 }
 
-.box2 {
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  animation: anime2 4s infinite;
+/* animations mask */
+.core defs mask polygon:nth-of-type(1) {
+  transform-origin: 75% 25%;
+  transform: rotate(90deg);
+}
+.core defs mask polygon:nth-of-type(2) {
+  transform-origin: 50% 50%;
+  animation: rotation var(--time-animation) linear infinite reverse;
+}
+.core defs mask polygon:nth-of-type(3) {
+  transform-origin: 50% 60%;
+  animation: rotation var(--time-animation) linear infinite;
+  animation-delay: calc(var(--time-animation) / -3);
+}
+.core defs mask polygon:nth-of-type(4),
+.core defs mask polygon:nth-of-type(5) {
+  transform-origin: 40% 40%;
+  animation: rotation var(--time-animation) linear infinite reverse;
+}
+.core defs mask polygon:nth-of-type(5) {
+  animation-delay: calc(var(--time-animation) / -2);
+}
+.core defs mask polygon:nth-of-type(6) {
+  transform-origin: 60% 40%;
+  animation: rotation var(--time-animation) linear infinite;
 }
 
-.box3 {
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  animation: anime3 4s infinite;
+.core defs mask {
+  filter: contrast(15);
+  animation: roundness calc(var(--time-animation) / 2) linear infinite;
 }
 
-@keyframes anime1 {
+/* keyframes identiques */
+@keyframes rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes roundness {
+  0%,
+  60%,
+  100% {
+    filter: contrast(15);
+  }
+  20%,
+  40% {
+    filter: contrast(3);
+  }
+}
+@keyframes colorize {
   0% {
-    width: 0%;
-    height: 0%;
+    filter: hue-rotate(0deg);
   }
-  25% {
-    width: 0%;
-    height: 0%;
+  20% {
+    filter: hue-rotate(-30deg);
   }
-  50% {
-    width: 100%;
-    height: 0%;
+  40% {
+    filter: hue-rotate(-60deg);
   }
-  75% {
-    width: 100%;
-    height: 100%;
+  60% {
+    filter: hue-rotate(-90deg);
+  }
+  80% {
+    filter: hue-rotate(-45deg);
   }
   100% {
-    width: 100%;
-    height: 100%;
+    filter: hue-rotate(0deg);
   }
 }
 
-@keyframes anime2 {
-  0% {
-    width: 0%;
-    height: 0%;
+/* ♿️ Motion-safe : réduit/stoppe les anims pour les utilisateurs concernés */
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation: none;
   }
-  35% {
-    width: 0%;
-    height: 0%;
+  .core defs mask {
+    animation: none;
   }
-  50% {
-    width: 100%;
-    height: 0%;
-  }
-  75% {
-    width: 100%;
-    height: 100%;
-  }
-  100% {
-    width: 100%;
-    height: 100%;
-  }
-}
-
-@keyframes anime3 {
-  0% {
-    width: 0%;
-    height: 0%;
-  }
-  45% {
-    width: 0%;
-    height: 0%;
-  }
-  50% {
-    width: 100%;
-    height: 0%;
-  }
-  75% {
-    width: 100%;
-    height: 100%;
-  }
-  100% {
-    width: 100%;
-    height: 100%;
+  .core defs mask polygon {
+    animation: none;
   }
 }

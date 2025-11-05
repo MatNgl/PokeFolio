@@ -35,10 +35,12 @@ export interface BGSSubgrades {
 
 /**
  * Grading information
+ * Note: company et grade sont optionnels pour permettre la compatibilité avec les DTOs
+ * et la normalisation. Dans la pratique, une carte gradée devrait avoir au minimum company et grade.
  */
 export interface GradingInfo {
-  company: GradingCompany;
-  grade: Grade;
+  company?: GradingCompany;
+  grade?: Grade;
   subgrades?: BGSSubgrades;
   certificationNumber?: string;
 }

@@ -123,6 +123,15 @@
 .cardImageWrap {
   position: relative;
   margin-bottom: 12px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cardImageWrap:hover .cardImage {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(124, 243, 255, 0.25);
 }
 
 .cardImage {

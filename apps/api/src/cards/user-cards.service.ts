@@ -22,10 +22,10 @@ export class UserCardsService {
     const match: FilterQuery<UserCard> = {
       userId,
       cardId: dto.cardId,
-      isGraded: !!dto.isGraded,
+      isGraded: !!dto.graded,
       // on garde undefined si non fourni pour ne pas forcer "null"
-      gradeCompany: dto.gradeCompany ?? undefined,
-      gradeScore: dto.gradeScore ?? undefined,
+      gradeCompany: dto.grading?.company ?? undefined,
+      gradeScore: dto.grading?.grade ?? undefined,
     };
 
     // Mise à jour / insertion typée
@@ -44,9 +44,9 @@ export class UserCardsService {
         types: dto.types,
         supertype: dto.supertype,
         subtypes: dto.subtypes,
-        isGraded: !!dto.isGraded,
-        gradeCompany: dto.gradeCompany,
-        gradeScore: dto.gradeScore,
+        isGraded: !!dto.graded,
+        gradeCompany: dto.grading?.company,
+        gradeScore: dto.grading?.grade,
         purchasePrice: dto.purchasePrice,
         purchaseDate: normalizedPurchaseDate,
         currentValue: dto.currentValue,

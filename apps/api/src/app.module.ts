@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
+import { PortfolioModule } from './modules/portfolio/portfolio.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { CardsModule } from './cards/cards.module';
     // Features
     UsersModule,
     AuthModule,
-    CardsModule, // <-- AJOUT
+    CardsModule,
+    PortfolioModule, // <-- Module portfolio avec système de variantes
   ],
   controllers: [AppController],
   providers: [AppService],

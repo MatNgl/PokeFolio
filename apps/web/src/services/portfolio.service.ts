@@ -1,65 +1,110 @@
-import type { AddCardDto } from '@pokefolio/types';
+import type { PortfolioItem, UpdatePortfolioItemDto } from '@pokefolio/types';
 import { api } from './api';
 
-export type PortfolioCard = {
-  _id: string;
-  userId: string;
-  cardId: string;
-  name: string;
+/**
+ * Type pour les cartes du portfolio côté frontend
+ * Enrichi avec les données de la carte (snapshot ou champs hérités)
+ * Note: Certains champs viennent de l'ancien système (isGraded, etc.) pour rétrocompatibilité
+ */
+export type PortfolioCard = Omit<PortfolioItem, 'createdAt' | 'updatedAt'> & {
+  _id?: string;
+  id?: string;
+  // Dates peuvent être des strings après sérialisation JSON
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  // Champs enrichis depuis cardSnapshot
+  name?: string;
+  imageUrl?: string;
+  imageUrlHiRes?: string;
   setId?: string;
   setName?: string;
   number?: string;
   rarity?: string;
-  imageUrl?: string;
-  imageUrlHiRes?: string;
   types?: string[];
   supertype?: string;
   subtypes?: string[];
-  quantity: number;
-  isGraded: boolean;
+  // Champs de l'ancien système (à supprimer progressivement)
+  isGraded?: boolean;
   gradeCompany?: string;
-  gradeScore?: number;
+  gradeScore?: string | number;
   purchasePrice?: number;
-  purchaseDate?: string;
   currentValue?: number;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
 };
 
+/**
+ * Statistiques du portfolio
+ * Compatible avec ce que renvoie l'API backend
+ */
+export interface PortfolioStats {
+  nbCartes: number;
+  nbCartesDistinctes: number;
+  coutTotalAchatCents: number;
+  nbSets: number;
+  nbGraded: number;
+  // Aliases pour compatibilité frontend
+  totalCards?: number;
+  uniqueCards?: number;
+  distinctCards?: number;
+  totalCost?: number;
+  totalValue?: number;
+  totalCurrent?: number;
+  gradedCards?: number;
+  graded?: number;
+  profit?: number;
+}
+
+/**
+ * Service frontend pour gérer le portfolio
+ * Fait des appels HTTP vers l'API backend
+ */
 export const portfolioService = {
-  async addCard(dto: AddCardDto): Promise<PortfolioCard> {
-    const res = await api.post<PortfolioCard>('/portfolio/cards', dto);
-    return res.data;
-  },
-
+  /**
+   * Récupérer toutes les cartes du portfolio
+   */
   async getCards(): Promise<PortfolioCard[]> {
-    const res = await api.get<PortfolioCard[]>('/portfolio/cards');
-    return res.data;
+    const response = await api.get<PortfolioCard[]>('/portfolio/cards');
+    return response.data;
   },
 
+  /**
+   * Récupérer une carte spécifique par son ID
+   */
   async getCard(id: string): Promise<PortfolioCard> {
-    const res = await api.get<PortfolioCard>(`/portfolio/cards/${id}`);
-    return res.data;
+    const response = await api.get<PortfolioCard>(`/portfolio/cards/${id}`);
+    return response.data;
   },
 
-  async updateCard(id: string, payload: Partial<PortfolioCard>): Promise<PortfolioCard> {
-    const res = await api.put<PortfolioCard>(`/portfolio/cards/${id}`, payload);
-    return res.data;
+  /**
+   * Ajouter une carte au portfolio
+   * Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
+   */
+  async addCard(data: Record<string, unknown>): Promise<PortfolioCard> {
+    const response = await api.post<PortfolioCard>('/portfolio/cards', data);
+    return response.data;
   },
 
+  /**
+   * Mettre à jour une carte du portfolio
+   * Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
+   */
+  async updateCard(id: string, data: UpdatePortfolioItemDto): Promise<PortfolioCard> {
+    const response = await api.put<PortfolioCard>(`/portfolio/cards/${id}`, data);
+    return response.data;
+  },
+
+  /**
+   * Supprimer une carte du portfolio
+   */
   async deleteCard(id: string): Promise<void> {
     await api.delete(`/portfolio/cards/${id}`);
   },
 
-  async getStats(): Promise<{
-    totalCards: number;
-    distinctCards: number;
-    totalCost: number;
-    totalCurrent: number;
-    profit: number;
-  }> {
-    const res = await api.get('/portfolio/stats');
-    return res.data;
+  /**
+   * Obtenir les statistiques du portfolio
+   */
+  async getStats(): Promise<PortfolioStats> {
+    const response = await api.get<PortfolioStats>('/portfolio/stats');
+    return response.data;
   },
 };

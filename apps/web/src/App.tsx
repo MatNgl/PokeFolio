@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -15,6 +16,15 @@ function RootRedirect() {
   return <Navigate to={isAuthenticated ? '/portfolio' : '/login'} replace />;
 }
 
+// Route "publique" : si connecté, on redirige vers /portfolio (bloque /login & /register)
+function PublicRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) {
+    return <Navigate to="/portfolio" replace />;
+  }
+  return <>{children}</>;
+}
+
 // Rend le Header sauf sur /login et /register
 function AppInner() {
   const location = useLocation();
@@ -25,11 +35,28 @@ function AppInner() {
       {!hideHeader && <Header />}
 
       <Routes>
+        {/* Racine */}
         <Route path="/" element={<RootRedirect />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
-        {/* Dashboard (toujours accessible) */}
+        {/* Auth (publiques, mais redirigées si déjà connecté) */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
+
+        {/* Dashboard (protégé) */}
         <Route
           path="/dashboard"
           element={
@@ -39,7 +66,7 @@ function AppInner() {
           }
         />
 
-        {/* Page principale : Portfolio */}
+        {/* Page principale : Portfolio (protégée) */}
         <Route
           path="/portfolio"
           element={
@@ -59,6 +86,7 @@ function AppInner() {
           }
         />
 
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

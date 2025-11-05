@@ -18,19 +18,18 @@ export class RegisterDto {
   pseudo!: string;
 
   @ApiProperty({
-    description: 'Mot de passe (≥12 & ≥3 catégories: maj/min/chiffre/symbole)',
-    example: 'StrongPassw0rd!',
-    minLength: 12,
+    description: 'Mot de passe (≥6, 1 majuscule, 1 caractère spécial)',
+    example: 'Azerty!',
+    minLength: 6,
   })
   @IsString()
-  @Length(12, 128, { message: 'Le mot de passe doit contenir au moins 12 caractères' })
-  @Matches(
-    /^(?:(?=.*[a-z])(?=.*[A-Z])(?=.*\d)|(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9])|(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9])|(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])).+$/,
-    { message: 'Le mot de passe doit contenir au moins 3 catégories: maj, min, chiffre, symbole' }
-  )
+  @Length(6, 128, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
+  @Matches(/^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/, {
+    message: 'Le mot de passe doit contenir au moins une majuscule et un caractère spécial',
+  })
   password!: string;
 
-  @ApiProperty({ description: 'Confirmation du mot de passe', example: 'StrongPassw0rd!' })
+  @ApiProperty({ description: 'Confirmation du mot de passe', example: 'Azerty!' })
   @IsNotEmpty({ message: 'La confirmation du mot de passe est requise' })
   @Match('password', { message: 'La confirmation doit correspondre au mot de passe' })
   confirmPassword!: string;

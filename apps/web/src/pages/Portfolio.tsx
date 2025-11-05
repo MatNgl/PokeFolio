@@ -1,15 +1,30 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { UserCard, PortfolioStats } from '@pokefolio/types';
-import { portfolioService } from '../services/portfolio.service';
+import type { UserCard } from '@pokefolio/types';
+import {
+  portfolioService,
+  type PortfolioCard,
+  type PortfolioStats,
+} from '../services/portfolio.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { EditCardModal } from '../components/cards/EditCardModal';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
+import PortfolioCardDetailsModal from '../components/cards/PortfolioCardDetailsModal';
 import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import { Loader } from '../components/ui/Loader';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 
 /** ---- Types côté UI ---- */
+type PortfolioVariant = {
+  purchasePrice?: number;
+  purchaseDate?: string | Date;
+  isGraded?: boolean;
+  gradeCompany?: string;
+  gradeScore?: string | number;
+  notes?: string;
+};
+
 type UserCardView = Partial<Omit<UserCard, 'gradeScore' | 'imageUrl'>> & {
   cardId: string; // obligatoire
   name: string; // obligatoire
@@ -20,6 +35,17 @@ type UserCardView = Partial<Omit<UserCard, 'gradeScore' | 'imageUrl'>> & {
   id?: string;
   image?: string;
   images?: { small?: string; large?: string };
+  variants?: PortfolioVariant[];
+  setCardCount?: number;
+  ownerId?: string;
+  userId?: string;
+  language?: string;
+  types?: string[];
+  supertype?: string;
+  subtypes?: string[];
+  currentValue?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 /** ---- Types “bruts” possibles venant de l’API (tolérants) ---- */
@@ -50,10 +76,17 @@ type ApiCard = {
 };
 
 type ApiStats = {
-  totalCards: number;
+  // Champs de l'API backend
+  nbCartes?: number;
+  nbCartesDistinctes?: number;
+  coutTotalAchatCents?: number;
+  nbSets?: number;
+  nbGraded?: number;
+  // Champs de l'ancien système
+  totalCards?: number;
   distinctCards?: number;
   uniqueCards?: number;
-  totalCost: number;
+  totalCost?: number;
   totalCurrent?: number;
   totalValue?: number;
   gradedCards?: number;
@@ -96,6 +129,13 @@ const normalizeStats = (s: ApiStats): PortfolioStats => {
   const gradedCards = s.gradedCards ?? s.graded ?? 0;
 
   return {
+    // Champs obligatoires de l'API
+    nbCartes: s.totalCards ?? s.nbCartes ?? 0,
+    nbCartesDistinctes: uniqueCards,
+    coutTotalAchatCents: s.totalCost ?? s.coutTotalAchatCents ?? 0, // Stocké en euros (float)
+    nbSets: s.nbSets ?? 0,
+    nbGraded: gradedCards,
+    // Champs optionnels pour compatibilité
     totalCards: s.totalCards ?? 0,
     uniqueCards,
     totalCost: s.totalCost ?? 0,
@@ -104,6 +144,33 @@ const normalizeStats = (s: ApiStats): PortfolioStats => {
     gradedCards,
   };
 };
+
+// Convertit une entry API (PortfolioCard) en UserCardView pour EditModal
+function toUserCardView(entry: PortfolioCard): UserCardView {
+  return {
+    _id: entry._id,
+    id: entry._id,
+    cardId: entry.cardId,
+    name: entry.name,
+    quantity: entry.quantity,
+    imageUrl: entry.imageUrl,
+    image: entry.imageUrl,
+    images: entry.imageUrl ? { small: entry.imageUrl, large: entry.imageUrlHiRes } : undefined,
+    setId: entry.setId,
+    setName: entry.setName,
+    number: entry.number,
+    rarity: entry.rarity,
+    isGraded: entry.isGraded,
+    gradeCompany: entry.gradeCompany,
+    gradeScore: typeof entry.gradeScore === 'number' ? String(entry.gradeScore) : entry.gradeScore,
+    purchasePrice: entry.purchasePrice,
+    purchaseDate: entry.purchaseDate,
+    currentValue: entry.currentValue,
+    notes: entry.notes,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+  } as UserCardView;
+}
 
 export default function Portfolio() {
   const [cards, setCards] = useState<UserCardView[]>([]);
@@ -114,13 +181,13 @@ export default function Portfolio() {
   const [deletingCard, setDeletingCard] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // ✅ état local pour afficher un toast
+  // ➕ Nouveau : entrée sélectionnée pour détails
+  const [detailsEntry, setDetailsEntry] = useState<PortfolioCard | null>(null);
+
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
   } | null>(null);
-
-  const totalQty = useMemo(() => cards.reduce((acc, c) => acc + (c.quantity ?? 0), 0), [cards]);
 
   const loadData = async () => {
     try {
@@ -182,7 +249,6 @@ export default function Portfolio() {
   const resolveImage = (card: UserCardView): string => {
     let img = card.imageUrl || card.image || card.images?.small;
 
-    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
     if (img && img.includes('assets.tcgdex.net') && !img.match(/\.(webp|png|jpg|jpeg)$/i)) {
       img = `${img}/high.webp`;
     }
@@ -253,9 +319,48 @@ export default function Portfolio() {
             const docId = resolveId(card);
             const img = resolveImage(card);
 
+            // Entry complète pour le modal (PortfolioCard shape)
+            const entryLike = {
+              _id: (card._id ?? card.id ?? '') as string,
+              ownerId: card.ownerId ?? card.userId ?? '',
+              cardId: card.cardId,
+              language: card.language ?? 'fr',
+              name: card.name,
+              setId: card.setId,
+              setName: card.setName,
+              number: card.number,
+              rarity: card.rarity,
+              imageUrl: card.imageUrl ?? card.image,
+              imageUrlHiRes: card.images?.large,
+              types: card.types,
+              supertype: card.supertype,
+              subtypes: card.subtypes,
+              quantity: card.quantity ?? 1,
+              isGraded: Boolean(card.isGraded),
+              gradeCompany: card.gradeCompany,
+              gradeScore: card.gradeScore ? Number(card.gradeScore) : undefined,
+              purchasePrice: card.purchasePrice,
+              purchaseDate: card.purchaseDate
+                ? typeof card.purchaseDate === 'string'
+                  ? new Date(card.purchaseDate)
+                  : card.purchaseDate
+                : undefined,
+              currentValue: card.currentValue,
+              notes: card.notes,
+              createdAt: card.createdAt ?? new Date().toISOString(),
+              updatedAt: card.updatedAt ?? new Date().toISOString(),
+            };
+
             return (
               <article key={docId} className={styles.card}>
-                <div className={styles.cardImageWrap}>
+                {/* ✅ bouton accessible pour ouvrir les détails */}
+                <button
+                  type="button"
+                  className={styles.cardImageWrap}
+                  onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
+                  aria-label={`Voir les détails de ${card.name}`}
+                  title={`Voir les détails de ${card.name}`}
+                >
                   <img
                     src={img}
                     alt={card.name}
@@ -263,6 +368,10 @@ export default function Portfolio() {
                     loading="lazy"
                     width={245}
                     height={342}
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }}
                   />
                   {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
                   {card.isGraded && (
@@ -270,7 +379,7 @@ export default function Portfolio() {
                       {card.gradeCompany} {card.gradeScore}
                     </span>
                   )}
-                </div>
+                </button>
 
                 <div className={styles.cardInfo}>
                   <h3 className={styles.cardName}>{card.name}</h3>
@@ -279,52 +388,43 @@ export default function Portfolio() {
                     {card.setCardCount && `/${card.setCardCount}`}
                   </p>
                   {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
-                  {typeof card.purchasePrice === 'number' && (
-                    <p className={styles.cardValue}>
-                      {euro(card.purchasePrice)}
-                      {card.quantity > 1 && ` × ${card.quantity}`}
-                    </p>
-                  )}
+                  {(() => {
+                    // Si la carte a des variantes, calculer le prix total
+                    const hasVariants =
+                      card.variants && Array.isArray(card.variants) && card.variants.length > 0;
+
+                    if (hasVariants && card.variants) {
+                      const total = card.variants.reduce(
+                        (sum: number, v: PortfolioVariant) => sum + (v.purchasePrice ?? 0),
+                        0
+                      );
+                      if (total > 0) {
+                        return <p className={styles.cardValue}>Total : {euro(total)}</p>;
+                      }
+                    } else if (typeof card.purchasePrice === 'number') {
+                      // Mode simple
+                      const total = card.purchasePrice * (card.quantity ?? 1);
+                      return (
+                        <p className={styles.cardValue}>
+                          {card.quantity > 1 ? `Total : ${euro(total)}` : euro(card.purchasePrice)}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div className={styles.cardActions}>
-                  <button
-                    className={styles.editBtn}
+                  <IconButton
+                    icon="edit"
+                    label={`Modifier ${card.name}`}
                     onClick={() => setEditingCard(card)}
-                    title="Modifier la carte"
-                    aria-label={`Modifier ${card.name}`}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
-                  <button
-                    className={styles.deleteBtn}
+                  />
+                  <IconButton
+                    icon="delete"
+                    label={`Supprimer ${card.name}`}
                     onClick={() => setDeletingCard({ id: docId, name: card.name })}
-                    title="Supprimer la carte"
-                    aria-label={`Supprimer ${card.name}`}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    </svg>
-                  </button>
+                  />
                 </div>
               </article>
             );
@@ -354,7 +454,23 @@ export default function Portfolio() {
         />
       )}
 
-      {/* ✅ Rendu du toast (se ferme via onClose ou auto via duration) */}
+      {/* 🔍 Modal de détails du portfolio */}
+      {detailsEntry && (
+        <PortfolioCardDetailsModal
+          entry={detailsEntry}
+          onClose={() => setDetailsEntry(null)}
+          onEdit={(entry) => {
+            setDetailsEntry(null);
+            setEditingCard(toUserCardView(entry));
+          }}
+          onDelete={(entry) => {
+            setDetailsEntry(null);
+            setDeletingCard({ id: entry._id || '', name: entry.name || 'Carte sans nom' });
+          }}
+        />
+      )}
+
+      {/* ✅ Toast */}
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>
           <Toast

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { Card, AddCardDto } from '@pokefolio/types';
+import type { Card } from '@pokefolio/types';
 import { cardsService } from '../../services/cards.service';
 import { portfolioService } from '../../services/portfolio.service';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { Toast } from '../ui/Toast';
 import styles from './AddCardModal.module.css';
@@ -15,14 +16,25 @@ interface AddCardModalProps {
   card?: Card; // Carte pré-sélectionnée (optionnel)
 }
 
+type VariantForm = {
+  isGraded?: boolean;
+  gradeCompany?: string;
+  gradeScore?: string;
+  purchasePrice?: number;
+  purchaseDate?: string;
+  notes?: string;
+};
+
 interface FormData {
   quantity: number;
+  sameForAll: boolean;
   isGraded: boolean;
   gradeCompany?: string;
   gradeScore?: string;
   purchasePrice?: number;
   purchaseDate?: string;
   notes?: string;
+  variants?: VariantForm[];
 }
 
 // Sociétés de gradation et leurs barèmes
@@ -84,14 +96,40 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const { register, handleSubmit, watch, setValue } = useForm<FormData>({
-    defaultValues: { quantity: 1, isGraded: false },
+    defaultValues: { quantity: 1, isGraded: false, variants: [] },
   });
 
-  const isGraded = watch('isGraded');
+  const quantity = watch('quantity');
   const selectedCompany = watch('gradeCompany');
 
   // Focus auto dans le modal
   const dialogRef = useRef<HTMLElement>(null);
+
+  // Initialiser automatiquement les variantes quand quantity >= 2
+  useEffect(() => {
+    const currentQuantity = quantity ?? 1;
+    const currentVariants = watch('variants') ?? [];
+
+    // Si quantity >= 2, s'assurer qu'on a le bon nombre de variantes
+    if (currentQuantity >= 2) {
+      if (currentVariants.length !== currentQuantity) {
+        setValue(
+          'variants',
+          Array.from(
+            { length: currentQuantity },
+            (_, i) => currentVariants[i] || ({} as VariantForm)
+          ),
+          { shouldDirty: true }
+        );
+      }
+    } else {
+      // Si quantity === 1, vider les variantes
+      if (currentVariants.length > 0) {
+        setValue('variants', [], { shouldDirty: true });
+      }
+    }
+  }, [quantity, setValue, watch]);
+
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
@@ -112,11 +150,6 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
   useEffect(() => {
     register('purchaseDate');
   }, [register]);
-
-  // Grades disponibles
-  const availableGrades = selectedCompany
-    ? GRADING_COMPANIES.find((c) => c.id === selectedCompany)?.grades || []
-    : [];
 
   const getCardImageUrl = (card: Card): string => {
     let img = card.image || card.images?.small || '';
@@ -178,16 +211,36 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         }
       }
 
-      // Préparer les URLs d'images avec extension .webp
-      const prepareImageUrl = (url: string | undefined): string | undefined => {
-        if (!url) return undefined;
-        if (url.includes('assets.tcgdex.net') && !url.match(/\.(webp|png|jpg|jpeg)$/i)) {
-          return `${url}/high.webp`;
-        }
-        return url;
-      };
+      // Construire les données pour l'API portfolio
+      // Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
+      interface PortfolioApiPayload {
+        // Métadonnées de la carte (obligatoires)
+        cardId: string;
+        name: string;
+        setId?: string;
+        setName?: string;
+        number?: string;
+        setCardCount?: number;
+        rarity?: string;
+        imageUrl?: string;
+        imageUrlHiRes?: string;
+        types?: string[];
+        supertype?: string;
+        subtypes?: string[];
+        // Données utilisateur
+        quantity: number;
+        graded?: boolean;
+        grading?: {
+          company?: string;
+          grade?: string;
+        };
+        purchasePrice?: number; // En euros (float)
+        purchaseDate?: string;
+        notes?: string;
+      }
 
-      const cardData: AddCardDto = {
+      const portfolioData: PortfolioApiPayload = {
+        // Métadonnées de la carte
         cardId: cardDetails.id,
         name: cardDetails.name,
         setId: cardDetails.set?.id,
@@ -195,26 +248,49 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         number: cardDetails.localId,
         setCardCount: cardDetails.set?.cardCount?.total || cardDetails.set?.cardCount?.official,
         rarity: cardDetails.rarity,
-        imageUrl: prepareImageUrl(cardDetails.image || cardDetails.images?.small),
-        imageUrlHiRes: prepareImageUrl(cardDetails.images?.large),
+        imageUrl: cardDetails.image || cardDetails.images?.small,
+        imageUrlHiRes: cardDetails.images?.large,
         types: cardDetails.types,
         supertype: cardDetails.category,
         subtypes: cardDetails.stage ? [cardDetails.stage] : undefined,
-        quantity: data.quantity,
-        isGraded: data.isGraded,
-        gradeCompany: data.gradeCompany,
-        gradeScore: data.gradeScore,
-        purchasePrice: data.purchasePrice,
-        purchaseDate: data.purchaseDate,
-        notes: data.notes,
+        // Données utilisateur
+        quantity: data.quantity || 1,
       };
 
-      await portfolioService.addCard(cardData);
+      // Ajouter les champs optionnels seulement s'ils sont définis
+      if (data.isGraded) {
+        portfolioData.graded = true;
+        if (data.gradeCompany || data.gradeScore) {
+          portfolioData.grading = {
+            company: data.gradeCompany,
+            grade: data.gradeScore?.toString(),
+          };
+        }
+      }
+      if (data.purchasePrice !== undefined && data.purchasePrice !== null) {
+        portfolioData.purchasePrice = data.purchasePrice;
+      }
+      if (data.purchaseDate) {
+        portfolioData.purchaseDate = data.purchaseDate;
+      }
+      if (data.notes) {
+        portfolioData.notes = data.notes;
+      }
+
+      await portfolioService.addCard(portfolioData as unknown as Record<string, unknown>);
       // Fermer immédiatement et notifier le succès
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Erreur lors de l'ajout:", error);
+      console.error("❌ Erreur lors de l'ajout:", error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: unknown } };
+        console.error("📋 Détails de l'erreur:", {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          message: axiosError.message,
+        });
+      }
       setToast({
         message:
           error instanceof Error
@@ -342,6 +418,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
                 </div>
               </div>
 
+              {/* Quantité */}
               <Input
                 label="Quantité"
                 type="number"
@@ -349,83 +426,233 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
                 {...register('quantity', { valueAsNumber: true })}
               />
 
-              <label className={styles.checkbox}>
-                <input type="checkbox" {...register('isGraded')} />
-                <span>Carte gradée</span>
-              </label>
-
-              {isGraded && (
+              {/* Champs simples si quantity === 1 */}
+              {quantity === 1 && (
                 <>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="gradeCompany" className={styles.label}>
-                      Société de gradation
-                    </label>
-                    <select
-                      id="gradeCompany"
-                      className={styles.select}
-                      {...register('gradeCompany', {
-                        onChange: () => setValue('gradeScore', undefined),
-                      })}
-                    >
-                      <option value="">Sélectionner une société</option>
-                      {GRADING_COMPANIES.map((company) => (
-                        <option key={company.id} value={company.id}>
-                          {company.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Checkbox gradée */}
+                  <Checkbox label="Carte gradée" {...register('isGraded')} />
 
-                  {selectedCompany && availableGrades.length > 0 && (
-                    <div className={styles.formGroup}>
-                      <label htmlFor="gradeScore" className={styles.label}>
-                        Note
-                      </label>
-                      <select id="gradeScore" className={styles.select} {...register('gradeScore')}>
-                        <option value="">Sélectionner une note</option>
-                        {availableGrades.map((grade) => (
-                          <option key={grade} value={grade}>
-                            {grade}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  {/* Société + note (affichés seulement si gradée) */}
+                  {watch('isGraded') && (
+                    <>
+                      <div className={styles.formGroup}>
+                        <span className={styles.label}>Société de gradation</span>
+                        <select
+                          className={styles.select}
+                          {...register('gradeCompany')}
+                          onChange={(e) => {
+                            setValue('gradeCompany', e.target.value || undefined);
+                            setValue('gradeScore', undefined);
+                          }}
+                        >
+                          <option value="">Sélectionnez une société</option>
+                          {GRADING_COMPANIES.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {watch('gradeCompany') && (
+                        <div className={styles.formGroup}>
+                          <span className={styles.label}>Note</span>
+                          <select className={styles.select} {...register('gradeScore')}>
+                            <option value="">Sélectionnez une note</option>
+                            {(
+                              GRADING_COMPANIES.find((c) => c.id === watch('gradeCompany'))
+                                ?.grades ?? []
+                            ).map((g) => (
+                              <option key={g} value={g}>
+                                {g}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </>
                   )}
+
+                  <Input
+                    label="Prix d'achat (€)"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Optionnel"
+                    {...register('purchasePrice', {
+                      setValueAs: (v) => (v === '' || v === null ? undefined : parseFloat(v)),
+                    })}
+                  />
+
+                  <DatePicker
+                    label="Date d'achat"
+                    placeholder="Sélectionnez une date"
+                    value={watch('purchaseDate') || ''}
+                    onChange={(value: string) =>
+                      setValue('purchaseDate', value, { shouldValidate: true, shouldDirty: true })
+                    }
+                  />
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="notes" className={styles.label}>
+                      Notes
+                    </label>
+                    <textarea
+                      id="notes"
+                      className={styles.textarea}
+                      placeholder="Notes personnelles..."
+                      rows={3}
+                      {...register('notes')}
+                    />
+                  </div>
                 </>
               )}
 
-              <Input
-                label="Prix d'achat (€)"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Optionnel"
-                {...register('purchasePrice', {
-                  setValueAs: (v) => (v === '' || v === null ? undefined : parseFloat(v)),
-                })}
-              />
+              {/* Form variantes si quantity >= 2 */}
+              {quantity >= 2 && (
+                <div className={styles.variants}>
+                  <div className={styles.variantsHeader}>
+                    <h4>Données par carte ({quantity})</h4>
+                    <button
+                      type="button"
+                      className={styles.copyFirstBtn}
+                      onClick={() => {
+                        const list = watch('variants') ?? [];
+                        if (list.length > 1) {
+                          const first = list[0] ?? {};
+                          setValue(
+                            'variants',
+                            list.map(() => ({ ...first })),
+                            { shouldDirty: true }
+                          );
+                        }
+                      }}
+                    >
+                      Copier la 1ʳᵉ sur toutes
+                    </button>
+                  </div>
 
-              <DatePicker
-                label="Date d'achat"
-                placeholder="Sélectionnez une date"
-                value={watch('purchaseDate') || ''}
-                onChange={(value: string) =>
-                  setValue('purchaseDate', value, { shouldValidate: true, shouldDirty: true })
-                }
-              />
+                  {(watch('variants') ?? []).map((v, i) => (
+                    <fieldset key={i} className={styles.variantRow}>
+                      <legend>Carte #{i + 1}</legend>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="notes" className={styles.label}>
-                  Notes
-                </label>
-                <textarea
-                  id="notes"
-                  className={styles.textarea}
-                  placeholder="Notes personnelles..."
-                  rows={3}
-                  {...register('notes')}
-                />
-              </div>
+                      <Checkbox
+                        label="Carte gradée"
+                        checked={Boolean(v?.isGraded)}
+                        onChange={(e) => {
+                          const list = [...(watch('variants') ?? [])];
+                          list[i] = {
+                            ...(list[i] || {}),
+                            isGraded: e.target.checked,
+                            // Réinitialiser les données de gradation si on décoche
+                            gradeCompany: e.target.checked ? list[i]?.gradeCompany : undefined,
+                            gradeScore: e.target.checked ? list[i]?.gradeScore : undefined,
+                          };
+                          setValue('variants', list, { shouldDirty: true });
+                        }}
+                      />
+
+                      {/* Société + note (affichés seulement si gradée) */}
+                      {v?.isGraded && (
+                        <>
+                          <div className={styles.formGroup}>
+                            <span className={styles.label}>Société</span>
+                            <select
+                              className={styles.select}
+                              value={v?.gradeCompany ?? ''}
+                              onChange={(e) => {
+                                const list = [...(watch('variants') ?? [])];
+                                list[i] = {
+                                  ...(list[i] || {}),
+                                  gradeCompany: e.target.value || undefined,
+                                  gradeScore: undefined,
+                                };
+                                setValue('variants', list, { shouldDirty: true });
+                              }}
+                            >
+                              <option value="">—</option>
+                              {GRADING_COMPANIES.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {v?.gradeCompany && (
+                            <div className={styles.formGroup}>
+                              <span className={styles.label}>Note</span>
+                              <select
+                                className={styles.select}
+                                value={v?.gradeScore ?? ''}
+                                onChange={(e) => {
+                                  const list = [...(watch('variants') ?? [])];
+                                  list[i] = {
+                                    ...(list[i] || {}),
+                                    gradeScore: e.target.value || undefined,
+                                  };
+                                  setValue('variants', list, { shouldDirty: true });
+                                }}
+                              >
+                                <option value="">—</option>
+                                {(
+                                  GRADING_COMPANIES.find((c) => c.id === v.gradeCompany)?.grades ??
+                                  []
+                                ).map((g) => (
+                                  <option key={g} value={g}>
+                                    {g}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <Input
+                        label="Prix d'achat (€)"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={v?.purchasePrice ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const list = [...(watch('variants') ?? [])];
+                          list[i] = {
+                            ...(list[i] || {}),
+                            purchasePrice: val === '' ? undefined : Number(val),
+                          };
+                          setValue('variants', list, { shouldDirty: true });
+                        }}
+                      />
+
+                      <DatePicker
+                        label="Date d'achat"
+                        value={v?.purchaseDate ?? ''}
+                        onChange={(val) => {
+                          const list = [...(watch('variants') ?? [])];
+                          list[i] = { ...(list[i] || {}), purchaseDate: val || undefined };
+                          setValue('variants', list, { shouldDirty: true });
+                        }}
+                      />
+
+                      <div className={styles.formGroup}>
+                        <span className={styles.label}>Notes</span>
+                        <textarea
+                          className={styles.textarea}
+                          rows={2}
+                          value={v?.notes ?? ''}
+                          onChange={(e) => {
+                            const list = [...(watch('variants') ?? [])];
+                            list[i] = { ...(list[i] || {}), notes: e.target.value || undefined };
+                            setValue('variants', list, { shouldDirty: true });
+                          }}
+                        />
+                      </div>
+                    </fieldset>
+                  ))}
+                </div>
+              )}
 
               <div className={styles.actions}>
                 <Button type="button" variant="secondary" onClick={onClose}>

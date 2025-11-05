@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { Button } from '../components/ui/Button';
+import { Checkbox } from '../components/ui/Checkbox';
 import styles from './Auth.module.css';
 
 export function Login() {
@@ -68,10 +69,7 @@ export function Login() {
             })}
           />
 
-          <label className={styles.checkbox}>
-            <input type="checkbox" {...register('rememberMe')} />
-            <span>Rester connecté (30 jours)</span>
-          </label>
+          <Checkbox label="Rester connecté (30 jours)" {...register('rememberMe')} />
 
           {error && <div className={styles.error}>{error}</div>}
 

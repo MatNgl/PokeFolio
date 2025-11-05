@@ -4,6 +4,7 @@ import type { UserCard } from '@pokefolio/types';
 import { portfolioService } from '../../services/portfolio.service';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { Toast } from '../ui/Toast';
 import styles from './AddCardModal.module.css';
@@ -138,12 +139,18 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
   const onSubmit = async (data: FormData) => {
     setSaving(true);
     try {
+      // Note: Les prix sont stockés en EUROS (float accepté: ex. 149.99)
       await portfolioService.updateCard(card._id, {
         quantity: data.quantity,
-        isGraded: data.isGraded,
-        gradeCompany: data.gradeCompany,
-        gradeScore: data.gradeScore,
-        purchasePrice: data.purchasePrice,
+        graded: data.isGraded,
+        grading:
+          data.isGraded && (data.gradeCompany || data.gradeScore)
+            ? {
+                company: data.gradeCompany,
+                grade: data.gradeScore?.toString(),
+              }
+            : undefined,
+        purchasePrice: data.purchasePrice, // En euros (float)
         purchaseDate: data.purchaseDate,
         notes: data.notes,
       });
@@ -223,10 +230,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
               {...register('quantity', { valueAsNumber: true })}
             />
 
-            <label className={styles.checkbox}>
-              <input type="checkbox" {...register('isGraded')} />
-              <span>Carte gradée</span>
-            </label>
+            <Checkbox label="Carte gradée" {...register('isGraded')} />
 
             {isGraded && (
               <>

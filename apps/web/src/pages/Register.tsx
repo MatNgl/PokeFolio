@@ -107,8 +107,8 @@ export function Register() {
             {...register('password', {
               required: 'Mot de passe requis',
               minLength: {
-                value: 12,
-                message: 'Au moins 12 caractères',
+                value: 6,
+                message: 'Au moins 6 caractères',
               },
               validate: (value) =>
                 hasThreeClasses(value) ||
@@ -127,7 +127,7 @@ export function Register() {
           />
 
           <div className={styles.hint}>
-            Mot de passe : ≥ 12 caractères & au moins 3 catégories parmi maj., min., chiffres,
+            Mot de passe : ≥ 6 caractères & au moins 3 catégories parmi maj., min., chiffres,
             symboles.
           </div>
 
