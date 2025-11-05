@@ -195,19 +195,21 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
             </div>
 
             <div className={styles.right}>
-              <h3 className={styles.name}>{title}</h3>
-
-              <div className={styles.tags}>
-                <span className={styles.tag}>{setLabel}</span>
-                <span className={styles.tag}>#{number}</span>
-                {rarity && <span className={styles.tag}>{rarity}</span>}
-              </div>
-
-              {/* --- Bloc Résumé (si variantes) --- */}
-              {hasVariants && (
+              {/* --- Bloc Résumé (si variantes, sinon header simple) --- */}
+              {hasVariants ? (
                 <section className={styles.summaryBlock}>
                   <h4 className={styles.blockTitle}>Résumé</h4>
                   <div className={styles.summaryGrid}>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.label}>Carte</span>
+                      <span className={styles.value}>{title}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.label}>Série</span>
+                      <span className={styles.value}>
+                        {setLabel} · #{number}
+                      </span>
+                    </div>
                     <div className={styles.summaryItem}>
                       <span className={styles.label}>Nombre de cartes</span>
                       <span className={styles.value}>{qty}</span>
@@ -216,8 +218,23 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
                       <span className={styles.label}>Prix total</span>
                       <span className={styles.value}>{euro(total ?? undefined)}</span>
                     </div>
+                    {rarity && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.label}>Rareté</span>
+                        <span className={styles.value}>{rarity}</span>
+                      </div>
+                    )}
                   </div>
                 </section>
+              ) : (
+                <>
+                  <h3 className={styles.name}>{title}</h3>
+                  <div className={styles.tags}>
+                    <span className={styles.tag}>{setLabel}</span>
+                    <span className={styles.tag}>#{number}</span>
+                    {rarity && <span className={styles.tag}>{rarity}</span>}
+                  </div>
+                </>
               )}
 
               {/* --- Variantes détaillées --- */}

@@ -258,6 +258,8 @@
   border-radius: var(--radii);
   padding: 4px;
   backdrop-filter: blur(var(--blur));
+  margin-bottom: 24px;
+  width: fit-content;
 }
 
 .viewBtn,

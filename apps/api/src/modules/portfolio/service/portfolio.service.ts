@@ -212,6 +212,12 @@ export class PortfolioService {
         isGraded: item.graded,
         gradeCompany: item.grading?.company,
         gradeScore: item.grading?.grade,
+        // S'assurer que purchasePrice et variants sont bien inclus
+        purchasePrice: item.purchasePrice,
+        purchaseDate: item.purchaseDate,
+        quantity: item.quantity,
+        variants: item.variants,
+        notes: item.notes,
       };
     });
   }

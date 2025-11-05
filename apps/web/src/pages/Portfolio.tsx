@@ -319,35 +319,7 @@ export default function Portfolio() {
         <div>
           <h1 className={styles.title}>Mon Portfolio</h1>
         </div>
-        <div className={styles.headerActions}>
-          <div className={styles.viewSelector}>
-            <button
-              className={viewMode === 'compact' ? styles.viewBtnActive : styles.viewBtn}
-              onClick={() => setViewMode('compact')}
-              aria-label="Vue compacte"
-              title="Vue compacte"
-            >
-              ☰
-            </button>
-            <button
-              className={viewMode === 'grid' ? styles.viewBtnActive : styles.viewBtn}
-              onClick={() => setViewMode('grid')}
-              aria-label="Vue normale (grille)"
-              title="Vue normale (grille)"
-            >
-              ⊞
-            </button>
-            <button
-              className={viewMode === 'detailed' ? styles.viewBtnActive : styles.viewBtn}
-              onClick={() => setViewMode('detailed')}
-              aria-label="Vue détaillée"
-              title="Vue détaillée"
-            >
-              ▭
-            </button>
-          </div>
-          <Button onClick={() => setShowAddModal(true)}>+ Ajouter une carte</Button>
-        </div>
+        <Button onClick={() => setShowAddModal(true)}>+ Ajouter une carte</Button>
       </header>
 
       {stats && (
@@ -369,6 +341,35 @@ export default function Portfolio() {
             <p className={styles.statValue}>{stats.gradedCards ?? 0}</p>
           </div>
         </section>
+      )}
+
+      {cards.length > 0 && (
+        <div className={styles.viewSelector}>
+          <button
+            className={viewMode === 'compact' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('compact')}
+            aria-label="Vue compacte"
+            title="Vue compacte"
+          >
+            ☰
+          </button>
+          <button
+            className={viewMode === 'grid' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('grid')}
+            aria-label="Vue normale (grille)"
+            title="Vue normale (grille)"
+          >
+            ⊞
+          </button>
+          <button
+            className={viewMode === 'detailed' ? styles.viewBtnActive : styles.viewBtn}
+            onClick={() => setViewMode('detailed')}
+            aria-label="Vue détaillée"
+            title="Vue détaillée"
+          >
+            ▭
+          </button>
+        </div>
       )}
 
       {cards.length === 0 ? (
