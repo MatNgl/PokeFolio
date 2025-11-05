@@ -12,6 +12,14 @@ dist
 .next
 out
 
+# TypeScript build artifacts (should be in dist, not src)
+apps/*/src/**/*.js
+apps/*/src/**/*.d.ts
+apps/*/src/**/*.d.ts.map
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
 # Misc
 .DS_Store
 *.pem
