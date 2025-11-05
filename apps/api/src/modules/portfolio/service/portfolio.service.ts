@@ -9,6 +9,23 @@ import type { CreatePortfolioItemDto, UpdatePortfolioItemDto } from '@pokefolio/
 // Représentation stockée en DB pour la gradation (uniforme)
 type StoredGrading = { company?: string; grade?: string; certificationNumber?: string };
 
+// Type pour cardSnapshot stocké en DB
+interface CardSnapshot {
+  name?: string;
+  set?: {
+    id?: string;
+    name?: string;
+    cardCount?: { total?: number };
+  };
+  number?: string;
+  rarity?: string;
+  imageUrl?: string;
+  imageUrlHiRes?: string;
+  types?: string[];
+  supertype?: string;
+  subtypes?: string[];
+}
+
 /**
  * Normalise un GradingInfo inconnu vers { company, grade, certificationNumber }
  * sans utiliser `any` (on passe par `unknown` + garde de type).
@@ -112,7 +129,24 @@ export class PortfolioService {
         })),
         cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
       });
-      return item.toObject();
+
+      // Retourner avec métadonnées aplaties
+      const obj = item.toObject();
+      const snapshot = cardSnapshot as CardSnapshot;
+      return {
+        ...obj,
+        name: snapshot.name,
+        setId: snapshot.set?.id,
+        setName: snapshot.set?.name,
+        setCardCount: snapshot.set?.cardCount?.total,
+        number: snapshot.number,
+        rarity: snapshot.rarity,
+        imageUrl: snapshot.imageUrl,
+        imageUrlHiRes: snapshot.imageUrlHiRes,
+        types: snapshot.types,
+        supertype: snapshot.supertype,
+        subtypes: snapshot.subtypes,
+      };
     }
 
     // --- Mode A : mêmes données pour toutes ---
@@ -132,21 +166,79 @@ export class PortfolioService {
       cardSnapshot: Object.keys(cardSnapshot).length > 0 ? cardSnapshot : undefined,
     });
 
-    return item.toObject();
+    // Retourner avec métadonnées aplaties
+    const obj = item.toObject();
+    const snapshot = cardSnapshot as CardSnapshot;
+    return {
+      ...obj,
+      name: snapshot.name,
+      setId: snapshot.set?.id,
+      setName: snapshot.set?.name,
+      setCardCount: snapshot.set?.cardCount?.total,
+      number: snapshot.number,
+      rarity: snapshot.rarity,
+      imageUrl: snapshot.imageUrl,
+      imageUrlHiRes: snapshot.imageUrlHiRes,
+      types: snapshot.types,
+      supertype: snapshot.supertype,
+      subtypes: snapshot.subtypes,
+    };
   }
 
-  async findAll(ownerId: string, query?: { cardId?: string }) {
+  async findAll(ownerId: string, query?: { cardId?: string }): Promise<Record<string, unknown>[]> {
     const filter: FilterQuery<PortfolioItemDocument> = { ownerId };
     if (query?.cardId) filter.cardId = query.cardId;
 
     const items = await this.model.find(filter).sort({ createdAt: -1 }).lean();
-    return items;
+
+    // Aplatir les données de cardSnapshot pour le frontend
+    return items.map((item) => {
+      const snapshot = item.cardSnapshot as CardSnapshot;
+      return {
+        ...item,
+        // Ajouter les métadonnées au niveau racine
+        name: snapshot?.name,
+        setId: snapshot?.set?.id,
+        setName: snapshot?.set?.name,
+        setCardCount: snapshot?.set?.cardCount?.total,
+        number: snapshot?.number,
+        rarity: snapshot?.rarity,
+        imageUrl: snapshot?.imageUrl,
+        imageUrlHiRes: snapshot?.imageUrlHiRes,
+        types: snapshot?.types,
+        supertype: snapshot?.supertype,
+        subtypes: snapshot?.subtypes,
+        // Ajouter isGraded (alias de graded) et les infos de gradation
+        isGraded: item.graded,
+        gradeCompany: item.grading?.company,
+        gradeScore: item.grading?.grade,
+      };
+    });
   }
 
-  async findOne(ownerId: string, id: string) {
+  async findOne(ownerId: string, id: string): Promise<Record<string, unknown>> {
     const item = await this.model.findOne({ ownerId, _id: id }).lean();
     if (!item) throw new NotFoundException('Item not found');
-    return item;
+
+    // Aplatir les données de cardSnapshot pour le frontend
+    const snapshot = item.cardSnapshot as CardSnapshot;
+    return {
+      ...item,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      setCardCount: snapshot?.set?.cardCount?.total,
+      number: snapshot?.number,
+      rarity: snapshot?.rarity,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      types: snapshot?.types,
+      supertype: snapshot?.supertype,
+      subtypes: snapshot?.subtypes,
+      isGraded: item.graded,
+      gradeCompany: item.grading?.company,
+      gradeScore: item.grading?.grade,
+    };
   }
 
   async update(ownerId: string, id: string, dto: UpdatePortfolioItemDto) {
@@ -189,7 +281,24 @@ export class PortfolioService {
     }
 
     await item.save();
-    return item.toObject();
+
+    // Retourner avec métadonnées aplaties
+    const obj = item.toObject();
+    const snapshot = obj.cardSnapshot as CardSnapshot;
+    return {
+      ...obj,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      setCardCount: snapshot?.set?.cardCount?.total,
+      number: snapshot?.number,
+      rarity: snapshot?.rarity,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      types: snapshot?.types,
+      supertype: snapshot?.supertype,
+      subtypes: snapshot?.subtypes,
+    };
   }
 
   async remove(ownerId: string, id: string) {
