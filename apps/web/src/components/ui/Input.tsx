@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Empêcher le scroll de changer la valeur des inputs number
     const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-      if (props.type === 'number') {
+      if (type === 'number') {
         e.currentTarget.blur();
       }
     };

@@ -288,7 +288,6 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         console.error("📋 Détails de l'erreur:", {
           status: axiosError.response?.status,
           data: axiosError.response?.data,
-          message: axiosError.message,
         });
       }
       setToast({

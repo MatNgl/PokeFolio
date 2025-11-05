@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Toast } from '../components/ui/Toast';
 import { userService } from '../services/user.service';
 import styles from './Profile.module.css';
 
@@ -125,8 +126,6 @@ export function Profile() {
         <p className={styles.email}>{user?.email}</p>
       </div>
 
-      {toast && <div className={`${styles.toast} ${styles[toast.type]}`}>{toast.message}</div>}
-
       <div className={styles.sections}>
         {/* Section Pseudo */}
         <section className={styles.section}>
@@ -242,6 +241,18 @@ export function Profile() {
           )}
         </section>
       </div>
+
+      {/* Toast UI */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={3500}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }

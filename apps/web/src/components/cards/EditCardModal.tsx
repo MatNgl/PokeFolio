@@ -150,10 +150,10 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
                 grade: data.gradeScore?.toString(),
               }
             : undefined,
-        purchasePrice: data.purchasePrice, // En euros (float)
+        purchasePriceCents: data.purchasePrice ? Math.round(data.purchasePrice * 100) : undefined,
         purchaseDate: data.purchaseDate,
         notes: data.notes,
-      });
+      } as any);
       onSuccess();
       onClose();
     } catch (error) {
