@@ -6,12 +6,14 @@ import {
   Req,
   UnauthorizedException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { PortfolioService } from '../modules/portfolio/service/portfolio.service';
 import { CryptoService } from '../auth/crypto.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 interface UpdatePseudoDto {
   pseudo: string;
@@ -20,6 +22,16 @@ interface UpdatePseudoDto {
 interface UpdatePasswordDto {
   currentPassword: string;
   newPassword: string;
+}
+
+type UserLike = {
+  sub?: string;
+  id?: string;
+  _id?: string;
+};
+
+interface AuthenticatedRequest extends Request {
+  user?: UserLike;
 }
 
 @ApiTags('users')
@@ -31,18 +43,20 @@ export class UsersController {
     private readonly cryptoService: CryptoService
   ) {}
 
-  private getUserIdFromRequest(req: Request): string {
-    const userId = req.headers['x-user-id'] as string;
+  private getUserIdFromRequest(req: AuthenticatedRequest): string {
+    const u = req.user;
+    const userId = u?.sub ?? u?.id ?? u?._id;
     if (!userId) {
       throw new UnauthorizedException('User not authenticated');
     }
-    return userId;
+    return String(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('profile/pseudo')
   @ApiOperation({ summary: 'Update user pseudo' })
   @ApiResponse({ status: 200, description: 'Pseudo updated successfully' })
-  async updatePseudo(@Req() req: Request, @Body() body: UpdatePseudoDto) {
+  async updatePseudo(@Req() req: AuthenticatedRequest, @Body() body: UpdatePseudoDto) {
     const userId = this.getUserIdFromRequest(req);
 
     if (!body.pseudo || body.pseudo.trim().length < 2) {
@@ -66,10 +80,11 @@ export class UsersController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('profile/password')
   @ApiOperation({ summary: 'Update user password' })
   @ApiResponse({ status: 200, description: 'Password updated successfully' })
-  async updatePassword(@Req() req: Request, @Body() body: UpdatePasswordDto) {
+  async updatePassword(@Req() req: AuthenticatedRequest, @Body() body: UpdatePasswordDto) {
     const userId = this.getUserIdFromRequest(req);
 
     if (!body.currentPassword || !body.newPassword) {
@@ -104,10 +119,11 @@ export class UsersController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('profile/portfolio')
   @ApiOperation({ summary: 'Clear user portfolio' })
   @ApiResponse({ status: 200, description: 'Portfolio cleared successfully' })
-  async clearPortfolio(@Req() req: Request) {
+  async clearPortfolio(@Req() req: AuthenticatedRequest) {
     const userId = this.getUserIdFromRequest(req);
 
     const result = await this.portfolioService.clearPortfolio(userId);
