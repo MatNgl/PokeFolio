@@ -23,8 +23,8 @@
   },
   "packageManager": "pnpm@8.15.1",
   "engines": {
-    "node": "20.x",
-    "pnpm": "8.x"
+    "node": ">=20 <23",
+    "pnpm": ">=8 <9"
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",

@@ -12,16 +12,17 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+
 import type { Response, CookieOptions } from 'express';
+import type { AuthResult } from './auth.service';
+import type { RegisterDto } from './dto/register.dto';
+import type { LoginDto } from './dto/login.dto';
+import type { JwtUser } from './types/jwt-user.type';
 
 import { AuthService } from './auth.service';
-import type { AuthResult } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
-import { JwtUser } from './types/jwt-user.type';
 
 @ApiTags('auth')
 @Controller('auth')
