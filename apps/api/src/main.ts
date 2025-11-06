@@ -19,31 +19,39 @@ function parseOrigins(src: string | undefined, fallback: string[]): string[] {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Sécurité
   app.use(helmet());
 
-  const allowedOrigins = new Set(
-    parseOrigins(process.env.CORS_ORIGINS, [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5173',
-      'http://localhost:4000',
-    ])
-  );
+  // Configuration CORS
+  const fallbackOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:4000',
+    // origine Netlify de prod
+    'https://pokefolioo.netlify.app',
+  ];
+
+  const allowedOrigins = new Set(parseOrigins(process.env.CORS_ORIGINS, fallbackOrigins));
+
   console.info('✅ CORS allowed origins:', Array.from(allowedOrigins).join(', '));
 
   app.enableCors({
-    credentials: false, // <— plus de cookies refresh
+    credentials: false, // pas de cookies, JWT dans Authorization
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true); // ex: curl / healthcheck
       if (allowedOrigins.has(origin)) return callback(null, true);
       if (/^http:\/\/localhost:\d+$/i.test(origin)) return callback(null, true);
+      // Autoriser aussi les previews Netlify si tu les utilises
+      if (/^https:\/\/[^.]+--pokefolioo\.netlify\.app$/i.test(origin)) return callback(null, true);
       console.warn(`❌ CORS blocked for origin: ${origin}`);
       return callback(null, false);
     },
   });
 
+  // Validation des DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -53,8 +61,10 @@ async function bootstrap() {
     })
   );
 
+  // Préfixe global de l'API
   app.setGlobalPrefix('api');
 
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('PokéFolio API')
     .setDescription('API pour gérer votre portfolio de cartes Pokémon')
@@ -72,13 +82,18 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  const port = process.env.PORT || 4000;
-  await app.listen(port);
+  // Petit endpoint /health sans contrôleur dédié
+  const http = app.getHttpAdapter();
+  http.get('/health', (_, res) => res.json({ ok: true }));
+
+  // Lancement
+  const port = Number(process.env.PORT ?? 4000);
+  await app.listen(port, '0.0.0.0'); // essentiel pour Render
   console.log(`🚀 API running on http://localhost:${port}/api`);
   console.log(`📚 Swagger docs on http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start application:', error);
+  console.error('❌ Failed to start application:', error);
   process.exit(1);
 });
