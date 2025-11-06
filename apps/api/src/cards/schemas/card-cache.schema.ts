@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+
+export type CardCacheDocument = HydratedDocument<CardCache>;
 
 @Schema({ timestamps: true })
-export class CardCache extends Document {
+export class CardCache {
   @Prop({ required: true, unique: true })
   cacheKey!: string;
 
@@ -11,13 +13,8 @@ export class CardCache extends Document {
 
   @Prop({ required: true })
   expiresAt!: Date;
-
-  createdAt!: Date;
-  updatedAt!: Date;
 }
 
 export const CardCacheSchema = SchemaFactory.createForClass(CardCache);
 
-// Index TTL pour auto-suppression après expiration
 CardCacheSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-CardCacheSchema.index({ cacheKey: 1 }, { unique: true });

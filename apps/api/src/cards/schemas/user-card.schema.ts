@@ -1,79 +1,48 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+
+export type UserCardDocument = HydratedDocument<UserCard>;
 
 @Schema({ timestamps: true })
-export class UserCard extends Document {
+export class UserCard {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId!: Types.ObjectId;
 
-  // Données de la carte
+  // Métadonnées carte
   @Prop({ required: true })
-  cardId!: string; // ID TCGdex / Card.id
+  cardId!: string;
 
   @Prop({ required: true })
   name!: string;
 
-  @Prop()
-  setId?: string;
+  @Prop() setId?: string;
+  @Prop() setName?: string;
+  @Prop() number?: string;
+  @Prop() setCardCount?: number;
+  @Prop() rarity?: string;
+  @Prop() imageUrl?: string;
+  @Prop() imageUrlHiRes?: string;
+  @Prop() types?: string[];
+  @Prop() supertype?: string;
+  @Prop() subtypes?: string[];
 
-  @Prop()
-  setName?: string;
-
-  @Prop()
-  number?: string; // localId
-
-  @Prop()
-  setCardCount?: number; // Nombre total de cartes dans le set
-
-  @Prop()
-  rarity?: string;
-
-  @Prop()
-  imageUrl?: string;
-
-  @Prop()
-  imageUrlHiRes?: string;
-
-  @Prop()
-  types?: string[];
-
-  @Prop()
-  supertype?: string;
-
-  @Prop()
-  subtypes?: string[];
-
-  // Données spécifiques utilisateur
+  // Données utilisateur
   @Prop({ required: true, default: 1, min: 1 })
   quantity!: number;
 
   @Prop({ default: false })
   isGraded!: boolean;
 
-  @Prop()
-  gradeCompany?: string; // PSA, BGS, ...
-
-  @Prop()
-  gradeScore?: string; // string pour supporter "10+", "9.5", etc.
-
-  @Prop()
-  purchasePrice?: number;
-
-  @Prop()
-  purchaseDate?: Date;
-
-  @Prop()
-  currentValue?: number;
-
-  @Prop()
-  notes?: string;
-
-  createdAt!: Date;
-  updatedAt!: Date;
+  @Prop() gradeCompany?: string;
+  @Prop() gradeScore?: string;
+  @Prop() purchasePrice?: number;
+  @Prop() purchaseDate?: Date;
+  @Prop() currentValue?: number;
+  @Prop() notes?: string;
 }
 
 export const UserCardSchema = SchemaFactory.createForClass(UserCard);
 
-// Index pour optimiser les requêtes
-UserCardSchema.index({ userId: 1, cardId: 1 });
+// 👍 Conserver les indexes utiles, mais rends le composé unique
+UserCardSchema.index({ userId: 1, cardId: 1 }, { unique: true });
 UserCardSchema.index({ userId: 1, createdAt: -1 });
