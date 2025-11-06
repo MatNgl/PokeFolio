@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
     'http://localhost:3001',
     'http://localhost:5173',
     'http://localhost:4000',
-    'https://poke-folio.vercel.app', // prod front
+    'https://poke-folio-web.vercel.app', // prod front
   ];
 
   const allowedOrigins = new Set(parseOrigins(process.env.CORS_ORIGINS, fallbackOrigins));
@@ -95,7 +95,7 @@ async function bootstrap(): Promise<void> {
   });
 
   // === Lancement du serveur ===
-  const port = Number(process.env.PORT ?? 4000);
+  const port = parseInt(process.env.PORT || '4000', 10);
   await app.listen(port, '0.0.0.0'); // nécessaire pour Render
 
   console.log(`🚀 API running on http://localhost:${port}/api`);
