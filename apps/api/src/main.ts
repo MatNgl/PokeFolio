@@ -33,8 +33,7 @@ async function bootstrap(): Promise<void> {
     'http://localhost:3001',
     'http://localhost:5173',
     'http://localhost:4000',
-    // origine Netlify de prod
-    'https://pokefolioo.netlify.app',
+    'https://poke-folio.vercel.app', // prod front
   ];
 
   const allowedOrigins = new Set(parseOrigins(process.env.CORS_ORIGINS, fallbackOrigins));
@@ -51,8 +50,7 @@ async function bootstrap(): Promise<void> {
       if (!origin) return callback(null, true); // ex: curl / healthcheck
       if (allowedOrigins.has(origin)) return callback(null, true);
       if (/^http:\/\/localhost:\d+$/i.test(origin)) return callback(null, true);
-      // Autoriser aussi les previews Netlify si tu les utilises
-      if (/^https:\/\/[^.]+--pokefolioo\.netlify\.app$/i.test(origin)) return callback(null, true);
+      if (/\.vercel\.app$/i.test(new URL(origin).hostname)) return callback(null, true);
 
       console.warn(`❌ CORS blocked for origin: ${origin}`);
       return callback(null, false);
