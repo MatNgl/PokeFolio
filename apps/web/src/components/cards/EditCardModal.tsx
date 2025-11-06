@@ -92,16 +92,25 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
   // Préparer les variantes initiales si elles existent
   const initialVariants: VariantForm[] =
     card.variants && Array.isArray(card.variants) && card.variants.length > 0
-      ? card.variants.map((v) => ({
-          isGraded: v.isGraded,
-          gradeCompany: v.gradeCompany,
-          gradeScore: v.gradeScore,
-          purchasePrice: v.purchasePrice,
-          purchaseDate: v.purchaseDate
-            ? new Date(v.purchaseDate).toISOString().split('T')[0]
-            : undefined,
-          notes: v.notes,
-        }))
+      ? card.variants.map(
+          (v: {
+            purchasePrice?: number;
+            purchaseDate?: string;
+            isGraded?: boolean;
+            gradeCompany?: string;
+            gradeScore?: string;
+            notes?: string;
+          }) => ({
+            isGraded: v.isGraded,
+            gradeCompany: v.gradeCompany,
+            gradeScore: v.gradeScore,
+            purchasePrice: v.purchasePrice,
+            purchaseDate: v.purchaseDate
+              ? new Date(v.purchaseDate).toISOString().split('T')[0]
+              : undefined,
+            notes: v.notes,
+          })
+        )
       : [];
 
   const { register, handleSubmit, watch, setValue } = useForm<FormData>({

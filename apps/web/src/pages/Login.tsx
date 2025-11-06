@@ -44,7 +44,7 @@ export function Login() {
   });
 
   useEffect(() => {
-    const sub = watch((values) => {
+    const sub = watch((values: Partial<LoginDto>) => {
       localStorage.setItem('loginDraft', JSON.stringify(values));
     });
     return () => sub.unsubscribe();

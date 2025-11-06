@@ -110,7 +110,7 @@ export default function Discover() {
           .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
           .then(async (data) => {
             // Filtrer pour exclure les cartes TCGP (jeu en ligne)
-            const physicalCards = data.cards.filter((card) => {
+            const physicalCards = data.cards.filter((card: Card) => {
               const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
               const setName = (card.set?.name || '').toLowerCase();
               return (
@@ -177,7 +177,7 @@ export default function Discover() {
         const data = await cardsService.searchCards({ q: searchQuery, limit: 100, lang: 'fr' });
 
         // Filtrer pour exclure les cartes TCGP (jeu en ligne)
-        const physicalCards = data.cards.filter((card) => {
+        const physicalCards = data.cards.filter((card: Card) => {
           const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
           const setName = (card.set?.name || '').toLowerCase();
           // Exclure les sets TCGP (Pokemon Trading Card Game Pocket)
