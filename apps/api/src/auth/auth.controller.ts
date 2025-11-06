@@ -15,9 +15,11 @@ import { ConfigService } from '@nestjs/config';
 
 import type { Response, CookieOptions } from 'express';
 import type { AuthResult } from './auth.service';
-import type { RegisterDto } from './dto/register.dto';
-import type { LoginDto } from './dto/login.dto';
 import type { JwtUser } from './types/jwt-user.type';
+
+// Import des DTOs en tant que valeurs (pas type-only) pour la validation
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
