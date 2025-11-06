@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { JwtUser } from '../auth/types/jwt-user.type';
+import type { JwtUser } from '../auth/types/jwt-user.type';
 
 import { UserCardsService } from './user-cards.service';
 import { AddCardDto } from './dto/add-card.dto';
