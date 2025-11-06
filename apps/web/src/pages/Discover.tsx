@@ -228,9 +228,10 @@ export default function Discover() {
   const getCardImageUrl = (card: Card): string => {
     let img = card.image || card.images?.small || '';
 
-    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
+    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension
     if (img && img.includes('assets.tcgdex.net') && !img.match(/\.(webp|png|jpg|jpeg)$/i)) {
-      img = `${img}/high.webp`;
+      // Priorité: PNG puis WebP
+      img = `${img}/high.png`;
     }
 
     // Image de dos de carte Pokémon par défaut
@@ -308,8 +309,20 @@ export default function Discover() {
                   loading="lazy"
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
-                    // Utiliser l'image de dos de carte Pokémon en cas d'erreur
-                    target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    const currentSrc = target.src;
+
+                    // Si l'URL contient "high.png", essayer avec "high.webp"
+                    if (currentSrc.includes('/high.png')) {
+                      target.src = currentSrc.replace('/high.png', '/high.webp');
+                    }
+                    // Si WebP échoue aussi, utiliser l'image de dos
+                    else if (currentSrc.includes('/high.webp')) {
+                      target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }
+                    // Sinon, directement l'image de dos
+                    else {
+                      target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }
                   }}
                 />
               </button>
