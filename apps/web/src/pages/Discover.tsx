@@ -3,12 +3,13 @@ import type { Card, CardSearchResult } from '@pokefolio/types';
 import { cardsService } from '../services/cards.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { CardDetailsModal } from '../components/cards/CardDetailsModal';
-import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Loader } from '../components/ui/Loader';
 import { Toast } from '../components/ui/Toast';
+import SearchBar from '../components/ui/Search';
+import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import styles from './Discover.module.css';
-import { Search, Eraser, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 
 export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,6 +23,7 @@ export default function Discover() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('default');
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -49,28 +51,95 @@ export default function Discover() {
   const loadRandomCards = async () => {
     try {
       setLoading(true);
-      // Recherche de cartes populaires pour afficher quelque chose au départ
-      const randomSearches = ['Pikachu', 'Dracaufeu', 'Mewtwo', 'Evoli', 'Lucario', 'Salamèche'];
-      const randomQuery = randomSearches[Math.floor(Math.random() * randomSearches.length)];
-      const data = await cardsService.searchCards({ q: randomQuery, limit: 50, lang: 'fr' });
+      // Liste étendue de Pokémon populaires et variés
+      const randomPokemons = [
+        'Pikachu',
+        'Dracaufeu',
+        'Mewtwo',
+        'Evoli',
+        'Lucario',
+        'Salamèche',
+        'Rondoudou',
+        'Florizarre',
+        'Tortank',
+        'Rayquaza',
+        'Lugia',
+        'Arceus',
+        'Mew',
+        'Celebi',
+        'Darkrai',
+        'Giratina',
+        'Artikodin',
+        'Electhor',
+        'Sulfura',
+        'Noctali',
+        'Mentali',
+        'Aquali',
+        'Voltali',
+        'Pyroli',
+        'Phyllali',
+        'Goupix',
+        'Magicarpe',
+        'Leviator',
+        'Palkia',
+        'Dialga',
+        'Kyogre',
+        'Groudon',
+        'Reshiram',
+        'Zekrom',
+        'Kyurem',
+        'Dracaufeu',
+        'Lokhlass',
+        'Ronflex',
+        'Carapuce',
+        'Bulbizarre',
+      ];
 
-      // Filtrer pour exclure les cartes TCGP (jeu en ligne)
-      const physicalCards = data.cards.filter((card) => {
-        const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
-        const setName = (card.set?.name || '').toLowerCase();
-        // Exclure les sets TCGP (Pokemon Trading Card Game Pocket)
-        return (
-          !setId.includes('tcgp') &&
-          !setName.includes('tcgp') &&
-          !setName.includes('pocket') &&
-          !setId.startsWith('a-')
-        );
-      });
+      // Mélanger la liste
+      const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
+
+      const cards: Card[] = [];
+      let index = 0;
+
+      // Continuer jusqu'à avoir 20 cartes ou épuiser la liste
+      while (cards.length < 20 && index < shuffled.length) {
+        const pokemon = shuffled[index];
+        index++;
+
+        try {
+          const data = await cardsService.searchCards({ q: pokemon, limit: 10, lang: 'fr' });
+
+          // Filtrer pour exclure les cartes TCGP
+          const physicalCards = data.cards.filter((card) => {
+            const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+            const setName = (card.set?.name || '').toLowerCase();
+            return (
+              !setId.includes('tcgp') &&
+              !setName.includes('tcgp') &&
+              !setName.includes('pocket') &&
+              !setId.startsWith('a-')
+            );
+          });
+
+          // Ajouter une carte aléatoire si disponible
+          if (physicalCards.length > 0) {
+            const randomIndex = Math.floor(Math.random() * physicalCards.length);
+            const randomCard = physicalCards[randomIndex];
+            if (randomCard) {
+              cards.push(randomCard);
+            }
+          }
+        } catch (error) {
+          // Ignorer les erreurs et continuer avec le prochain Pokémon
+          console.warn(`Erreur lors de la recherche de ${pokemon}:`, error);
+        }
+      }
 
       setResult({
-        ...data,
-        cards: physicalCards.slice(0, 20),
-        total: physicalCards.length,
+        cards,
+        total: cards.length,
+        page: 1,
+        limit: 20,
       });
     } catch (error) {
       console.error('Erreur lors du chargement des cartes:', error);
@@ -83,48 +152,54 @@ export default function Discover() {
     }
   };
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
+  // Recherche dynamique lors de la saisie
+  useEffect(() => {
+    const handleSearch = async () => {
+      if (!searchQuery.trim()) {
+        void loadRandomCards();
+        return;
+      }
 
-    if (!searchQuery.trim()) {
-      void loadRandomCards();
-      return;
-    }
+      try {
+        setLoading(true);
+        const data = await cardsService.searchCards({ q: searchQuery, limit: 100, lang: 'fr' });
 
-    try {
-      setLoading(true);
-      const data = await cardsService.searchCards({ q: searchQuery, limit: 100, lang: 'fr' });
+        // Filtrer pour exclure les cartes TCGP (jeu en ligne)
+        const physicalCards = data.cards.filter((card) => {
+          const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+          const setName = (card.set?.name || '').toLowerCase();
+          // Exclure les sets TCGP (Pokemon Trading Card Game Pocket)
+          return (
+            !setId.includes('tcgp') &&
+            !setName.includes('tcgp') &&
+            !setName.includes('pocket') &&
+            !setId.startsWith('a-')
+          );
+        });
 
-      // Filtrer pour exclure les cartes TCGP (jeu en ligne)
-      const physicalCards = data.cards.filter((card) => {
-        const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
-        const setName = (card.set?.name || '').toLowerCase();
-        // Exclure les sets TCGP (Pokemon Trading Card Game Pocket)
-        return (
-          !setId.includes('tcgp') &&
-          !setName.includes('tcgp') &&
-          !setName.includes('pocket') &&
-          !setId.startsWith('a-')
-        );
-      });
+        setResult({
+          ...data,
+          cards: physicalCards,
+          total: physicalCards.length,
+        });
+      } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        setToast({
+          message: 'Erreur lors de la recherche de cartes',
+          type: 'error',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setResult({
-        ...data,
-        cards: physicalCards,
-        total: physicalCards.length,
-      });
-    } catch (error) {
-      console.error('Erreur lors de la recherche:', error);
-      setToast({
-        message: 'Erreur lors de la recherche de cartes',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const timeoutId = setTimeout(() => {
+      void handleSearch();
+    }, 300); // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   const handleAddCard = (card: Card) => {
     setSelectedCard(card);
@@ -150,6 +225,36 @@ export default function Discover() {
     return img || 'https://images.pokemontcg.io/swsh1/back.png';
   };
 
+  // Trier les cartes selon l'option sélectionnée
+  const getSortedCards = (): Card[] => {
+    const cards = [...result.cards];
+
+    if (sortOption === 'default') {
+      return cards;
+    }
+
+    return cards.sort((a, b) => {
+      switch (sortOption) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '');
+        case 'quantity-asc':
+        case 'quantity-desc':
+        case 'price-asc':
+        case 'price-desc':
+        case 'date-asc':
+        case 'date-desc':
+          // Ces options n'ont pas de sens pour Discover (pas de quantité/prix/date)
+          return 0;
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const displayedCards = getSortedCards();
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -159,40 +264,24 @@ export default function Discover() {
         </div>
       </header>
 
-      <form onSubmit={handleSearch} className={styles.searchForm}>
-        <Input
-          type="text"
-          placeholder="Rechercher une carte (ex: Pikachu, Dracaufeu...)"
+      <div className={styles.searchForm}>
+        <SearchBar
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={setSearchQuery}
+          placeholder="Rechercher une carte (ex: Pikachu, Dracaufeu...)"
+          ariaLabel="Rechercher une carte Pokémon"
+          className={styles.searchBar}
         />
-        <Button type="submit" variant="info" size="md">
-          <Search size={18} aria-hidden />
-          Rechercher
-        </Button>
-        {searchQuery && (
-          <Button
-            type="button"
-            variant="warning"
-            size="md"
-            onClick={() => {
-              setSearchQuery('');
-              void loadRandomCards();
-            }}
-          >
-            <Eraser size={18} aria-hidden />
-            Effacer
-          </Button>
-        )}
-      </form>
+        <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="discover" />
+      </div>
 
       {loading ? (
         <div className={styles.loading}>
           <Loader />
         </div>
-      ) : result.cards.length > 0 ? (
+      ) : displayedCards.length > 0 ? (
         <section className={styles.grid}>
-          {result.cards.map((card) => (
+          {displayedCards.map((card) => (
             <article key={`${card.id}-${card.localId}`} className={styles.card}>
               {/* ⬇️ Remplacement du div cliquable par un vrai bouton accessible */}
               <button

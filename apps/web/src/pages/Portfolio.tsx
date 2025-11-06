@@ -12,6 +12,8 @@ import PortfolioCardDetailsModal from '../components/cards/PortfolioCardDetailsM
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { Loader } from '../components/ui/Loader';
+import SearchBar from '../components/ui/Search';
+import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 
@@ -189,6 +191,10 @@ export default function Portfolio() {
   // ➕ Nouveau : entrée sélectionnée pour détails
   const [detailsEntry, setDetailsEntry] = useState<PortfolioCard | null>(null);
 
+  // ➕ Recherche et tri
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('default');
+
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -309,6 +315,64 @@ export default function Portfolio() {
     return null;
   };
 
+  // Filtrer et trier les cartes
+  const getFilteredAndSortedCards = (): UserCardView[] => {
+    let filtered = [...cards];
+
+    // Recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((card) => {
+        const name = card.name?.toLowerCase() || '';
+        const setName = card.setName?.toLowerCase() || '';
+        const rarity = card.rarity?.toLowerCase() || '';
+        return name.includes(query) || setName.includes(query) || rarity.includes(query);
+      });
+    }
+
+    // Tri (sauf si mode "default")
+    if (sortOption !== 'default') {
+      filtered.sort((a, b) => {
+        switch (sortOption) {
+          case 'name-asc':
+            return (a.name || '').localeCompare(b.name || '');
+          case 'name-desc':
+            return (b.name || '').localeCompare(a.name || '');
+          case 'quantity-asc':
+            return (a.quantity || 0) - (b.quantity || 0);
+          case 'quantity-desc':
+            return (b.quantity || 0) - (a.quantity || 0);
+          case 'price-asc': {
+            const priceA = calculateCardTotal(a) ?? 0;
+            const priceB = calculateCardTotal(b) ?? 0;
+            return priceA - priceB;
+          }
+          case 'price-desc': {
+            const priceA = calculateCardTotal(a) ?? 0;
+            const priceB = calculateCardTotal(b) ?? 0;
+            return priceB - priceA;
+          }
+          case 'date-asc': {
+            const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
+            const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
+            return dateA - dateB;
+          }
+          case 'date-desc': {
+            const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
+            const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
+            return dateB - dateA;
+          }
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return filtered;
+  };
+
+  const displayedCards = getFilteredAndSortedCards();
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -347,6 +411,19 @@ export default function Portfolio() {
             <p className={styles.statValue}>{stats.gradedCards ?? 0}</p>
           </div>
         </section>
+      )}
+
+      {cards.length > 0 && (
+        <div className={styles.searchFilterContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Rechercher dans votre collection..."
+            ariaLabel="Rechercher une carte dans votre portfolio"
+            className={styles.searchBar}
+          />
+          <FilterButton onSortChange={setSortOption} currentSort={sortOption} />
+        </div>
       )}
 
       {cards.length > 0 && (
@@ -403,10 +480,27 @@ export default function Portfolio() {
             + Ajouter votre première carte
           </Button>
         </div>
+      ) : displayedCards.length === 0 ? (
+        <div className={styles.empty}>
+          <svg
+            width="64"
+            height="64"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <h2>Aucune carte trouvée</h2>
+          <p>Essayez une autre recherche</p>
+        </div>
       ) : viewMode === 'compact' ? (
         // Vue Compact : petite image + infos sur une ligne
         <section className={styles.compact} aria-label="Mes cartes">
-          {cards.map((card) => {
+          {displayedCards.map((card) => {
             const docId = resolveId(card);
             const img = resolveImage(card);
             const entryLike = createEntryLike(card);
@@ -481,7 +575,7 @@ export default function Portfolio() {
       ) : viewMode === 'detailed' ? (
         // Vue Détaillée : grosses cartes empilées avec détails
         <section className={styles.detailed} aria-label="Mes cartes">
-          {cards.map((card) => {
+          {displayedCards.map((card) => {
             const docId = resolveId(card);
             const img = resolveImage(card);
             const entryLike = createEntryLike(card);
@@ -584,7 +678,7 @@ export default function Portfolio() {
       ) : (
         // Vue Grid (normale) : grille de cartes
         <section className={styles.grid} aria-label="Mes cartes">
-          {cards.map((card) => {
+          {displayedCards.map((card) => {
             const docId = resolveId(card);
             const img = resolveImage(card);
             const entryLike = createEntryLike(card);

@@ -70,6 +70,20 @@
   color: #f87171;
 }
 
+/* Search and Filter Container */
+.searchFilterContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.searchBar {
+  flex: 1;
+  min-width: 280px;
+}
+
 /* Empty state */
 .empty {
   display: flex;

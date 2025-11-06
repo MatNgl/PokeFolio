@@ -23,19 +23,15 @@
 
 .searchForm {
   display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
-  align-items: flex-end;
-  overflow: visible;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-.searchForm > div:first-child {
+.searchBar {
   flex: 1;
-}
-
-/* Boutons compacts dans la barre de recherche */
-.searchForm :global(button) {
-  width: fit-content;
+  min-width: 280px;
 }
 
 .addBtn {

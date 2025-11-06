@@ -7,7 +7,9 @@
       "Bash(pnpm run type-check:web:*)",
       "Bash(pnpm nest start:*)",
       "Bash(taskkill:*)",
-      "Bash(pnpm exec tsc:*)"
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm run dev:web:*)",
+      "Bash(pnpm run dev:*)"
     ],
     "deny": [],
     "ask": []
