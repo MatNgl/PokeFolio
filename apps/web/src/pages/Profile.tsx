@@ -146,7 +146,7 @@ export function Profile() {
               placeholder="Votre pseudo"
               required
             />
-            <Button variant="warning">
+            <Button variant="warning" type="submit" disabled={loading}>
               <UserRoundPen size={18} aria-hidden />
               Mettre à jour le pseudo
             </Button>
@@ -187,71 +187,82 @@ export function Profile() {
               showPasswordToggle
               required
             />
-            <Button variant="info">
+            <Button variant="info" type="submit" disabled={loading}>
               <KeyRound size={18} aria-hidden />
               Changer le mot de passe
             </Button>
           </form>
         </section>
 
-        {/* Section Déconnexion */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Déconnexion</h2>
-          <p className={styles.description}>Déconnectez-vous de votre compte PokéFolio</p>
-          <Button onClick={handleLogout} variant="action">
-            <LogOut size={18} aria-hidden />
-            Se déconnecter
-          </Button>
-        </section>
-
-        {/* Section Danger Zone */}
-        <section className={`${styles.section} ${styles.dangerZone}`}>
-          <h2 className={styles.sectionTitle}>Zone de danger</h2>
-          <p className={styles.description}>
-            Action irréversible : supprimer toutes les cartes de votre portfolio
-          </p>
-
-          {!showDeleteConfirm ? (
-            <Button variant="danger">
-              <Trash2 size={18} aria-hidden />
-              Vider le portfolio
+        {/* === Bloc côte à côte (desktop) : Déconnexion + Suppression === */}
+        <div className={styles.splitRow}>
+          {/* Section Déconnexion */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Déconnexion</h2>
+            <p className={styles.description}>Déconnectez-vous de votre compte PokéFolio</p>
+            <Button onClick={handleLogout} variant="danger" type="button" disabled={loading}>
+              <LogOut size={18} aria-hidden />
+              Se déconnecter
             </Button>
-          ) : (
-            <div className={styles.confirmBox}>
-              <p className={styles.confirmText}>⚠️ Cette action est irréversible !</p>
-              <p className={styles.confirmText}>
-                Tapez <strong>SUPPRIMER</strong> pour confirmer
-              </p>
-              <input
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className={styles.input}
-                placeholder="SUPPRIMER"
-              />
-              <div className={styles.confirmButtons}>
-                <Button
-                  onClick={handleClearPortfolio}
-                  variant="danger"
-                  disabled={loading || deleteConfirmText !== 'SUPPRIMER'}
-                >
-                  <CheckCircle size={18} aria-hidden />
-                  Confirmer la suppression
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteConfirmText('');
-                  }}
-                  variant="action"
-                >
-                  <XCircle size={18} aria-hidden />
-                  Annuler
-                </Button>
+          </section>
+
+          {/* Section Suppression de données */}
+          <section className={`${styles.section} ${styles.dangerZone}`}>
+            <h2 className={styles.sectionTitle}>Suppression de données</h2>
+            <p className={styles.description}>
+              Action irréversible : supprimer toutes les cartes de votre portfolio
+            </p>
+
+            {!showDeleteConfirm ? (
+              <Button
+                variant="danger"
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+              >
+                <Trash2 size={18} aria-hidden />
+                Vider le portfolio
+              </Button>
+            ) : (
+              <div className={styles.confirmBox}>
+                <p className={styles.confirmText}>⚠️ Cette action est irréversible !</p>
+                <p className={styles.confirmText}>
+                  Tapez <strong>SUPPRIMER</strong> pour confirmer
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className={styles.input}
+                  placeholder="SUPPRIMER"
+                />
+                <div className={styles.confirmButtons}>
+                  <Button
+                    onClick={handleClearPortfolio}
+                    variant="danger"
+                    type="button"
+                    disabled={loading || deleteConfirmText !== 'SUPPRIMER'}
+                  >
+                    <CheckCircle size={18} aria-hidden />
+                    Confirmer la suppression
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    variant="action"
+                    type="button"
+                    disabled={loading}
+                  >
+                    <XCircle size={18} aria-hidden />
+                    Annuler
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        </div>
       </div>
 
       {/* Toast UI */}

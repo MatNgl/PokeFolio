@@ -143,3 +143,62 @@
     flex-direction: column;
   }
 }
+
+/* Grille côte à côte */
+.splitRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-2xl, 24px);
+  align-items: stretch; /* 👈 Étire chaque section pour avoir la même hauteur */
+}
+
+/* Sur mobile : repasse en colonne */
+@media (max-width: 900px) {
+  .splitRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Chaque section dans cette grille prend la hauteur max */
+.splitRow .section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Pour bien répartir le contenu et le bouton */
+  height: 100%; /* 👈 force la hauteur égale */
+  box-sizing: border-box;
+}
+
+/* Optionnel : un peu plus de contraste pour la zone danger */
+.dangerZone {
+  border: 1px solid rgba(255, 77, 79, 0.35);
+  background: linear-gradient(180deg, rgba(255, 77, 79, 0.06) 0%, rgba(255, 77, 79, 0.03) 100%);
+  box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.12) inset;
+  border-radius: 12px;
+}
+
+/* Boîte de confirmation */
+.confirmBox {
+  display: grid;
+  gap: var(--spacing-md, 12px);
+  margin-top: var(--spacing-md, 12px);
+}
+
+.confirmText {
+  color: var(--text-muted, #9aa3b2);
+  font-size: 0.9rem;
+}
+
+.confirmButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, 8px);
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #2a2f3a);
+  background: var(--surface, #101218);
+  color: var(--text, #e6e9ef);
+}
