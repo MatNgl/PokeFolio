@@ -1,31 +1,43 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { type JwtPayload } from '@pokefolio/types';
+import { ExtractJwt, Strategy, type JwtFromRequestFunction } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
+import type { JwtUser } from '../types/jwt-user.type';
+import type { UserRole } from '@pokefolio/types';
 
-import { UsersService } from '../../users/users.service';
+type JwtPayload = {
+  sub: string; // user id
+  email: string;
+  role: UserRole;
+  iat?: number;
+  exp?: number;
+};
+
+const cookieExtractor: JwtFromRequestFunction = (req: Request): string | null => {
+  const token = req?.cookies?.access_token;
+  return typeof token === 'string' ? token : null;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(
-    private readonly usersService: UsersService,
-    configService: ConfigService
-  ) {
+  constructor(configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.usersService.findById(payload.sub);
-
-    if (!user) {
-      throw new UnauthorizedException('Utilisateur introuvable');
-    }
-
-    return user;
+  validate(payload: JwtPayload): JwtUser {
+    // On renvoie le "JwtUser" attendu par @CurrentUser()
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
   }
 }

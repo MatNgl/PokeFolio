@@ -1,57 +1,55 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Document } from 'mongoose';
-import { User } from './schemas/user.schema';
+import { Model } from 'mongoose';
+import { User, UserDoc } from './schemas/user.schema';
 import type { AuthUser } from '@pokefolio/types';
-
-type UserDoc = User & Document;
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
-    private readonly userModel: Model<UserDoc>
+    private readonly userModel: Model<User>
   ) {}
 
-  async findById(id: string): Promise<UserDoc | null> {
-    return this.userModel.findById(id).exec();
+  findById(id: string): Promise<UserDoc | null> {
+    // Pas de .lean() -> on veut un document hydraté
+    return this.userModel.findById(id).exec() as Promise<UserDoc | null>;
   }
 
-  async findByEmail(email: string): Promise<UserDoc | null> {
-    return this.userModel.findOne({ email: email.toLowerCase().trim() }).exec();
+  findByEmail(email: string): Promise<UserDoc | null> {
+    return this.userModel
+      .findOne({ email: email.toLowerCase().trim() })
+      .exec() as Promise<UserDoc | null>;
   }
 
-  async findByPseudo(pseudo: string): Promise<UserDoc | null> {
-    return this.userModel.findOne({ pseudo: pseudo.trim() }).exec();
+  findByPseudo(pseudo: string): Promise<UserDoc | null> {
+    return this.userModel.findOne({ pseudo: pseudo.trim() }).exec() as Promise<UserDoc | null>;
   }
 
-  async create(email: string, pseudo: string, passwordHash: string): Promise<UserDoc> {
+  create(email: string, pseudo: string, passwordHash: string): Promise<UserDoc> {
     return this.userModel.create({
       email: email.toLowerCase().trim(),
       pseudo: pseudo.trim(),
       passwordHash,
       role: 'user',
-    });
+    }) as Promise<UserDoc>;
   }
 
-  async updatePseudo(userId: string, newPseudo: string): Promise<UserDoc | null> {
+  updatePseudo(userId: string, newPseudo: string): Promise<UserDoc | null> {
     return this.userModel
       .findByIdAndUpdate(userId, { pseudo: newPseudo.trim() }, { new: true })
-      .exec();
+      .exec() as Promise<UserDoc | null>;
   }
 
-  async updatePassword(userId: string, newPasswordHash: string): Promise<UserDoc | null> {
+  updatePassword(userId: string, newPasswordHash: string): Promise<UserDoc | null> {
     return this.userModel
       .findByIdAndUpdate(userId, { passwordHash: newPasswordHash }, { new: true })
-      .exec();
+      .exec() as Promise<UserDoc | null>;
   }
 
   toUserResponse(user: UserDoc): AuthUser {
-    return {
-      id: user.id,
-      email: user.email,
-      pseudo: user.pseudo, // ✅ plus de "username"
-      role: user.role,
-    };
+    // Mongoose ajoute .id (string) basé sur _id
+    const { id, email, pseudo, role } = user;
+    return { id, email, pseudo, role };
   }
 }

@@ -8,14 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { UsersService } from '../users/users.service';
-import { User } from '../users/schemas/user.schema';
 import { CryptoService } from './crypto.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UserDoc } from '../users/schemas/user.schema';
 
 type UserDto = ReturnType<UsersService['toUserResponse']>;
 export interface AuthResult {
-  // <= export !
   user: UserDto;
   accessToken: string;
 }
@@ -44,7 +43,7 @@ export class AuthService {
     if (existingByPseudo) throw new ConflictException('Ce pseudo est déjà utilisé');
 
     const passwordHash = await this.cryptoService.hashPassword(dto.password);
-    const user = await this.usersService.create(email, pseudo, passwordHash);
+    const user = await this.usersService.create(email, pseudo, passwordHash); // UserDoc
 
     const accessToken = this.generateAccessToken(user);
     return { user: this.usersService.toUserResponse(user), accessToken };
@@ -68,11 +67,11 @@ export class AuthService {
     return;
   }
 
-  private generateAccessToken(user: User): string {
+  private generateAccessToken(user: UserDoc): string {
     const payload = { sub: user.id, email: user.email, role: user.role };
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '100d'), // 100 jours
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '100d'),
     });
   }
 }

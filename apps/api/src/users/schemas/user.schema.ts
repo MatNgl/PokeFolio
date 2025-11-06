@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { type UserRole } from '@pokefolio/types';
 
-export type UserDocument = HydratedDocument<User>;
+export type UserDoc = HydratedDocument<User> & { _id: Types.ObjectId };
 
 @Schema({ timestamps: true })
 export class User {
@@ -23,3 +23,5 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// ⚠️ laisser les index côté @Prop/unique et enlever les doublons schema.index(...) si encore présents

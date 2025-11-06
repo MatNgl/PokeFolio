@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import type { LoginDto } from '@pokefolio/types';
@@ -9,9 +9,9 @@ import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
+import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import styles from './Auth.module.css';
 
-// Icône pro
 import { LogIn } from 'lucide-react';
 
 export function Login() {
@@ -20,90 +20,132 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // — Persistance (optionnelle) du brouillon
+  const persisted = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('loginDraft') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginDto>();
+    watch,
+  } = useForm<LoginDto>({
+    defaultValues: {
+      email: persisted.email ?? '',
+      password: persisted.password ?? '',
+      rememberMe: persisted.rememberMe ?? false,
+    },
+    shouldUnregister: false,
+  });
+
+  useEffect(() => {
+    const sub = watch((values) => {
+      localStorage.setItem('loginDraft', JSON.stringify(values));
+    });
+    return () => sub.unsubscribe();
+  }, [watch]);
 
   const onSubmit = async (data: LoginDto) => {
-    if (loading) return; // évite double submit
+    if (loading) return;
     try {
       setLoading(true);
       setError('');
       await login(data);
+      localStorage.removeItem('loginDraft');
       navigate('/portfolio');
     } catch (err) {
       setError('Email ou mot de passe incorrect');
       console.error(err);
-      // Ne pas réinitialiser les champs, ils restent remplis grâce à react-hook-form
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={styles.container}>
-      <Card className={styles.card}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>Connexion</h1>
-          <p className={styles.subtitle}>Bienvenue sur PokéFolio</p>
-        </div>
+    <>
+      {loading && <FullScreenLoader message="Connexion en cours..." />}
+      <div className={styles.container} aria-hidden={loading}>
+        <Card className={styles.card}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>Connexion</h1>
+            <p className={styles.subtitle}>Bienvenue sur PokéFolio</p>
+          </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
-          <Input
-            label="Email"
-            type="email"
-            placeholder="votre@email.com"
-            error={errors.email?.message}
-            {...register('email', {
-              required: 'Email requis',
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Email invalide',
-              },
-            })}
-          />
-
-          <PasswordInput
-            label="Mot de passe"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            {...register('password', {
-              required: 'Mot de passe requis',
-            })}
-          />
-
-          <Checkbox label="Rester connecté" {...register('rememberMe')} />
-
-          {error && (
-            <div className={styles.error} role="alert">
-              {error}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            loading={loading}
-            size="lg"
-            variant="info" // ✅ halo/teinte bleue au hover
-            disabled={loading}
-            aria-busy={loading}
+          {/* ⛑️ Antibug: on intercepte le submit natif quoi qu'il arrive */}
+          <form
+            noValidate
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              // Si tu veux tracer:
+              // console.log('[Login] onSubmit intercepted');
+              void handleSubmit(onSubmit)(e);
+            }}
+            onInvalid={(e) => {
+              // Empêche le navigateur de recharger sur "enter" + contrainte native
+              e.preventDefault();
+            }}
           >
-            <LogIn size={18} aria-hidden />
-            Se connecter
-          </Button>
-        </form>
+            <fieldset
+              disabled={loading}
+              aria-busy={loading}
+              style={{ border: 0, padding: 0, margin: 0 }}
+            >
+              <Input
+                label="Email"
+                type="email"
+                placeholder="votre@email.com"
+                autoComplete="email"
+                error={errors.email?.message}
+                {...register('email', {
+                  required: 'Email requis',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Email invalide',
+                  },
+                })}
+              />
 
-        <div className={styles.footer}>
-          <p>
-            Pas encore de compte ?{' '}
-            <Link to="/register" className={styles.link}>
-              S&apos;inscrire
-            </Link>
-          </p>
-        </div>
-      </Card>
-    </div>
+              <PasswordInput
+                label="Mot de passe"
+                placeholder="••••••••"
+                autoComplete={watch('rememberMe') ? 'current-password' : 'off'}
+                error={errors.password?.message}
+                {...register('password', { required: 'Mot de passe requis' })}
+              />
+
+              <Checkbox label="Rester connecté" {...register('rememberMe')} />
+
+              {error && (
+                <div className={styles.error} role="alert">
+                  {error}
+                </div>
+              )}
+
+              {/* Assure-toi que Button rend bien un <button type="submit"> */}
+              <Button type="submit" size="lg" variant="info" disabled={loading}>
+                <LogIn size={18} aria-hidden />
+                Se connecter
+              </Button>
+            </fieldset>
+          </form>
+
+          <div className={styles.footer}>
+            <p>
+              Pas encore de compte ?{' '}
+              <Link to="/register" className={styles.link}>
+                S&apos;inscrire
+              </Link>
+            </p>
+          </div>
+        </Card>
+      </div>
+    </>
   );
 }
