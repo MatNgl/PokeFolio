@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@pokefolio/web...",
   "outputDirectory": "dist",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile"
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
