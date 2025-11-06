@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Card, CardSearchResult } from '@pokefolio/types';
 import { cardsService } from '../services/cards.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { CardDetailsModal } from '../components/cards/CardDetailsModal';
 import { Button } from '../components/ui/Button';
-import { Loader } from '../components/ui/Loader';
+import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import { Toast } from '../components/ui/Toast';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
@@ -24,6 +24,7 @@ export default function Discover() {
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('default');
+  const isInitialLoadRef = useRef(true);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -31,7 +32,11 @@ export default function Discover() {
 
   // Charger des cartes aléatoires au montage
   useEffect(() => {
-    void loadRandomCards();
+    const load = async () => {
+      await loadRandomCards();
+      isInitialLoadRef.current = false;
+    };
+    void load();
   }, []);
 
   // Gérer l'affichage du bouton scroll to top
@@ -51,7 +56,7 @@ export default function Discover() {
   const loadRandomCards = async () => {
     try {
       setLoading(true);
-      // Liste étendue de Pokémon populaires et variés
+      // Liste de 40 Pokémon populaires pour garantir une variété
       const randomPokemons = [
         'Pikachu',
         'Dracaufeu',
@@ -59,81 +64,83 @@ export default function Discover() {
         'Evoli',
         'Lucario',
         'Salamèche',
-        'Rondoudou',
+        'Ronflex',
+        'Lokhlass',
+        'Dracaufeu',
         'Florizarre',
         'Tortank',
-        'Rayquaza',
+        'Drattak',
+        'Suicune',
+        'Raikou',
+        'Entei',
         'Lugia',
-        'Arceus',
-        'Mew',
+        'Ho-Oh',
         'Celebi',
-        'Darkrai',
-        'Giratina',
-        'Artikodin',
-        'Electhor',
-        'Sulfura',
-        'Noctali',
-        'Mentali',
-        'Aquali',
-        'Voltali',
-        'Pyroli',
-        'Phyllali',
-        'Goupix',
-        'Magicarpe',
-        'Leviator',
-        'Palkia',
-        'Dialga',
+        'Rayquaza',
         'Kyogre',
         'Groudon',
+        'Latias',
+        'Latios',
+        'Jirachi',
+        'Deoxys',
+        'Dialga',
+        'Palkia',
+        'Giratina',
+        'Arceus',
         'Reshiram',
         'Zekrom',
         'Kyurem',
-        'Dracaufeu',
-        'Lokhlass',
-        'Ronflex',
-        'Carapuce',
-        'Bulbizarre',
+        'Xerneas',
+        'Yveltal',
+        'Zygarde',
+        'Solgaleo',
+        'Lunala',
+        'Necrozma',
+        'Zacian',
+        'Zamazenta',
       ];
 
-      // Mélanger la liste
+      // Mélanger et sélectionner 20 Pokémon différents
       const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 20);
 
-      const cards: Card[] = [];
-      let index = 0;
+      // Charger les cartes en parallèle avec Promise.all
+      const promises = selected.map((pokemon) =>
+        cardsService
+          .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
+          .then(async (data) => {
+            // Filtrer pour exclure les cartes TCGP (jeu en ligne)
+            const physicalCards = data.cards.filter((card) => {
+              const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+              const setName = (card.set?.name || '').toLowerCase();
+              return (
+                !setId.includes('tcgp') &&
+                !setName.includes('tcgp') &&
+                !setName.includes('pocket') &&
+                !setId.startsWith('a-')
+              );
+            });
 
-      // Continuer jusqu'à avoir 20 cartes ou épuiser la liste
-      while (cards.length < 20 && index < shuffled.length) {
-        const pokemon = shuffled[index];
-        index++;
+            // Sélectionner une carte aléatoire
+            if (physicalCards.length > 0) {
+              const randomCard = physicalCards[Math.floor(Math.random() * physicalCards.length)];
 
-        try {
-          const data = await cardsService.searchCards({ q: pokemon, limit: 10, lang: 'fr' });
+              if (!randomCard) return null;
 
-          // Filtrer pour exclure les cartes TCGP
-          const physicalCards = data.cards.filter((card) => {
-            const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
-            const setName = (card.set?.name || '').toLowerCase();
-            return (
-              !setId.includes('tcgp') &&
-              !setName.includes('tcgp') &&
-              !setName.includes('pocket') &&
-              !setId.startsWith('a-')
-            );
-          });
-
-          // Ajouter une carte aléatoire si disponible
-          if (physicalCards.length > 0) {
-            const randomIndex = Math.floor(Math.random() * physicalCards.length);
-            const randomCard = physicalCards[randomIndex];
-            if (randomCard) {
-              cards.push(randomCard);
+              // Charger les détails complets de la carte pour avoir les infos du set
+              try {
+                const fullCard = await cardsService.getCardById(randomCard.id, 'fr');
+                return fullCard || randomCard;
+              } catch {
+                return randomCard;
+              }
             }
-          }
-        } catch (error) {
-          // Ignorer les erreurs et continuer avec le prochain Pokémon
-          console.warn(`Erreur lors de la recherche de ${pokemon}:`, error);
-        }
-      }
+            return null;
+          })
+          .catch(() => null)
+      );
+
+      const cards = (await Promise.all(promises)).filter((card): card is Card => card !== null);
 
       setResult({
         cards,
@@ -152,8 +159,13 @@ export default function Discover() {
     }
   };
 
-  // Recherche dynamique lors de la saisie
+  // Recherche dynamique lors de la saisie (skip initial load)
   useEffect(() => {
+    // Ignorer le premier rendu (déjà géré par loadRandomCards)
+    if (isInitialLoadRef.current) {
+      return;
+    }
+
     const handleSearch = async () => {
       if (!searchQuery.trim()) {
         void loadRandomCards();
@@ -275,11 +287,9 @@ export default function Discover() {
         <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="discover" />
       </div>
 
-      {loading ? (
-        <div className={styles.loading}>
-          <Loader />
-        </div>
-      ) : displayedCards.length > 0 ? (
+      {loading && <FullScreenLoader message="Recherche de cartes..." />}
+
+      {!loading && displayedCards.length > 0 ? (
         <section className={styles.grid}>
           {displayedCards.map((card) => (
             <article key={`${card.id}-${card.localId}`} className={styles.card}>
@@ -308,16 +318,9 @@ export default function Discover() {
                 <h3 className={styles.cardName}>{card.name}</h3>
                 <p className={styles.cardSet}>
                   {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Set inconnu'}
-                  {card.localId && (
-                    <>
-                      {' · #'}
-                      {card.localId.padStart(3, '0')}
-                      {(card.set?.cardCount?.total || card.set?.cardCount?.official) &&
-                        `/${String(
-                          card.set?.cardCount?.total || card.set?.cardCount?.official
-                        ).padStart(card.localId.length >= 3 ? 2 : 3, '0')}`}
-                    </>
-                  )}
+                  {card.localId && ` · #${card.localId.padStart(3, '0')}`}
+                  {card.set?.cardCount?.total &&
+                    `/${String(card.set.cardCount.total).padStart(3, '0')}`}
                 </p>
                 {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
               </div>
@@ -335,7 +338,7 @@ export default function Discover() {
             </article>
           ))}
         </section>
-      ) : (
+      ) : !loading ? (
         <div className={styles.empty}>
           <svg
             width="64"
@@ -352,7 +355,7 @@ export default function Discover() {
           <h2>Aucune carte trouvée</h2>
           <p>Essayez une autre recherche</p>
         </div>
-      )}
+      ) : null}
 
       {selectedCard && (
         <AddCardModal

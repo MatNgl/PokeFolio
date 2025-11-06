@@ -1,23 +1,31 @@
-// Loader.tsx
 import { useId } from 'react';
-import styles from './Loader.module.css';
+import styles from './FullScreenLoader.module.css';
+import loaderStyles from './Loader.module.css';
 
-type LoaderProps = { size?: number; 'aria-label'?: string };
+interface FullScreenLoaderProps {
+  message?: string;
+}
 
+interface LoaderProps {
+  size?: number;
+  'aria-label'?: string;
+}
+
+// Composant Loader inline (réutilisé partout)
 export function Loader({ size = 100, ...aria }: LoaderProps) {
-  const uid = useId(); // 👈 évite les collisions d'IDs entre instances
+  const uid = useId();
   const maskId = `waves-${uid}`;
   const gradId = `lava-grad-${uid}`;
   const clipId = `ball-clip-${uid}`;
 
   return (
     <div
-      className={styles.loader}
+      className={loaderStyles.loader}
       style={{ '--d': `${size}px` } as React.CSSProperties}
       role="status"
       {...aria}
     >
-      <svg className={styles.core} viewBox="0 0 100 100" aria-hidden="true">
+      <svg className={loaderStyles.core} viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="30%" stopColor="var(--color-one)" />
@@ -43,6 +51,18 @@ export function Loader({ size = 100, ...aria }: LoaderProps) {
           <circle cx="50" cy="50" r="49" fill={`url(#${gradId})`} mask={`url(#${maskId})`} />
         </g>
       </svg>
+    </div>
+  );
+}
+
+// Loader plein écran
+export function FullScreenLoader({ message = 'Chargement...' }: FullScreenLoaderProps) {
+  return (
+    <div className={styles.overlay} role="status" aria-live="polite">
+      <div className={styles.content}>
+        <Loader size={120} aria-label={message} />
+        {message && <p className={styles.message}>{message}</p>}
+      </div>
     </div>
   );
 }

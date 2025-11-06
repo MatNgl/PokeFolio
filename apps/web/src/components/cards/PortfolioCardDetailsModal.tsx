@@ -3,7 +3,7 @@ import type { Card } from '@pokefolio/types';
 import type { PortfolioCard } from '../../services/portfolio.service';
 import { cardsService } from '../../services/cards.service';
 import { Button } from '../ui/Button';
-import { Loader } from '../ui/Loader';
+import { Loader } from '../ui/FullScreenLoader';
 import styles from './PortfolioCardDetailsModal.module.css';
 
 type PortfolioVariant = {
