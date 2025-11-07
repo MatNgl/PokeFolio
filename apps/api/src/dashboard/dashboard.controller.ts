@@ -8,6 +8,7 @@ import { TimeSeriesQueryDto, TimeSeriesResponseDto } from './dto/timeseries.dto'
 import { GradeDistributionDto } from './dto/distribution.dto';
 import { TopSetsDto, TopSetsQueryDto } from './dto/top-sets.dto';
 import { RecentActivityDto, RecentActivityQueryDto } from './dto/activity.dto';
+import { ExpensiveCardsDto, ExpensiveCardsQueryDto } from './dto/expensive-cards.dto';
 
 interface JwtPayload {
   sub: string;
@@ -111,5 +112,23 @@ export class DashboardController {
     @Query() query: RecentActivityQueryDto
   ): Promise<RecentActivityDto> {
     return this.dashboardService.getRecentActivity(user.sub, query.limit || 10);
+  }
+
+  @Get('expensive-cards')
+  @ApiOperation({
+    summary: 'Get most expensive cards',
+    description: 'Returns the most expensive cards in the collection ranked by purchase price',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Expensive cards retrieved successfully',
+    type: ExpensiveCardsDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getExpensiveCards(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ExpensiveCardsQueryDto
+  ): Promise<ExpensiveCardsDto> {
+    return this.dashboardService.getExpensiveCards(user.sub, query.limit || 5);
   }
 }

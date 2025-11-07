@@ -16,6 +16,7 @@ import {
 import { GradeDistributionDto, GradeCompanyDistribution } from './dto/distribution.dto';
 import { TopSetsDto, TopSetItem } from './dto/top-sets.dto';
 import { RecentActivityDto, RecentActivityItem, ActivityType } from './dto/activity.dto';
+import { ExpensiveCardsDto, ExpensiveCardItem } from './dto/expensive-cards.dto';
 
 interface CardSnapshot {
   name?: string;
@@ -314,12 +315,12 @@ export class DashboardService {
     const sortStage = { $sort: { _id: 1 as const } };
 
     const data = await this.portfolioModel.aggregate<{
-      _id: Date;
+      _id: string;
       value: number;
     }>([matchStage, addFieldsStage, groupStage, sortStage]);
 
     const dataPoints: TimeSeriesDataPoint[] = data.map((item) => ({
-      date: this.formatDate(new Date(item._id), bucket),
+      date: item._id, // MongoDB $dateToString retourne déjà une string formatée
       value: Math.round(item.value * 100) / 100,
     }));
 
@@ -602,6 +603,79 @@ export class DashboardService {
     return { activities: items };
   }
 
+  /**
+   * Récupère les cartes les plus chères
+   */
+  async getExpensiveCards(userId: string, limit: number): Promise<ExpensiveCardsDto> {
+    const cards = await this.portfolioModel
+      .find({ ownerId: userId })
+      .lean<PortfolioItemDocument[]>()
+      .exec();
+
+    // Calculer le prix effectif pour chaque carte (Mode A ou somme variants Mode B)
+    const cardsWithPrice = cards
+      .map((item) => {
+        const snapshot = item.cardSnapshot as CardSnapshot | undefined;
+        let imageUrl: string | undefined;
+
+        if (snapshot?.image) {
+          if (typeof snapshot.image === 'string') {
+            imageUrl = snapshot.image;
+          } else if (snapshot.image.large) {
+            imageUrl = snapshot.image.large;
+          } else if (snapshot.image.small) {
+            imageUrl = snapshot.image.small;
+          }
+        }
+
+        // Mode A : prix direct
+        if (item.purchasePrice !== undefined && item.purchasePrice > 0) {
+          return {
+            itemId: String(item._id),
+            cardId: item.cardId,
+            cardName: snapshot?.name,
+            imageUrl,
+            price: item.purchasePrice,
+            isGraded: item.graded === true,
+            gradeCompany: item.grading?.company,
+            gradeScore: item.grading?.grade,
+            setName: snapshot?.set?.name,
+          };
+        }
+
+        // Mode B : chercher le variant le plus cher
+        if (Array.isArray(item.variants) && item.variants.length > 0) {
+          const maxVariant = item.variants.reduce((max, v) => {
+            const vPrice = v.purchasePrice ?? 0;
+            const maxPrice = max.purchasePrice ?? 0;
+            return vPrice > maxPrice ? v : max;
+          }, item.variants[0]);
+
+          if (maxVariant && maxVariant.purchasePrice && maxVariant.purchasePrice > 0) {
+            return {
+              itemId: String(item._id),
+              cardId: item.cardId,
+              cardName: snapshot?.name,
+              imageUrl,
+              price: maxVariant.purchasePrice,
+              isGraded: maxVariant.graded === true,
+              gradeCompany: maxVariant.grading?.company,
+              gradeScore: maxVariant.grading?.grade,
+              setName: snapshot?.set?.name,
+            };
+          }
+        }
+
+        return null;
+      })
+      .filter((card): card is ExpensiveCardItem => card !== null && card.price > 0);
+
+    // Trier par prix décroissant et prendre les N premiers
+    const topCards = cardsWithPrice.sort((a, b) => b.price - a.price).slice(0, limit);
+
+    return { cards: topCards };
+  }
+
   // ────────────────────────────────────────────────────────────
   // Méthodes utilitaires
   // ────────────────────────────────────────────────────────────
@@ -628,15 +702,15 @@ export class DashboardService {
     switch (period) {
       case TimeSeriesPeriod.SEVEN_DAYS:
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%W';
+        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%U';
         break;
       case TimeSeriesPeriod.THIRTY_DAYS:
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%W';
+        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%U';
         break;
       case TimeSeriesPeriod.SIX_MONTHS:
         startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.MONTHLY ? '%Y-%m' : '%Y-%W';
+        bucketFormat = bucket === TimeSeriesBucket.MONTHLY ? '%Y-%m' : '%Y-%U';
         break;
       case TimeSeriesPeriod.ONE_YEAR:
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
