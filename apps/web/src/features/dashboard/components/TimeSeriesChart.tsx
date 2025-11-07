@@ -9,28 +9,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, BarChart3 } from 'lucide-react';
-import type { TimeSeriesPeriod, TimeSeriesDataPoint } from '../types/dashboard.types';
+import type { TimeSeriesDataPoint } from '../types/dashboard.types';
 import styles from './TimeSeriesChart.module.css';
-
-interface PeriodOption {
-  label: string;
-  value: TimeSeriesPeriod;
-}
-
-const PERIOD_OPTIONS: PeriodOption[] = [
-  { label: '7J', value: '7d' as TimeSeriesPeriod },
-  { label: '30J', value: '30d' as TimeSeriesPeriod },
-  { label: '6M', value: '6m' as TimeSeriesPeriod },
-  { label: '1A', value: '1y' as TimeSeriesPeriod },
-  { label: 'Tout', value: 'all' as TimeSeriesPeriod },
-];
 
 export interface TimeSeriesChartProps {
   title: string;
   data: TimeSeriesDataPoint[];
   loading?: boolean;
-  period: TimeSeriesPeriod;
-  onPeriodChange: (period: TimeSeriesPeriod) => void;
   valueFormatter?: (value: number) => string;
   color?: string;
 }
@@ -39,8 +24,6 @@ export function TimeSeriesChart({
   title,
   data,
   loading = false,
-  period,
-  onPeriodChange,
   valueFormatter = (v: number) => v.toString(),
   color = '#7cf3ff',
 }: TimeSeriesChartProps): JSX.Element {
@@ -89,21 +72,6 @@ export function TimeSeriesChart({
             <TrendingUp size={16} />
           </div>
           {title}
-        </div>
-
-        <div className={styles.controls} role="group" aria-label="Period selector">
-          {PERIOD_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`${styles.filterButton} ${period === option.value ? styles.active : ''}`}
-              onClick={() => onPeriodChange(option.value)}
-              aria-pressed={period === option.value}
-              aria-label={`Show ${option.label}`}
-            >
-              {option.label}
-            </button>
-          ))}
         </div>
       </div>
 

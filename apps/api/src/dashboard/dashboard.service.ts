@@ -630,7 +630,7 @@ export class DashboardService {
 
         // Mode A : prix direct
         if (item.purchasePrice !== undefined && item.purchasePrice > 0) {
-          return {
+          const card: ExpensiveCardItem = {
             itemId: String(item._id),
             cardId: item.cardId,
             cardName: snapshot?.name,
@@ -641,18 +641,26 @@ export class DashboardService {
             gradeScore: item.grading?.grade,
             setName: snapshot?.set?.name,
           };
+          return card;
         }
 
         // Mode B : chercher le variant le plus cher
         if (Array.isArray(item.variants) && item.variants.length > 0) {
-          const maxVariant = item.variants.reduce((max, v) => {
-            const vPrice = v.purchasePrice ?? 0;
-            const maxPrice = max.purchasePrice ?? 0;
-            return vPrice > maxPrice ? v : max;
-          }, item.variants[0]);
+          // Find the most expensive variant using a simple loop to avoid reduce type issues
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          let maxVariant = item.variants[0]!; // Safe: we checked length > 0
+          for (let i = 1; i < item.variants.length; i++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const currentVariant = item.variants[i]!;
+            const currentPrice = currentVariant.purchasePrice ?? 0;
+            const maxPrice = maxVariant.purchasePrice ?? 0;
+            if (currentPrice > maxPrice) {
+              maxVariant = currentVariant;
+            }
+          }
 
-          if (maxVariant && maxVariant.purchasePrice && maxVariant.purchasePrice > 0) {
-            return {
+          if (maxVariant.purchasePrice && maxVariant.purchasePrice > 0) {
+            const card: ExpensiveCardItem = {
               itemId: String(item._id),
               cardId: item.cardId,
               cardName: snapshot?.name,
@@ -663,12 +671,13 @@ export class DashboardService {
               gradeScore: maxVariant.grading?.grade,
               setName: snapshot?.set?.name,
             };
+            return card;
           }
         }
 
         return null;
       })
-      .filter((card): card is ExpensiveCardItem => card !== null && card.price > 0);
+      .filter((card): card is ExpensiveCardItem => card !== null);
 
     // Trier par prix décroissant et prendre les N premiers
     const topCards = cardsWithPrice.sort((a, b) => b.price - a.price).slice(0, limit);
@@ -714,6 +723,23 @@ export class DashboardService {
         break;
       case TimeSeriesPeriod.ONE_YEAR:
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        bucketFormat = '%Y-%m';
+        break;
+      case TimeSeriesPeriod.CURRENT_MONTH:
+        // Premier jour du mois en cours
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        bucketFormat = '%Y-%m-%d';
+        break;
+      case TimeSeriesPeriod.CURRENT_QUARTER: {
+        // Premier jour du trimestre en cours
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        startDate = new Date(now.getFullYear(), quarterMonth, 1);
+        bucketFormat = bucket === TimeSeriesBucket.MONTHLY ? '%Y-%m' : '%Y-%U';
+        break;
+      }
+      case TimeSeriesPeriod.CURRENT_YEAR:
+        // Premier jour de l'année en cours
+        startDate = new Date(now.getFullYear(), 0, 1);
         bucketFormat = '%Y-%m';
         break;
       case TimeSeriesPeriod.ALL:

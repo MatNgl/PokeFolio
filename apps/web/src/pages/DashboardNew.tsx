@@ -7,6 +7,7 @@ import { TimeSeriesChart } from '@/features/dashboard/components/TimeSeriesChart
 import { GradedPieChart } from '@/features/dashboard/components/GradedPieChart';
 import { TopSetsList } from '@/features/dashboard/components/TopSetsList';
 import { TopExpensiveCards } from '@/features/dashboard/components/TopExpensiveCards';
+import { PeriodSelector, type Period } from '@/features/dashboard/components/PeriodSelector';
 import {
   TimeSeriesMetric,
   TimeSeriesPeriod,
@@ -15,15 +16,23 @@ import {
 import styles from './DashboardNew.module.css';
 
 export function DashboardNew(): JSX.Element {
-  const [countPeriod, setCountPeriod] = useState<TimeSeriesPeriod>(TimeSeriesPeriod.THIRTY_DAYS);
-  const [valuePeriod, setValuePeriod] = useState<TimeSeriesPeriod>(TimeSeriesPeriod.THIRTY_DAYS);
+  // Période globale partagée par tous les composants
+  const [globalPeriod, setGlobalPeriod] = useState<Period>({
+    type: '30d',
+    label: '30 Jours',
+  });
+
+  // Convertir Period vers TimeSeriesPeriod
+  const periodToTimeSeriesPeriod = (period: Period): TimeSeriesPeriod => {
+    return period.type as TimeSeriesPeriod;
+  };
 
   // Déterminer le bucket automatiquement selon la période
-  const getAutoBucket = (period: TimeSeriesPeriod): TimeSeriesBucket => {
-    if (period === TimeSeriesPeriod.SEVEN_DAYS || period === TimeSeriesPeriod.THIRTY_DAYS) {
+  const getAutoBucket = (period: Period): TimeSeriesBucket => {
+    if (period.type === '7d' || period.type === '30d' || period.type === 'month') {
       return TimeSeriesBucket.DAILY;
     }
-    if (period === TimeSeriesPeriod.SIX_MONTHS) {
+    if (period.type === '6m' || period.type === 'quarter') {
       return TimeSeriesBucket.WEEKLY;
     }
     return TimeSeriesBucket.MONTHLY;
@@ -44,9 +53,13 @@ export function DashboardNew(): JSX.Element {
     isLoading: countLoading,
     error: countError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'count', countPeriod],
+    queryKey: ['dashboard', 'timeseries', 'count', globalPeriod.type],
     queryFn: () =>
-      dashboardApi.getTimeSeries(TimeSeriesMetric.COUNT, countPeriod, getAutoBucket(countPeriod)),
+      dashboardApi.getTimeSeries(
+        TimeSeriesMetric.COUNT,
+        periodToTimeSeriesPeriod(globalPeriod),
+        getAutoBucket(globalPeriod)
+      ),
   });
 
   const {
@@ -54,9 +67,13 @@ export function DashboardNew(): JSX.Element {
     isLoading: valueLoading,
     error: valueError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'value', valuePeriod],
+    queryKey: ['dashboard', 'timeseries', 'value', globalPeriod.type],
     queryFn: () =>
-      dashboardApi.getTimeSeries(TimeSeriesMetric.VALUE, valuePeriod, getAutoBucket(valuePeriod)),
+      dashboardApi.getTimeSeries(
+        TimeSeriesMetric.VALUE,
+        periodToTimeSeriesPeriod(globalPeriod),
+        getAutoBucket(globalPeriod)
+      ),
   });
 
   const {
@@ -148,14 +165,17 @@ export function DashboardNew(): JSX.Element {
         />
       </section>
 
+      {/* Global Period Selector */}
+      <section className={styles.periodSelector} aria-label="Period Selector">
+        <PeriodSelector currentPeriod={globalPeriod} onPeriodChange={setGlobalPeriod} />
+      </section>
+
       {/* Charts Row 1: Time Series */}
       <section className={styles.chartsRow} aria-label="Time Series Charts">
         <TimeSeriesChart
           title="Évolution du Nombre de Cartes"
           data={countSeries?.data || []}
           loading={countLoading}
-          period={countPeriod}
-          onPeriodChange={setCountPeriod}
           valueFormatter={formatNumber}
           color="#7cf3ff"
         />
@@ -163,8 +183,6 @@ export function DashboardNew(): JSX.Element {
           title="Évolution de la Valeur"
           data={valueSeries?.data || []}
           loading={valueLoading}
-          period={valuePeriod}
-          onPeriodChange={setValuePeriod}
           valueFormatter={formatCurrency}
           color="#a78bfa"
         />

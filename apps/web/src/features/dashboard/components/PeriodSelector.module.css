@@ -1,0 +1,163 @@
+.container {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(124, 243, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  color: #7cf3ff;
+}
+
+.periodTabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.periodButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  white-space: nowrap;
+}
+
+.periodButton:hover {
+  border-color: rgba(124, 243, 255, 0.4);
+  background: rgba(124, 243, 255, 0.1);
+  color: #7cf3ff;
+}
+
+.periodButton:focus-visible {
+  border-color: #7cf3ff;
+  box-shadow: 0 0 0 3px rgba(124, 243, 255, 0.2);
+}
+
+.periodButton.active {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
+  border-color: #7cf3ff;
+  color: #7cf3ff;
+  font-weight: 600;
+}
+
+.customSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dateInput {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: rgba(15, 23, 42, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 150px;
+}
+
+.dateInput:focus {
+  border-color: #7cf3ff;
+  box-shadow: 0 0 0 3px rgba(124, 243, 255, 0.2);
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.dateInput::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.applyButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #7cf3ff;
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
+  color: #7cf3ff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.applyButton:hover {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.25) 0%, rgba(167, 139, 250, 0.25) 100%);
+  box-shadow: 0 0 16px rgba(124, 243, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.applyButton:active {
+  transform: translateY(0);
+}
+
+.applyButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .periodTabs {
+    width: 100%;
+  }
+
+  .periodButton {
+    flex: 1;
+    min-width: 60px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .customSection {
+    width: 100%;
+  }
+
+  .dateInput {
+    flex: 1;
+  }
+}

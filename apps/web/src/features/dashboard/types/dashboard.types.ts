@@ -34,6 +34,9 @@ export enum TimeSeriesPeriod {
   THIRTY_DAYS = '30d',
   SIX_MONTHS = '6m',
   ONE_YEAR = '1y',
+  CURRENT_MONTH = 'month',
+  CURRENT_QUARTER = 'quarter',
+  CURRENT_YEAR = 'year',
   ALL = 'all',
 }
 

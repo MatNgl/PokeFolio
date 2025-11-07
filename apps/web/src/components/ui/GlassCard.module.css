@@ -1,0 +1,45 @@
+/* Composant Card avec effet glassmorphism unifié */
+.card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(124, 243, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: rgba(124, 243, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
+}
+
+.card:focus-within {
+  border-color: rgba(124, 243, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(124, 243, 255, 0.1);
+}
+
+/* Variantes */
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:active {
+  transform: translateY(0);
+}
+
+.noPadding {
+  padding: 0;
+}
+
+.compact {
+  padding: 16px;
+}
+
+.comfortable {
+  padding: 24px;
+}
+
+.spacious {
+  padding: 32px;
+}
