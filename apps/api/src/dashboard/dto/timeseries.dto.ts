@@ -47,7 +47,23 @@ export enum TimeSeriesBucket {
  */
 export class PeriodFilterDto {
   @ApiProperty({
-    description: 'Type de période',
+    description: 'Date de début (ISO 8601 string) - prioritaire sur type/year/month/week',
+    required: false,
+    example: '2025-01-01T00:00:00.000Z',
+  })
+  @IsOptional()
+  startDate?: string;
+
+  @ApiProperty({
+    description: 'Date de fin (ISO 8601 string) - prioritaire sur type/year/month/week',
+    required: false,
+    example: '2025-01-31T23:59:59.999Z',
+  })
+  @IsOptional()
+  endDate?: string;
+
+  @ApiProperty({
+    description: 'Type de période (legacy - utilisé si startDate/endDate non fournis)',
     enum: PeriodType,
     default: PeriodType.ALL,
   })

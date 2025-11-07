@@ -618,12 +618,21 @@ export class DashboardService {
   // ────────────────────────────────────────────────────────────
 
   /**
-   * Calcule les dates de début et fin en fonction du filtre de période hiérarchique
+   * Calcule les dates de début et fin en fonction du filtre de période
+   * Priorité: startDate/endDate (ISO strings) > type hiérarchique (year/month/week)
    */
   private getPeriodDates(filter: PeriodFilterDto): {
     startDate: Date | null;
     endDate: Date | null;
   } {
+    // Priorité 1: Si startDate et/ou endDate sont fournis (ISO strings), les utiliser
+    if (filter.startDate || filter.endDate) {
+      const startDate = filter.startDate ? new Date(filter.startDate) : null;
+      const endDate = filter.endDate ? new Date(filter.endDate) : null;
+      return { startDate, endDate };
+    }
+
+    // Priorité 2: Utiliser le système hiérarchique (legacy)
     const now = new Date();
     const currentYear = filter.year || now.getFullYear();
     const currentMonth = filter.month !== undefined ? filter.month - 1 : now.getMonth();
