@@ -14,6 +14,8 @@ export enum PeriodType {
 }
 
 export interface PeriodFilter {
+  startDate?: string; // ISO date string
+  endDate?: string; // ISO date string
   type?: PeriodType;
   year?: number;
   month?: number; // 1-12

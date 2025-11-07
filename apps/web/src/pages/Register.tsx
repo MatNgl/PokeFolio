@@ -58,7 +58,7 @@ export function Register() {
         password: data.password,
         confirmPassword: data.confirmPassword,
       });
-      navigate('/dashboard');
+      navigate('/portfolio');
     } catch (err: unknown) {
       const e = err as ApiError;
       const message = e?.response?.data?.message ?? "Une erreur est survenue lors de l'inscription";

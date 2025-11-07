@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Calendar, ChevronDown } from 'lucide-react';
-import { PeriodFilter, PeriodType } from '../types/dashboard.types';
+import { useState } from 'react';
+import { Calendar, RotateCcw } from 'lucide-react';
+import { PeriodFilter } from '../types/dashboard.types';
 import styles from './PeriodSelector.module.css';
 
 export type { PeriodFilter };
@@ -10,257 +10,171 @@ export interface PeriodSelectorProps {
   onPeriodChange: (period: PeriodFilter) => void;
 }
 
-const MONTHS = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-];
+type QuickPeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 
 export function PeriodSelector({
   currentPeriod,
   onPeriodChange,
 }: PeriodSelectorProps): JSX.Element {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
+  const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<QuickPeriod>('all');
+  const [customDate, setCustomDate] = useState<string>('');
 
-  // États locaux pour les sélecteurs
-  const [selectedType, setSelectedType] = useState<PeriodType>(
-    currentPeriod.type || PeriodType.ALL
-  );
-  const [selectedYear, setSelectedYear] = useState<number>(currentPeriod.year || currentYear);
-  const [selectedMonth, setSelectedMonth] = useState<number>(currentPeriod.month || currentMonth);
-  const [selectedWeek, setSelectedWeek] = useState<number>(currentPeriod.week || 1);
+  const handleQuickPeriodChange = (period: QuickPeriod): void => {
+    setSelectedQuickPeriod(period);
+    setCustomDate(''); // Reset custom date when selecting a quick period
 
-  // Générer la liste des années (10 dernières années)
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+    const now = new Date();
+    const startDate = new Date();
 
-  // Gérer le changement de type de période
-  const handleTypeChange = (type: PeriodType): void => {
-    setSelectedType(type);
-
-    const newPeriod: PeriodFilter = { type };
-
-    // Ajouter les paramètres en fonction du type
-    switch (type) {
-      case PeriodType.YEAR:
-        newPeriod.year = selectedYear;
+    switch (period) {
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
         break;
-      case PeriodType.MONTH:
-        newPeriod.year = selectedYear;
-        newPeriod.month = selectedMonth;
+      case '30d':
+        startDate.setDate(now.getDate() - 30);
         break;
-      case PeriodType.WEEK:
-        newPeriod.year = selectedYear;
-        newPeriod.month = selectedMonth;
-        newPeriod.week = selectedWeek;
+      case '90d':
+        startDate.setDate(now.getDate() - 90);
         break;
-      case PeriodType.ALL:
+      case '1y':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'all':
       default:
+        // Pour 'all', on ne définit pas de dates (backend gérera)
+        onPeriodChange({});
+        return;
+    }
+
+    // Envoyer les dates au format ISO
+    onPeriodChange({
+      startDate: startDate.toISOString(),
+      endDate: now.toISOString(),
+    });
+  };
+
+  const handleCustomDateChange = (date: string): void => {
+    setCustomDate(date);
+
+    if (!date || !selectedQuickPeriod || selectedQuickPeriod === 'all') return;
+
+    const selectedDate = new Date(date);
+    const now = new Date();
+
+    // Calculer la période en fonction du bouton actif
+    let endDate = new Date(selectedDate);
+
+    switch (selectedQuickPeriod) {
+      case '7d':
+        endDate.setDate(selectedDate.getDate() + 7);
+        break;
+      case '30d':
+        // Si on sélectionne une date et "30d", on affiche le mois de cette date
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        break;
+      case '90d':
+        endDate.setDate(selectedDate.getDate() + 90);
+        break;
+      case '1y':
+        endDate = new Date(selectedDate.getFullYear(), 11, 31);
         break;
     }
 
-    onPeriodChange(newPeriod);
-  };
-
-  // Gérer le changement d'année
-  const handleYearChange = (year: number): void => {
-    setSelectedYear(year);
-
-    if (selectedType !== PeriodType.ALL) {
-      const newPeriod: PeriodFilter = {
-        type: selectedType,
-        year,
-      };
-
-      if (selectedType === PeriodType.MONTH || selectedType === PeriodType.WEEK) {
-        newPeriod.month = selectedMonth;
-      }
-
-      if (selectedType === PeriodType.WEEK) {
-        newPeriod.week = selectedWeek;
-      }
-
-      onPeriodChange(newPeriod);
+    // Ne pas dépasser la date actuelle
+    if (endDate > now) {
+      endDate = now;
     }
+
+    onPeriodChange({
+      startDate: selectedDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
   };
 
-  // Gérer le changement de mois
-  const handleMonthChange = (month: number): void => {
-    setSelectedMonth(month);
-
-    if (selectedType === PeriodType.MONTH || selectedType === PeriodType.WEEK) {
-      const newPeriod: PeriodFilter = {
-        type: selectedType,
-        year: selectedYear,
-        month,
-      };
-
-      if (selectedType === PeriodType.WEEK) {
-        newPeriod.week = selectedWeek;
-      }
-
-      onPeriodChange(newPeriod);
-    }
+  const handleReset = (): void => {
+    setSelectedQuickPeriod('all');
+    setCustomDate('');
+    onPeriodChange({});
   };
-
-  // Gérer le changement de semaine
-  const handleWeekChange = (week: number): void => {
-    setSelectedWeek(week);
-
-    if (selectedType === PeriodType.WEEK) {
-      onPeriodChange({
-        type: PeriodType.WEEK,
-        year: selectedYear,
-        month: selectedMonth,
-        week,
-      });
-    }
-  };
-
-  // Synchroniser avec les props externes
-  useEffect(() => {
-    if (currentPeriod.type) setSelectedType(currentPeriod.type);
-    if (currentPeriod.year) setSelectedYear(currentPeriod.year);
-    if (currentPeriod.month) setSelectedMonth(currentPeriod.month);
-    if (currentPeriod.week) setSelectedWeek(currentPeriod.week);
-  }, [currentPeriod]);
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Calendar className={styles.icon} aria-hidden="true" />
-        <h2 className={styles.title}>Période d&apos;analyse</h2>
-      </div>
-
-      {/* Sélecteur de type de période */}
-      <div className={styles.periodTypes} role="group" aria-label="Type de période">
-        <button
-          type="button"
-          className={`${styles.typeButton} ${
-            selectedType === PeriodType.WEEK ? styles.active : ''
-          }`}
-          onClick={() => handleTypeChange(PeriodType.WEEK)}
-          aria-pressed={selectedType === PeriodType.WEEK}
-        >
-          Semaine
-        </button>
-        <button
-          type="button"
-          className={`${styles.typeButton} ${
-            selectedType === PeriodType.MONTH ? styles.active : ''
-          }`}
-          onClick={() => handleTypeChange(PeriodType.MONTH)}
-          aria-pressed={selectedType === PeriodType.MONTH}
-        >
-          Mois
-        </button>
-        <button
-          type="button"
-          className={`${styles.typeButton} ${
-            selectedType === PeriodType.YEAR ? styles.active : ''
-          }`}
-          onClick={() => handleTypeChange(PeriodType.YEAR)}
-          aria-pressed={selectedType === PeriodType.YEAR}
-        >
-          Année
-        </button>
-        <button
-          type="button"
-          className={`${styles.typeButton} ${selectedType === PeriodType.ALL ? styles.active : ''}`}
-          onClick={() => handleTypeChange(PeriodType.ALL)}
-          aria-pressed={selectedType === PeriodType.ALL}
-        >
-          Tout
-        </button>
-      </div>
-
-      {/* Sélecteurs de date conditionnels */}
-      {selectedType !== PeriodType.ALL && (
-        <div className={styles.selectors}>
-          {/* Sélecteur d'année */}
-          {(selectedType === PeriodType.YEAR ||
-            selectedType === PeriodType.MONTH ||
-            selectedType === PeriodType.WEEK) && (
-            <div className={styles.selectorGroup}>
-              <label htmlFor="year-select" className={styles.label}>
-                Année
-              </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  id="year-select"
-                  className={styles.select}
-                  value={selectedYear}
-                  onChange={(e) => handleYearChange(Number(e.target.value))}
-                >
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className={styles.selectIcon} aria-hidden="true" />
-              </div>
-            </div>
-          )}
-
-          {/* Sélecteur de mois */}
-          {(selectedType === PeriodType.MONTH || selectedType === PeriodType.WEEK) && (
-            <div className={styles.selectorGroup}>
-              <label htmlFor="month-select" className={styles.label}>
-                Mois
-              </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  id="month-select"
-                  className={styles.select}
-                  value={selectedMonth}
-                  onChange={(e) => handleMonthChange(Number(e.target.value))}
-                >
-                  {MONTHS.map((month, index) => (
-                    <option key={index} value={index + 1}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className={styles.selectIcon} aria-hidden="true" />
-              </div>
-            </div>
-          )}
-
-          {/* Sélecteur de semaine */}
-          {selectedType === PeriodType.WEEK && (
-            <div className={styles.selectorGroup}>
-              <label htmlFor="week-select" className={styles.label}>
-                Semaine
-              </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  id="week-select"
-                  className={styles.select}
-                  value={selectedWeek}
-                  onChange={(e) => handleWeekChange(Number(e.target.value))}
-                >
-                  {[1, 2, 3, 4].map((week) => (
-                    <option key={week} value={week}>
-                      Semaine {week}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className={styles.selectIcon} aria-hidden="true" />
-              </div>
-            </div>
-          )}
+      <div className={styles.controlsWrapper}>
+        {/* Boutons de période rapide */}
+        <div className={styles.quickButtons} role="group" aria-label="Périodes rapides">
+          <button
+            type="button"
+            className={`${styles.quickButton} ${selectedQuickPeriod === '7d' ? styles.active : ''}`}
+            onClick={() => handleQuickPeriodChange('7d')}
+            aria-pressed={selectedQuickPeriod === '7d'}
+          >
+            7j
+          </button>
+          <button
+            type="button"
+            className={`${styles.quickButton} ${
+              selectedQuickPeriod === '30d' ? styles.active : ''
+            }`}
+            onClick={() => handleQuickPeriodChange('30d')}
+            aria-pressed={selectedQuickPeriod === '30d'}
+          >
+            30j
+          </button>
+          <button
+            type="button"
+            className={`${styles.quickButton} ${
+              selectedQuickPeriod === '90d' ? styles.active : ''
+            }`}
+            onClick={() => handleQuickPeriodChange('90d')}
+            aria-pressed={selectedQuickPeriod === '90d'}
+          >
+            90j
+          </button>
+          <button
+            type="button"
+            className={`${styles.quickButton} ${selectedQuickPeriod === '1y' ? styles.active : ''}`}
+            onClick={() => handleQuickPeriodChange('1y')}
+            aria-pressed={selectedQuickPeriod === '1y'}
+          >
+            1 an
+          </button>
+          <button
+            type="button"
+            className={`${styles.quickButton} ${
+              selectedQuickPeriod === 'all' ? styles.active : ''
+            }`}
+            onClick={() => handleQuickPeriodChange('all')}
+            aria-pressed={selectedQuickPeriod === 'all'}
+          >
+            Tout
+          </button>
         </div>
-      )}
+
+        {/* Sélecteur de date personnalisé */}
+        <div className={styles.customControls}>
+          <div className={styles.datePickerWrapper}>
+            <Calendar className={styles.dateIcon} size={16} aria-hidden="true" />
+            <input
+              type="date"
+              className={styles.datePicker}
+              value={customDate}
+              onChange={(e) => handleCustomDateChange(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              aria-label="Date personnalisée"
+            />
+          </div>
+
+          <button
+            type="button"
+            className={styles.resetButton}
+            onClick={handleReset}
+            aria-label="Réinitialiser les filtres"
+            title="Réinitialiser"
+          >
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
