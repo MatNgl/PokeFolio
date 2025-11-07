@@ -22,7 +22,6 @@ export default function Discover() {
   });
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const isInitialLoadRef = useRef(true);
   const [toast, setToast] = useState<{
@@ -38,20 +37,6 @@ export default function Discover() {
     };
     void load();
   }, []);
-
-  // Gérer l'affichage du bouton scroll to top
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const loadRandomCards = async () => {
     try {
@@ -387,16 +372,6 @@ export default function Discover() {
             setDetailsCard(null);
           }}
         />
-      )}
-
-      {showScrollTop && (
-        <button
-          className={styles.scrollTopBtn}
-          onClick={scrollToTop}
-          aria-label="Retour en haut de la page"
-        >
-          ↑
-        </button>
       )}
 
       {toast && (

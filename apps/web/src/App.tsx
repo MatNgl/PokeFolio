@@ -10,6 +10,7 @@ import { Header } from './components/layout/Header';
 import Portfolio from './pages/Portfolio';
 import Discover from './pages/Discover';
 import { Profile } from './pages/Profile';
+import { ScrollToTop } from './components/ui/ScrollToTop';
 
 // Redirection racine vers Portfolio si connecté, sinon Login
 function RootRedirect() {
@@ -100,6 +101,9 @@ function AppInner() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Bouton Scroll to Top disponible sur toutes les pages */}
+      <ScrollToTop />
     </>
   );
 }
