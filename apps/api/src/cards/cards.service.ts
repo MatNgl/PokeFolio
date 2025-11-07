@@ -24,23 +24,26 @@ export class CardsService {
     const pageRaw = dto.page ?? 1;
     const limitRaw = dto.limit ?? 20;
 
-    // bornes sécurisées
+    // bornes sécurisées - pas de limite max pour permettre tous les résultats
     const page = Math.max(1, pageRaw);
-    const limit = Math.min(Math.max(1, limitRaw), 100);
+    const limit = limitRaw === 0 ? 0 : Math.max(1, limitRaw);
 
     if (!query) {
       return { cards: [], total: 0, page, limit };
     }
 
-    // Détecter si la recherche contient un numéro (ex: "hyporoi 010" ou "012")
-    const numberMatch = query.match(/\b(\d{1,3})\b/);
-    const searchNumber = numberMatch ? numberMatch[1] : null;
+    // Détecter si la recherche contient un numéro avec préfixe optionnel (ex: "TG30", "GG70", "SWSH001", "010")
+    const numberMatch = query.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
+    const searchPrefix = numberMatch?.[1]?.toUpperCase() || null;
+    const searchNumber = numberMatch?.[2] || null;
 
-    // Extraire le nom (tout sauf le numéro)
-    const searchName = numberMatch ? query.replace(/\b\d{1,3}\b/g, '').trim() : query;
+    // Extraire le nom (tout sauf le préfixe et numéro)
+    const searchName = numberMatch ? query.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim() : query;
 
     if (searchNumber) {
-      this.logger.log(`Recherche détectée - Nom: "${searchName}", Numéro: "${searchNumber}"`);
+      this.logger.log(
+        `Recherche détectée - Nom: "${searchName}", Préfixe: "${searchPrefix}", Numéro: "${searchNumber}"`
+      );
     }
 
     const cacheKey = `search:${lang}:${query.toLowerCase()}`;
@@ -60,7 +63,9 @@ export class CardsService {
     if (searchNumber && !searchName) {
       // Recherche uniquement par numéro : impossible avec TCGdex, on retourne vide
       // L'utilisateur devra ajouter au moins un nom partiel
-      this.logger.log(`Recherche par numéro seul (${searchNumber}) - retour vide`);
+      this.logger.log(
+        `Recherche par numéro seul (${searchPrefix || ''}${searchNumber}) - retour vide`
+      );
       cards = [];
     } else {
       // Recherche normale par nom
@@ -72,28 +77,40 @@ export class CardsService {
         cards = await this.tcgdexService.searchCards(searchName || query, 'en');
       }
 
-      // Filtrer par numéro si spécifié
+      // Filtrer par numéro et préfixe si spécifié
       if (searchNumber) {
-        this.logger.log(`Filtrage par numéro: "${searchNumber}"`);
+        this.logger.log(`Filtrage par numéro: "${searchPrefix || ''}${searchNumber}"`);
         const searchNumInt = parseInt(searchNumber, 10);
 
         cards = cards.filter((card) => {
           if (!card.localId) return false;
 
-          const cardNumInt = parseInt(card.localId, 10);
+          // Extraire le préfixe et numéro de la carte
+          const cardIdMatch = card.localId.match(/^([A-Z]{1,5})?(\d+)$/i);
+          const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
+          const cardNumInt = cardIdMatch?.[2]
+            ? parseInt(cardIdMatch[2], 10)
+            : parseInt(card.localId, 10);
+
+          // Vérifier correspondance préfixe (si spécifié)
+          const prefixMatch = !searchPrefix || cardPrefix === searchPrefix;
 
           // Comparer les nombres sans les zéros initiaux
-          const match = cardNumInt === searchNumInt;
+          const numberMatch = cardNumInt === searchNumInt;
+
+          const match = prefixMatch && numberMatch;
 
           if (match) {
             this.logger.log(
-              `✓ Match: ${card.name} #${card.localId} (${cardNumInt} === ${searchNumInt})`
+              `✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, numéro: ${cardNumInt})`
             );
           }
 
           return match;
         });
-        this.logger.log(`${cards.length} carte(s) trouvée(s) avec le numéro ${searchNumber}`);
+        this.logger.log(
+          `${cards.length} carte(s) trouvée(s) avec le numéro ${searchPrefix || ''}${searchNumber}`
+        );
       }
     }
 
@@ -194,6 +211,16 @@ export class CardsService {
   }
 
   private paginateResults(cards: Card[], page: number, limit: number): CardSearchResult {
+    // Si limit = 0, retourner tous les résultats
+    if (limit === 0) {
+      return {
+        cards,
+        total: cards.length,
+        page,
+        limit,
+      };
+    }
+
     const start = (page - 1) * limit;
     const end = start + limit;
     const paginated = cards.slice(start, end);

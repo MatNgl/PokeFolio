@@ -9,7 +9,8 @@
       "Bash(taskkill:*)",
       "Bash(pnpm exec tsc:*)",
       "Bash(pnpm run dev:web:*)",
-      "Bash(pnpm run dev:*)"
+      "Bash(pnpm run dev:*)",
+      "Bash(pnpm dev)"
     ],
     "deny": [],
     "ask": []

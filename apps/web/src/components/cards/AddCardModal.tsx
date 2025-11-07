@@ -180,7 +180,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
     }
     setLoading(true);
     try {
-      const result = await cardsService.searchCards({ q: value, limit: 20 });
+      const result = await cardsService.searchCards({ q: value, limit: 0 });
       setSearchResults(result.cards);
     } catch (error) {
       console.error('Erreur de recherche:', error);

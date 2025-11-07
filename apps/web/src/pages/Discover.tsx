@@ -174,7 +174,7 @@ export default function Discover() {
 
       try {
         setLoading(true);
-        const data = await cardsService.searchCards({ q: searchQuery, limit: 100, lang: 'fr' });
+        const data = await cardsService.searchCards({ q: searchQuery, limit: 0, lang: 'fr' });
 
         // Filtrer pour exclure les cartes TCGP (jeu en ligne)
         const physicalCards = data.cards.filter((card: Card) => {
