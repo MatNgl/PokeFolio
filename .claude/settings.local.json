@@ -10,7 +10,8 @@
       "Bash(pnpm exec tsc:*)",
       "Bash(pnpm run dev:web:*)",
       "Bash(pnpm run dev:*)",
-      "Bash(pnpm dev)"
+      "Bash(pnpm dev)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

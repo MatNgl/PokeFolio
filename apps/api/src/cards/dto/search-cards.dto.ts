@@ -37,17 +37,15 @@ export class SearchCardsDto {
   page?: number;
 
   @ApiProperty({
-    description: 'Nombre de résultats par page',
+    description: 'Nombre de résultats par page (0 = tous les résultats)',
     example: 20,
     default: 20,
-    minimum: 1,
-    maximum: 100,
+    minimum: 0,
     required: false,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
+  @Min(0)
   limit?: number;
 }

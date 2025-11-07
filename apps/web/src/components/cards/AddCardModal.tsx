@@ -37,7 +37,7 @@ interface FormData {
   variants?: VariantForm[];
 }
 
-// Sociétés de gradation et leurs barèmes
+// Sociétés de gradation et leurs barèmes (aligné avec le backend)
 const GRADING_COMPANIES = [
   { id: 'PSA', name: 'PSA', grades: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'] },
   {
@@ -46,7 +46,7 @@ const GRADING_COMPANIES = [
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'COLLECT_AURA',
+    id: 'CollectAura',
     name: 'Collect Aura',
     grades: ['10+', '10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'],
   },
@@ -61,29 +61,9 @@ const GRADING_COMPANIES = [
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'AGS',
-    name: 'AGS (ACE Grading)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
-  },
-  {
-    id: 'CCC',
-    name: 'CCC (Certified Collectibles Group)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
-  },
-  {
-    id: 'SGC',
-    name: 'SGC (Sportscard Guaranty)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
-  },
-  {
-    id: 'TAG',
-    name: 'TAG (The Authentication Group)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
-  },
-  {
-    id: 'MNT',
-    name: 'MNT (Mint Grading)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+    id: 'Other',
+    name: 'Autre',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5', '4', '3', '2', '1'],
   },
 ] as const;
 
@@ -365,6 +345,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
         <div className={styles.content}>
           {!selectedCard ? (
             <>
+              {/* Barre de recherche sticky */}
               <form onSubmit={handleSearch} className={styles.searchForm}>
                 <Input
                   type="text"
