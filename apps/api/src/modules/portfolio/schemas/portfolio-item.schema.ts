@@ -118,3 +118,9 @@ PortfolioItemSchema.pre<PortfolioItemDocument>('save', function (next) {
   }
   next();
 });
+
+// ───── Indexes pour performances Dashboard ─────
+PortfolioItemSchema.index({ ownerId: 1, createdAt: -1 });
+PortfolioItemSchema.index({ ownerId: 1, updatedAt: -1 });
+PortfolioItemSchema.index({ ownerId: 1, graded: 1 });
+PortfolioItemSchema.index({ ownerId: 1, purchaseDate: -1 });
