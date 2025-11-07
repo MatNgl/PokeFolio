@@ -1,6 +1,6 @@
 import { DollarSign } from 'lucide-react';
 import type { ExpensiveCards } from '../types/dashboard.types';
-import styles from './TopSetsList.module.css';
+import styles from './TopExpensiveCards.module.css';
 
 export interface TopExpensiveCardsProps {
   data: ExpensiveCards | undefined;
@@ -22,8 +22,11 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
         <div className={styles.list}>
           {[...Array(5)].map((_, i) => (
             <div key={i} className={styles.skeletonItem}>
-              <div className={styles.skeletonName} />
-              <div className={styles.skeletonValue} />
+              <div className={styles.skeletonImage} />
+              <div className={styles.skeletonContent}>
+                <div className={styles.skeletonName} />
+                <div className={styles.skeletonValue} />
+              </div>
             </div>
           ))}
         </div>
@@ -67,18 +70,31 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
             <div className={styles.rank} aria-label={`Rank ${index + 1}`}>
               #{index + 1}
             </div>
+
+            {/* Image de la carte */}
+            {card.imageUrl && (
+              <div className={styles.imageWrapper}>
+                <img
+                  src={card.imageUrl}
+                  alt={card.cardName || card.cardId}
+                  className={styles.cardImage}
+                  loading="lazy"
+                />
+              </div>
+            )}
+
             <div className={styles.info}>
-              <div className={styles.setName} title={card.cardName || card.cardId}>
+              <div className={styles.cardName} title={card.cardName || card.cardId}>
                 {card.cardName || card.cardId}
               </div>
               <div className={styles.stats}>
-                <span className={styles.value} aria-label={`Price: ${card.price.toFixed(2)}€`}>
+                <span className={styles.price} aria-label={`Price: ${card.price.toFixed(2)}€`}>
                   {card.price.toFixed(2)}€
                 </span>
                 {card.isGraded && card.gradeCompany && (
                   <>
                     <span className={styles.separator}>•</span>
-                    <span className={styles.count} aria-label={`Grade: ${card.gradeCompany}`}>
+                    <span className={styles.grade} aria-label={`Grade: ${card.gradeCompany}`}>
                       {card.gradeCompany}
                       {card.gradeScore ? ` ${card.gradeScore}` : ''}
                     </span>
@@ -87,7 +103,7 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
                 {card.setName && (
                   <>
                     <span className={styles.separator}>•</span>
-                    <span className={styles.count} aria-label={`Set: ${card.setName}`}>
+                    <span className={styles.setInfo} aria-label={`Set: ${card.setName}`}>
                       {card.setName}
                     </span>
                   </>

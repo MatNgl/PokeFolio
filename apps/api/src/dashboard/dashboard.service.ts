@@ -40,7 +40,10 @@ export class DashboardService {
     const { startDate, endDate } = this.getPeriodDates(filter);
 
     // Créer le match stage en fonction de la période
-    const matchStage: Record<string, unknown> = {
+    const matchStage: {
+      ownerId: string;
+      createdAt?: { $gte: Date; $lte?: Date };
+    } = {
       ownerId: userId,
     };
 
@@ -170,20 +173,23 @@ export class DashboardService {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bucketFormat = this.getBucketFormat(query, query.bucket!);
 
-    // Créer le match stage en fonction de la période
-    const matchStage: Record<string, unknown> = {
-      $match: {
-        ownerId: userId,
-      },
+    // Créer le match filter en fonction de la période
+    const matchFilter: {
+      ownerId: string;
+      createdAt?: { $gte: Date; $lte?: Date };
+    } = {
+      ownerId: userId,
     };
 
     // Si on a une période spécifique (pas "all"), filtrer par date
     if (startDate) {
-      matchStage.$match.createdAt = { $gte: startDate };
+      matchFilter.createdAt = { $gte: startDate };
       if (endDate) {
-        matchStage.$match.createdAt.$lte = endDate;
+        matchFilter.createdAt.$lte = endDate;
       }
     }
+
+    const matchStage = { $match: matchFilter };
 
     const addFieldsStage = {
       $addFields: {

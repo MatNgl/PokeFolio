@@ -122,6 +122,12 @@ export function GradedPieChart({ data, loading = false }: GradedPieChartProps): 
                 padding: '12px',
                 color: '#ffffff',
               }}
+              itemStyle={{
+                color: '#ffffff',
+              }}
+              labelStyle={{
+                color: '#ffffff',
+              }}
               formatter={(value: number) => [value, 'Cartes']}
             />
             <Legend
