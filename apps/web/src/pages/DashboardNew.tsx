@@ -7,35 +7,42 @@ import { TimeSeriesChart } from '@/features/dashboard/components/TimeSeriesChart
 import { GradedPieChart } from '@/features/dashboard/components/GradedPieChart';
 import { TopSetsList } from '@/features/dashboard/components/TopSetsList';
 import { TopExpensiveCards } from '@/features/dashboard/components/TopExpensiveCards';
-import { PeriodSelector, type Period } from '@/features/dashboard/components/PeriodSelector';
+import { PeriodSelector, type PeriodFilter } from '@/features/dashboard/components/PeriodSelector';
 import {
   TimeSeriesMetric,
-  TimeSeriesPeriod,
   TimeSeriesBucket,
+  PeriodType,
 } from '@/features/dashboard/types/dashboard.types';
 import styles from './DashboardNew.module.css';
 
 export function DashboardNew(): JSX.Element {
-  // Période globale partagée par tous les composants
-  const [globalPeriod, setGlobalPeriod] = useState<Period>({
-    type: '30d',
-    label: '30 Jours',
+  // Période globale partagée par tous les composants - par défaut 'all'
+  const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>({
+    type: PeriodType.ALL,
   });
 
-  // Convertir Period vers TimeSeriesPeriod
-  const periodToTimeSeriesPeriod = (period: Period): TimeSeriesPeriod => {
-    return period.type as TimeSeriesPeriod;
-  };
-
   // Déterminer le bucket automatiquement selon la période
-  const getAutoBucket = (period: Period): TimeSeriesBucket => {
-    if (period.type === '7d' || period.type === '30d' || period.type === 'month') {
+  const getAutoBucket = (period: PeriodFilter): TimeSeriesBucket => {
+    if (period.type === PeriodType.WEEK) {
       return TimeSeriesBucket.DAILY;
     }
-    if (period.type === '6m' || period.type === 'quarter') {
-      return TimeSeriesBucket.WEEKLY;
+    if (period.type === PeriodType.MONTH) {
+      return TimeSeriesBucket.DAILY;
     }
+    if (period.type === PeriodType.YEAR) {
+      return TimeSeriesBucket.MONTHLY;
+    }
+    // Pour 'all', utiliser mensuel pour avoir une vue d'ensemble
     return TimeSeriesBucket.MONTHLY;
+  };
+
+  // Générer une clé de query unique basée sur le filtre de période
+  const getPeriodQueryKey = (period: PeriodFilter): string => {
+    const parts = [period.type || 'all'];
+    if (period.year) parts.push(period.year.toString());
+    if (period.month) parts.push(period.month.toString());
+    if (period.week) parts.push(period.week.toString());
+    return parts.join('-');
   };
 
   // Queries React Query
@@ -44,8 +51,8 @@ export function DashboardNew(): JSX.Element {
     isLoading: summaryLoading,
     error: summaryError,
   } = useQuery({
-    queryKey: ['dashboard', 'summary'],
-    queryFn: () => dashboardApi.getSummary(),
+    queryKey: ['dashboard', 'summary', getPeriodQueryKey(globalPeriod)],
+    queryFn: () => dashboardApi.getSummary(globalPeriod),
   });
 
   const {
@@ -53,13 +60,9 @@ export function DashboardNew(): JSX.Element {
     isLoading: countLoading,
     error: countError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'count', globalPeriod.type],
+    queryKey: ['dashboard', 'timeseries', 'count', getPeriodQueryKey(globalPeriod)],
     queryFn: () =>
-      dashboardApi.getTimeSeries(
-        TimeSeriesMetric.COUNT,
-        periodToTimeSeriesPeriod(globalPeriod),
-        getAutoBucket(globalPeriod)
-      ),
+      dashboardApi.getTimeSeries(TimeSeriesMetric.COUNT, globalPeriod, getAutoBucket(globalPeriod)),
   });
 
   const {
@@ -67,13 +70,9 @@ export function DashboardNew(): JSX.Element {
     isLoading: valueLoading,
     error: valueError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'value', globalPeriod.type],
+    queryKey: ['dashboard', 'timeseries', 'value', getPeriodQueryKey(globalPeriod)],
     queryFn: () =>
-      dashboardApi.getTimeSeries(
-        TimeSeriesMetric.VALUE,
-        periodToTimeSeriesPeriod(globalPeriod),
-        getAutoBucket(globalPeriod)
-      ),
+      dashboardApi.getTimeSeries(TimeSeriesMetric.VALUE, globalPeriod, getAutoBucket(globalPeriod)),
   });
 
   const {
@@ -129,45 +128,37 @@ export function DashboardNew(): JSX.Element {
         <p className={styles.pageSubtitle}>Vue d&apos;ensemble de votre collection Pokémon</p>
       </header>
 
+      {/* Global Period Selector - Déplacé au-dessus des KPIs */}
+      <section className={styles.periodSelector} aria-label="Period Selector">
+        <PeriodSelector currentPeriod={globalPeriod} onPeriodChange={setGlobalPeriod} />
+      </section>
+
       {/* KPIs */}
       <section className={styles.kpiGrid} aria-label="Key Performance Indicators">
         <KpiCard
           title="Total Cartes"
           icon={<Layers size={20} />}
-          value={summary ? formatNumber(summary.totalCards.value) : '0'}
-          change={summary?.totalCards}
+          value={summary ? formatNumber(summary.totalCards) : '0'}
           loading={summaryLoading}
-          formatter={formatNumber}
         />
         <KpiCard
           title="Total Sets"
           icon={<Award size={20} />}
-          value={summary ? formatNumber(summary.totalSets.value) : '0'}
-          change={summary?.totalSets}
+          value={summary ? formatNumber(summary.totalSets) : '0'}
           loading={summaryLoading}
-          formatter={formatNumber}
         />
         <KpiCard
           title="Valeur Totale"
           icon={<DollarSign size={20} />}
-          value={summary ? formatCurrency(summary.totalValue.value) : '0€'}
-          change={summary?.totalValue}
+          value={summary ? formatCurrency(summary.totalValue) : '0€'}
           loading={summaryLoading}
-          formatter={formatCurrency}
         />
         <KpiCard
           title="Cartes Gradées"
           icon={<TrendingUp size={20} />}
-          value={summary ? formatNumber(summary.gradedCount.value) : '0'}
-          change={summary?.gradedCount}
+          value={summary ? formatNumber(summary.gradedCount) : '0'}
           loading={summaryLoading}
-          formatter={formatNumber}
         />
-      </section>
-
-      {/* Global Period Selector */}
-      <section className={styles.periodSelector} aria-label="Period Selector">
-        <PeriodSelector currentPeriod={globalPeriod} onPeriodChange={setGlobalPeriod} />
       </section>
 
       {/* Charts Row 1: Time Series */}

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { DashboardSummaryDto } from './dto/summary.dto';
+import { DashboardSummaryDto, SummaryQueryDto } from './dto/summary.dto';
 import { TimeSeriesQueryDto, TimeSeriesResponseDto } from './dto/timeseries.dto';
 import { GradeDistributionDto } from './dto/distribution.dto';
 import { TopSetsDto, TopSetsQueryDto } from './dto/top-sets.dto';
@@ -26,7 +26,7 @@ export class DashboardController {
   @ApiOperation({
     summary: 'Get dashboard summary KPIs',
     description:
-      'Returns key metrics (total cards, sets, value, graded count) with period-over-period changes',
+      'Returns key metrics (total cards, sets, value, graded count) for the specified period',
   })
   @ApiResponse({
     status: 200,
@@ -34,15 +34,18 @@ export class DashboardController {
     type: DashboardSummaryDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getSummary(@CurrentUser() user: JwtPayload): Promise<DashboardSummaryDto> {
-    return this.dashboardService.getSummary(user.sub);
+  async getSummary(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: SummaryQueryDto
+  ): Promise<DashboardSummaryDto> {
+    return this.dashboardService.getSummary(user.sub, query);
   }
 
   @Get('timeseries')
   @ApiOperation({
     summary: 'Get time series data',
     description:
-      'Returns time series data for card count or collection value over a specified period',
+      'Returns time series data for card count or collection value over a specified hierarchical period',
   })
   @ApiResponse({
     status: 200,
@@ -54,12 +57,7 @@ export class DashboardController {
     @CurrentUser() user: JwtPayload,
     @Query() query: TimeSeriesQueryDto
   ): Promise<TimeSeriesResponseDto> {
-    return this.dashboardService.getTimeSeries(
-      user.sub,
-      query.metric!,
-      query.period!,
-      query.bucket!
-    );
+    return this.dashboardService.getTimeSeries(user.sub, query);
   }
 
   @Get('grade-distribution')

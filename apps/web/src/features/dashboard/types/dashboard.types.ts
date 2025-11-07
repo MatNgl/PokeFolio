@@ -3,20 +3,32 @@
  */
 
 // ────────────────────────────────────────────────────────────
+// Period Filter
+// ────────────────────────────────────────────────────────────
+
+export enum PeriodType {
+  ALL = 'all',
+  YEAR = 'year',
+  MONTH = 'month',
+  WEEK = 'week',
+}
+
+export interface PeriodFilter {
+  type?: PeriodType;
+  year?: number;
+  month?: number; // 1-12
+  week?: number; // 1-4
+}
+
+// ────────────────────────────────────────────────────────────
 // Summary
 // ────────────────────────────────────────────────────────────
 
-export interface MetricChange {
-  value: number;
-  percentChange: number;
-  previousValue: number;
-}
-
 export interface DashboardSummary {
-  totalCards: MetricChange;
-  totalSets: MetricChange;
-  totalValue: MetricChange;
-  gradedCount: MetricChange;
+  totalCards: number;
+  totalSets: number;
+  totalValue: number;
+  gradedCount: number;
   calculatedAt: string;
 }
 
@@ -27,17 +39,6 @@ export interface DashboardSummary {
 export enum TimeSeriesMetric {
   COUNT = 'count',
   VALUE = 'value',
-}
-
-export enum TimeSeriesPeriod {
-  SEVEN_DAYS = '7d',
-  THIRTY_DAYS = '30d',
-  SIX_MONTHS = '6m',
-  ONE_YEAR = '1y',
-  CURRENT_MONTH = 'month',
-  CURRENT_QUARTER = 'quarter',
-  CURRENT_YEAR = 'year',
-  ALL = 'all',
 }
 
 export enum TimeSeriesBucket {
@@ -53,7 +54,7 @@ export interface TimeSeriesDataPoint {
 
 export interface TimeSeriesData {
   metric: TimeSeriesMetric;
-  period: TimeSeriesPeriod;
+  period: PeriodFilter;
   bucket: TimeSeriesBucket;
   data: TimeSeriesDataPoint[];
 }

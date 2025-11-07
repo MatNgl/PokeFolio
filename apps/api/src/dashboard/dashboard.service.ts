@@ -5,13 +5,15 @@ import {
   PortfolioItem,
   PortfolioItemDocument,
 } from '../modules/portfolio/schemas/portfolio-item.schema';
-import { DashboardSummaryDto, MetricChange } from './dto/summary.dto';
+import { DashboardSummaryDto, SummaryQueryDto } from './dto/summary.dto';
 import {
   TimeSeriesMetric,
-  TimeSeriesPeriod,
+  TimeSeriesQueryDto,
   TimeSeriesBucket,
   TimeSeriesDataPoint,
   TimeSeriesResponseDto,
+  PeriodFilterDto,
+  PeriodType,
 } from './dto/timeseries.dto';
 import { GradeDistributionDto, GradeCompanyDistribution } from './dto/distribution.dto';
 import { TopSetsDto, TopSetItem } from './dto/top-sets.dto';
@@ -32,25 +34,33 @@ export class DashboardService {
   ) {}
 
   /**
-   * Calcule le résumé des KPIs avec variations période précédente
+   * Calcule le résumé des KPIs pour la période spécifiée
    */
-  async getSummary(userId: string): Promise<DashboardSummaryDto> {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  async getSummary(userId: string, filter: SummaryQueryDto): Promise<DashboardSummaryDto> {
+    const { startDate, endDate } = this.getPeriodDates(filter);
 
-    // Période actuelle (30 derniers jours)
-    const currentPeriod = await this.portfolioModel.aggregate<{
+    // Créer le match stage en fonction de la période
+    const matchStage: Record<string, unknown> = {
+      ownerId: userId,
+    };
+
+    // Si on a une période spécifique (pas "all"), filtrer par date
+    if (startDate) {
+      matchStage.createdAt = { $gte: startDate };
+      if (endDate) {
+        matchStage.createdAt.$lte = endDate;
+      }
+    }
+
+    // Calcul des métriques pour la période
+    const result = await this.portfolioModel.aggregate<{
       totalCards: number;
       totalSets: number;
       totalValue: number;
       gradedCount: number;
     }>([
       {
-        $match: {
-          ownerId: userId,
-          createdAt: { $gte: thirtyDaysAgo },
-        },
+        $match: matchStage,
       },
       {
         $addFields: {
@@ -136,107 +146,7 @@ export class DashboardService {
       },
     ]);
 
-    // Période précédente (30 jours avant)
-    const previousPeriod = await this.portfolioModel.aggregate<{
-      totalCards: number;
-      totalSets: number;
-      totalValue: number;
-      gradedCount: number;
-    }>([
-      {
-        $match: {
-          ownerId: userId,
-          createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo },
-        },
-      },
-      {
-        $addFields: {
-          setId: {
-            $cond: {
-              if: { $ifNull: ['$cardSnapshot.set.id', false] },
-              then: '$cardSnapshot.set.id',
-              else: null,
-            },
-          },
-          effectiveGraded: {
-            $cond: {
-              if: { $eq: ['$graded', true] },
-              then: true,
-              else: {
-                $cond: {
-                  if: { $isArray: '$variants' },
-                  then: {
-                    $anyElementTrue: {
-                      $map: {
-                        input: '$variants',
-                        as: 'v',
-                        in: { $eq: ['$$v.graded', true] },
-                      },
-                    },
-                  },
-                  else: false,
-                },
-              },
-            },
-          },
-          effectivePrice: {
-            $cond: {
-              if: { $ifNull: ['$purchasePrice', false] },
-              then: '$purchasePrice',
-              else: {
-                $cond: {
-                  if: { $isArray: '$variants' },
-                  then: {
-                    $sum: {
-                      $map: {
-                        input: '$variants',
-                        as: 'v',
-                        in: { $ifNull: ['$$v.purchasePrice', 0] },
-                      },
-                    },
-                  },
-                  else: 0,
-                },
-              },
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalCards: { $sum: '$quantity' },
-          totalSets: { $addToSet: '$setId' },
-          totalValue: { $sum: '$effectivePrice' },
-          gradedCount: {
-            $sum: {
-              $cond: [
-                '$effectiveGraded',
-                { $cond: [{ $isArray: '$variants' }, { $size: '$variants' }, 1] },
-                0,
-              ],
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalCards: 1,
-          totalSets: { $size: '$totalSets' },
-          totalValue: 1,
-          gradedCount: 1,
-        },
-      },
-    ]);
-
-    const current = currentPeriod[0] || {
-      totalCards: 0,
-      totalSets: 0,
-      totalValue: 0,
-      gradedCount: 0,
-    };
-    const previous = previousPeriod[0] || {
+    const data = result[0] || {
       totalCards: 0,
       totalSets: 0,
       totalValue: 0,
@@ -244,31 +154,36 @@ export class DashboardService {
     };
 
     return {
-      totalCards: this.calculateChange(current.totalCards, previous.totalCards),
-      totalSets: this.calculateChange(current.totalSets, previous.totalSets),
-      totalValue: this.calculateChange(current.totalValue, previous.totalValue),
-      gradedCount: this.calculateChange(current.gradedCount, previous.gradedCount),
-      calculatedAt: now,
+      totalCards: data.totalCards,
+      totalSets: data.totalSets,
+      totalValue: Math.round(data.totalValue * 100) / 100,
+      gradedCount: data.gradedCount,
+      calculatedAt: new Date(),
     };
   }
 
   /**
    * Récupère les séries temporelles
    */
-  async getTimeSeries(
-    userId: string,
-    metric: TimeSeriesMetric,
-    period: TimeSeriesPeriod,
-    bucket: TimeSeriesBucket
-  ): Promise<TimeSeriesResponseDto> {
-    const { startDate, bucketFormat } = this.getPeriodConfig(period, bucket);
+  async getTimeSeries(userId: string, query: TimeSeriesQueryDto): Promise<TimeSeriesResponseDto> {
+    const { startDate, endDate } = this.getPeriodDates(query);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const bucketFormat = this.getBucketFormat(query, query.bucket!);
 
-    const matchStage = {
+    // Créer le match stage en fonction de la période
+    const matchStage: Record<string, unknown> = {
       $match: {
         ownerId: userId,
-        createdAt: { $gte: startDate },
       },
     };
+
+    // Si on a une période spécifique (pas "all"), filtrer par date
+    if (startDate) {
+      matchStage.$match.createdAt = { $gte: startDate };
+      if (endDate) {
+        matchStage.$match.createdAt.$lte = endDate;
+      }
+    }
 
     const addFieldsStage = {
       $addFields: {
@@ -298,7 +213,7 @@ export class DashboardService {
     };
 
     const groupStage =
-      metric === TimeSeriesMetric.COUNT
+      query.metric === TimeSeriesMetric.COUNT
         ? {
             $group: {
               _id: '$bucketDate',
@@ -325,9 +240,16 @@ export class DashboardService {
     }));
 
     return {
-      metric,
-      period,
-      bucket,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      metric: query.metric!,
+      period: {
+        type: query.type,
+        year: query.year,
+        month: query.month,
+        week: query.week,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      bucket: query.bucket!,
       data: dataPoints,
     };
   }
@@ -689,69 +611,80 @@ export class DashboardService {
   // Méthodes utilitaires
   // ────────────────────────────────────────────────────────────
 
-  private calculateChange(current: number, previous: number): MetricChange {
-    const percentChange =
-      previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : 0;
+  /**
+   * Calcule les dates de début et fin en fonction du filtre de période hiérarchique
+   */
+  private getPeriodDates(filter: PeriodFilterDto): {
+    startDate: Date | null;
+    endDate: Date | null;
+  } {
+    const now = new Date();
+    const currentYear = filter.year || now.getFullYear();
+    const currentMonth = filter.month !== undefined ? filter.month - 1 : now.getMonth();
 
-    return {
-      value: current,
-      percentChange: Math.round(percentChange * 100) / 100,
-      previousValue: previous,
-    };
+    switch (filter.type) {
+      case PeriodType.ALL:
+        // Pas de filtre de date, retourne tout
+        return { startDate: null, endDate: null };
+
+      case PeriodType.YEAR: {
+        // Début et fin de l'année spécifiée
+        const startDate = new Date(currentYear, 0, 1);
+        const endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+        return { startDate, endDate };
+      }
+
+      case PeriodType.MONTH: {
+        // Début et fin du mois spécifié
+        const startDate = new Date(currentYear, currentMonth, 1);
+        const endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+        return { startDate, endDate };
+      }
+
+      case PeriodType.WEEK: {
+        // Calculer la semaine spécifiée dans le mois/année
+        const weekNum = filter.week || 1;
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+        const startDate = new Date(firstDayOfMonth);
+        startDate.setDate(1 + (weekNum - 1) * 7);
+
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+
+        return { startDate, endDate };
+      }
+
+      default:
+        return { startDate: null, endDate: null };
+    }
   }
 
-  private getPeriodConfig(
-    period: TimeSeriesPeriod,
-    bucket: TimeSeriesBucket
-  ): { startDate: Date; bucketFormat: string } {
-    const now = new Date();
-    let startDate: Date;
-    let bucketFormat: string;
-
-    switch (period) {
-      case TimeSeriesPeriod.SEVEN_DAYS:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%U';
-        break;
-      case TimeSeriesPeriod.THIRTY_DAYS:
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%U';
-        break;
-      case TimeSeriesPeriod.SIX_MONTHS:
-        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        bucketFormat = bucket === TimeSeriesBucket.MONTHLY ? '%Y-%m' : '%Y-%U';
-        break;
-      case TimeSeriesPeriod.ONE_YEAR:
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        bucketFormat = '%Y-%m';
-        break;
-      case TimeSeriesPeriod.CURRENT_MONTH:
-        // Premier jour du mois en cours
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        bucketFormat = '%Y-%m-%d';
-        break;
-      case TimeSeriesPeriod.CURRENT_QUARTER: {
-        // Premier jour du trimestre en cours
-        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
-        startDate = new Date(now.getFullYear(), quarterMonth, 1);
-        bucketFormat = bucket === TimeSeriesBucket.MONTHLY ? '%Y-%m' : '%Y-%U';
-        break;
-      }
-      case TimeSeriesPeriod.CURRENT_YEAR:
-        // Premier jour de l'année en cours
-        startDate = new Date(now.getFullYear(), 0, 1);
-        bucketFormat = '%Y-%m';
-        break;
-      case TimeSeriesPeriod.ALL:
-        startDate = new Date(0); // Epoch
-        bucketFormat = '%Y-%m';
-        break;
-      default:
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        bucketFormat = '%Y-%m-%d';
+  /**
+   * Détermine le format de bucket MongoDB approprié
+   */
+  private getBucketFormat(filter: PeriodFilterDto, bucket: TimeSeriesBucket): string {
+    // Si c'est une semaine spécifique, utiliser le format journalier
+    if (filter.type === PeriodType.WEEK) {
+      return '%Y-%m-%d';
     }
 
-    return { startDate, bucketFormat };
+    // Si c'est un mois spécifique, privilégier journalier ou hebdomadaire
+    if (filter.type === PeriodType.MONTH) {
+      return bucket === TimeSeriesBucket.DAILY ? '%Y-%m-%d' : '%Y-%U';
+    }
+
+    // Pour l'année ou tout, utiliser le bucket demandé
+    switch (bucket) {
+      case TimeSeriesBucket.DAILY:
+        return '%Y-%m-%d';
+      case TimeSeriesBucket.WEEKLY:
+        return '%Y-%U';
+      case TimeSeriesBucket.MONTHLY:
+        return '%Y-%m';
+      default:
+        return '%Y-%m-%d';
+    }
   }
 
   private getBucketDateExpression(format: string): Record<string, unknown> {

@@ -1,27 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PeriodFilterDto } from './timeseries.dto';
 
 /**
- * Variation d'une métrique par rapport à la période précédente
+ * Query parameters pour le résumé
  */
-export class MetricChange {
-  @ApiProperty({
-    description: 'Valeur de la métrique',
-    example: 150,
-  })
-  value!: number;
-
-  @ApiProperty({
-    description: 'Changement en pourcentage par rapport à la période précédente',
-    example: 12.5,
-  })
-  percentChange!: number;
-
-  @ApiProperty({
-    description: 'Valeur de la période précédente',
-    example: 133,
-  })
-  previousValue!: number;
-}
+export class SummaryQueryDto extends PeriodFilterDto {}
 
 /**
  * Résumé des KPIs du dashboard
@@ -29,27 +12,27 @@ export class MetricChange {
 export class DashboardSummaryDto {
   @ApiProperty({
     description: 'Nombre total de cartes',
-    type: MetricChange,
+    example: 150,
   })
-  totalCards!: MetricChange;
+  totalCards!: number;
 
   @ApiProperty({
     description: 'Nombre de sets distincts',
-    type: MetricChange,
+    example: 25,
   })
-  totalSets!: MetricChange;
+  totalSets!: number;
 
   @ApiProperty({
     description: 'Valeur totale de la collection',
-    type: MetricChange,
+    example: 5432.5,
   })
-  totalValue!: MetricChange;
+  totalValue!: number;
 
   @ApiProperty({
     description: 'Nombre de cartes gradées',
-    type: MetricChange,
+    example: 42,
   })
-  gradedCount!: MetricChange;
+  gradedCount!: number;
 
   @ApiProperty({
     description: 'Date de calcul',

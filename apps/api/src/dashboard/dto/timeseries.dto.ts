@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsIn, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 /**
  * Types de métriques pour les séries temporelles
@@ -10,7 +10,17 @@ export enum TimeSeriesMetric {
 }
 
 /**
- * Périodes de temps disponibles
+ * Types de périodes hiérarchiques
+ */
+export enum PeriodType {
+  ALL = 'all',
+  YEAR = 'year',
+  MONTH = 'month',
+  WEEK = 'week',
+}
+
+/**
+ * Périodes de temps disponibles (legacy - à supprimer progressivement)
  */
 export enum TimeSeriesPeriod {
   SEVEN_DAYS = '7d',
@@ -33,9 +43,53 @@ export enum TimeSeriesBucket {
 }
 
 /**
+ * Query parameters pour les périodes hiérarchiques
+ */
+export class PeriodFilterDto {
+  @ApiProperty({
+    description: 'Type de période',
+    enum: PeriodType,
+    default: PeriodType.ALL,
+  })
+  @IsEnum(PeriodType)
+  @IsOptional()
+  type?: PeriodType = PeriodType.ALL;
+
+  @ApiProperty({
+    description: 'Année spécifique (ex: 2024)',
+    required: false,
+  })
+  @IsInt()
+  @Min(2000)
+  @Max(2100)
+  @IsOptional()
+  year?: number;
+
+  @ApiProperty({
+    description: 'Mois spécifique (1-12)',
+    required: false,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  @IsOptional()
+  month?: number;
+
+  @ApiProperty({
+    description: 'Semaine spécifique (1-53)',
+    required: false,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(53)
+  @IsOptional()
+  week?: number;
+}
+
+/**
  * Query parameters pour les séries temporelles
  */
-export class TimeSeriesQueryDto {
+export class TimeSeriesQueryDto extends PeriodFilterDto {
   @ApiProperty({
     description: 'Métrique à afficher',
     enum: TimeSeriesMetric,
@@ -44,15 +98,6 @@ export class TimeSeriesQueryDto {
   @IsEnum(TimeSeriesMetric)
   @IsOptional()
   metric?: TimeSeriesMetric = TimeSeriesMetric.COUNT;
-
-  @ApiProperty({
-    description: 'Période de temps',
-    enum: TimeSeriesPeriod,
-    default: TimeSeriesPeriod.THIRTY_DAYS,
-  })
-  @IsIn(Object.values(TimeSeriesPeriod))
-  @IsOptional()
-  period?: TimeSeriesPeriod = TimeSeriesPeriod.THIRTY_DAYS;
 
   @ApiProperty({
     description: 'Type de bucket pour agrégation',
@@ -92,10 +137,10 @@ export class TimeSeriesResponseDto {
   metric!: TimeSeriesMetric;
 
   @ApiProperty({
-    description: 'Période demandée',
-    enum: TimeSeriesPeriod,
+    description: 'Filtre de période appliqué',
+    type: PeriodFilterDto,
   })
-  period!: TimeSeriesPeriod;
+  period!: PeriodFilterDto;
 
   @ApiProperty({
     description: 'Bucket utilisé',

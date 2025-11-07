@@ -3,8 +3,8 @@ import type {
   DashboardSummary,
   TimeSeriesData,
   TimeSeriesMetric,
-  TimeSeriesPeriod,
   TimeSeriesBucket,
+  PeriodFilter,
   GradeDistribution,
   TopSets,
   RecentActivity,
@@ -18,10 +18,12 @@ import type {
 
 export const dashboardApi = {
   /**
-   * Récupère le résumé des KPIs
+   * Récupère le résumé des KPIs pour une période donnée
    */
-  async getSummary(): Promise<DashboardSummary> {
-    const { data } = await api.get<DashboardSummary>('/dashboard/summary');
+  async getSummary(periodFilter: PeriodFilter): Promise<DashboardSummary> {
+    const { data } = await api.get<DashboardSummary>('/dashboard/summary', {
+      params: periodFilter,
+    });
     return data;
   },
 
@@ -30,11 +32,11 @@ export const dashboardApi = {
    */
   async getTimeSeries(
     metric: TimeSeriesMetric,
-    period: TimeSeriesPeriod,
+    periodFilter: PeriodFilter,
     bucket: TimeSeriesBucket
   ): Promise<TimeSeriesData> {
     const { data } = await api.get<TimeSeriesData>('/dashboard/timeseries', {
-      params: { metric, period, bucket },
+      params: { metric, ...periodFilter, bucket },
     });
     return data;
   },
