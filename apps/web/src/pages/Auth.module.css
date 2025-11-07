@@ -14,7 +14,7 @@
 
 .header {
   text-align: center;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: 32px;
 }
 
 .title {
@@ -35,7 +35,13 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 32px;
+}
+
+.form fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
 /* ===== Boutons auth : full width ===== */
@@ -63,9 +69,14 @@
 
 /* ===== Hints & Errors ===== */
 .hint {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
-  margin-top: calc(var(--spacing-sm) * -1);
+  line-height: 1.6;
+  padding: 14px 18px;
+  background: rgba(124, 243, 255, 0.08);
+  border-left: 3px solid rgba(124, 243, 255, 0.4);
+  border-radius: 6px;
+  margin: 0;
 }
 
 .error {
@@ -80,7 +91,9 @@
 
 /* ===== Footer & Links ===== */
 .footer {
-  margin-top: var(--spacing-xl);
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(124, 243, 255, 0.1);
   text-align: center;
   color: var(--text-muted);
   font-size: 0.875rem;
