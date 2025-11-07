@@ -8,6 +8,7 @@ import type {
   GradeDistribution,
   TopSets,
   RecentActivity,
+  ExpensiveCards,
 } from '../types/dashboard.types';
 
 /**
@@ -61,6 +62,16 @@ export const dashboardApi = {
    */
   async getRecentActivity(limit: number = 10): Promise<RecentActivity> {
     const { data } = await api.get<RecentActivity>('/dashboard/recent-activity', {
+      params: { limit },
+    });
+    return data;
+  },
+
+  /**
+   * Récupère les cartes les plus chères
+   */
+  async getExpensiveCards(limit: number = 5): Promise<ExpensiveCards> {
+    const { data } = await api.get<ExpensiveCards>('/dashboard/expensive-cards', {
       params: { limit },
     });
     return data;

@@ -6,6 +6,7 @@ import { KpiCard } from '@/features/dashboard/components/KpiCard';
 import { TimeSeriesChart } from '@/features/dashboard/components/TimeSeriesChart';
 import { GradedPieChart } from '@/features/dashboard/components/GradedPieChart';
 import { TopSetsList } from '@/features/dashboard/components/TopSetsList';
+import { TopExpensiveCards } from '@/features/dashboard/components/TopExpensiveCards';
 import {
   TimeSeriesMetric,
   TimeSeriesPeriod,
@@ -76,12 +77,22 @@ export function DashboardNew(): JSX.Element {
     queryFn: () => dashboardApi.getTopSets(5),
   });
 
+  const {
+    data: expensiveCards,
+    isLoading: expensiveCardsLoading,
+    error: expensiveCardsError,
+  } = useQuery({
+    queryKey: ['dashboard', 'expensive-cards'],
+    queryFn: () => dashboardApi.getExpensiveCards(5),
+  });
+
   // Formatters
   const formatCurrency = (value: number): string => `${value.toFixed(2)}€`;
   const formatNumber = (value: number): string => value.toLocaleString('fr-FR');
 
   // Gestion des erreurs globale
-  const hasErrors = summaryError || countError || valueError || gradeError || topSetsError;
+  const hasErrors =
+    summaryError || countError || valueError || gradeError || topSetsError || expensiveCardsError;
 
   if (hasErrors) {
     return (
@@ -163,6 +174,11 @@ export function DashboardNew(): JSX.Element {
       <section className={styles.chartsRow} aria-label="Distribution and Rankings">
         <GradedPieChart data={gradeDistribution} loading={gradeLoading} />
         <TopSetsList data={topSets} loading={topSetsLoading} />
+      </section>
+
+      {/* Charts Row 3: Expensive Cards */}
+      <section className={styles.chartsRow} aria-label="Expensive Cards">
+        <TopExpensiveCards data={expensiveCards} loading={expensiveCardsLoading} />
       </section>
     </div>
   );

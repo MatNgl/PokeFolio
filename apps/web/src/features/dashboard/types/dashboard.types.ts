@@ -112,3 +112,23 @@ export interface RecentActivityItem {
 export interface RecentActivity {
   activities: RecentActivityItem[];
 }
+
+// ────────────────────────────────────────────────────────────
+// Expensive Cards
+// ────────────────────────────────────────────────────────────
+
+export interface ExpensiveCardItem {
+  itemId: string;
+  cardId: string;
+  cardName?: string;
+  imageUrl?: string;
+  price: number;
+  isGraded: boolean;
+  gradeCompany?: string;
+  gradeScore?: string;
+  setName?: string;
+}
+
+export interface ExpensiveCards {
+  cards: ExpensiveCardItem[];
+}
