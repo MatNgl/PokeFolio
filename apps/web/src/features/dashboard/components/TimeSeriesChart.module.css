@@ -1,0 +1,145 @@
+.chartContainer {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(124, 243, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconWrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7cf3ff;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+.filterButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.filterButton:hover {
+  border-color: rgba(124, 243, 255, 0.4);
+  background: rgba(124, 243, 255, 0.1);
+  color: #7cf3ff;
+}
+
+.filterButton:focus-visible {
+  border-color: #7cf3ff;
+  box-shadow: 0 0 0 3px rgba(124, 243, 255, 0.2);
+}
+
+.filterButton.active {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
+  border-color: #7cf3ff;
+  color: #7cf3ff;
+}
+
+.chartWrapper {
+  width: 100%;
+  height: 300px;
+  margin-top: 16px;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(124, 243, 255, 0.05) 0%,
+    rgba(124, 243, 255, 0.1) 50%,
+    rgba(124, 243, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  height: 300px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: rgba(255, 255, 255, 0.5);
+  gap: 12px;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  color: rgba(124, 243, 255, 0.3);
+}
+
+.emptyText {
+  font-size: 14px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .chartContainer {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .controls {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .filterButton {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .chartWrapper {
+    height: 250px;
+  }
+}

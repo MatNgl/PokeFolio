@@ -1,11 +1,12 @@
 import { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/DashboardNew';
 import { Header } from './components/layout/Header';
 import Portfolio from './pages/Portfolio';
 import Discover from './pages/Discover';
@@ -108,12 +109,26 @@ function AppInner() {
   );
 }
 
+// Configuration React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (remplace cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 export function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppInner />
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppInner />
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
