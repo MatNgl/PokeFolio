@@ -37,7 +37,14 @@ export class AdminService {
             {
               $group: {
                 _id: null,
-                total: { $sum: { $multiply: ['$quantity', '$currentValue'] } },
+                total: {
+                  $sum: {
+                    $multiply: [
+                      '$quantity',
+                      { $ifNull: ['$currentValue', 0] }, // Gérer les valeurs null
+                    ],
+                  },
+                },
               },
             },
           ])
@@ -216,7 +223,11 @@ export class AdminService {
           $group: {
             _id: '$userId',
             cardsCount: { $sum: '$quantity' },
-            totalValue: { $sum: { $multiply: ['$quantity', '$currentValue'] } },
+            totalValue: {
+              $sum: {
+                $multiply: ['$quantity', { $ifNull: ['$currentValue', 0] }],
+              },
+            },
           },
         },
       ])
