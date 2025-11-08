@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { PeriodFilter } from '../types/dashboard.types';
 import styles from './PeriodSelector.module.css';
 
@@ -17,34 +17,44 @@ export function PeriodSelector({
   onPeriodChange,
 }: PeriodSelectorProps): JSX.Element {
   const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<QuickPeriod>('all');
-  const [customDate, setCustomDate] = useState<string>('');
 
   const handleQuickPeriodChange = (period: QuickPeriod): void => {
     setSelectedQuickPeriod(period);
-    setCustomDate(''); // Reset custom date when selecting a quick period
+
+    if (period === 'all') {
+      // Pour 'all', on ne définit pas de dates (backend gérera)
+      onPeriodChange({});
+      return;
+    }
 
     const now = new Date();
-    const startDate = new Date();
+    // Utiliser les timestamps pour éviter les problèmes de changement de mois
+    const nowTime = now.getTime();
+    let startTime: number;
 
     switch (period) {
       case '7d':
-        startDate.setDate(now.getDate() - 7);
+        // 7 jours en millisecondes
+        startTime = nowTime - 7 * 24 * 60 * 60 * 1000;
         break;
       case '30d':
-        startDate.setDate(now.getDate() - 30);
+        // 30 jours en millisecondes
+        startTime = nowTime - 30 * 24 * 60 * 60 * 1000;
         break;
       case '90d':
-        startDate.setDate(now.getDate() - 90);
+        // 90 jours en millisecondes
+        startTime = nowTime - 90 * 24 * 60 * 60 * 1000;
         break;
       case '1y':
-        startDate.setFullYear(now.getFullYear() - 1);
+        // 365 jours en millisecondes
+        startTime = nowTime - 365 * 24 * 60 * 60 * 1000;
         break;
-      case 'all':
       default:
-        // Pour 'all', on ne définit pas de dates (backend gérera)
         onPeriodChange({});
         return;
     }
+
+    const startDate = new Date(startTime);
 
     // Envoyer les dates au format ISO
     onPeriodChange({
@@ -53,47 +63,8 @@ export function PeriodSelector({
     });
   };
 
-  const handleCustomDateChange = (date: string): void => {
-    setCustomDate(date);
-
-    if (!date || !selectedQuickPeriod || selectedQuickPeriod === 'all') return;
-
-    const selectedDate = new Date(date);
-    const now = new Date();
-
-    // Calculer la période en fonction du bouton actif
-    let endDate = new Date(selectedDate);
-
-    switch (selectedQuickPeriod) {
-      case '7d':
-        endDate.setDate(selectedDate.getDate() + 7);
-        break;
-      case '30d':
-        // Si on sélectionne une date et "30d", on affiche le mois de cette date
-        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-        break;
-      case '90d':
-        endDate.setDate(selectedDate.getDate() + 90);
-        break;
-      case '1y':
-        endDate = new Date(selectedDate.getFullYear(), 11, 31);
-        break;
-    }
-
-    // Ne pas dépasser la date actuelle
-    if (endDate > now) {
-      endDate = now;
-    }
-
-    onPeriodChange({
-      startDate: selectedDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-  };
-
   const handleReset = (): void => {
     setSelectedQuickPeriod('all');
-    setCustomDate('');
     onPeriodChange({});
   };
 
@@ -150,20 +121,8 @@ export function PeriodSelector({
           </button>
         </div>
 
-        {/* Sélecteur de date personnalisé */}
+        {/* Bouton reset */}
         <div className={styles.customControls}>
-          <div className={styles.datePickerWrapper}>
-            <Calendar className={styles.dateIcon} size={16} aria-hidden="true" />
-            <input
-              type="date"
-              className={styles.datePicker}
-              value={customDate}
-              onChange={(e) => handleCustomDateChange(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
-              aria-label="Date personnalisée"
-            />
-          </div>
-
           <button
             type="button"
             className={styles.resetButton}
