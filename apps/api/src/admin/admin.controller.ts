@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Delete,
+  Post,
   Param,
   UseGuards,
   Query,
@@ -114,5 +115,11 @@ export class AdminController {
     };
 
     return this.activityLogsService.findAll(options);
+  }
+
+  @Post('maintenance/backfill-card-metadata')
+  @ApiOperation({ summary: 'Backfill missing card metadata (images) from TCGdex' })
+  async backfillCardMetadata() {
+    return this.adminService.backfillCardMetadata();
   }
 }

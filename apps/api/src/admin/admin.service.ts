@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDoc } from '../users/schemas/user.schema';
 import { UserCard, UserCardDocument } from '../cards/schemas/user-card.schema';
+import { CardsService } from '../cards/cards.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDoc>,
-    @InjectModel(UserCard.name) private readonly userCardModel: Model<UserCardDocument>
+    @InjectModel(UserCard.name) private readonly userCardModel: Model<UserCardDocument>,
+    private readonly cardsService: CardsService
   ) {}
 
   /**
@@ -17,14 +21,6 @@ export class AdminService {
   async getGlobalStats() {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Debug: Liste des collections
-    try {
-      const collections = await this.userCardModel.db?.db?.listCollections().toArray();
-      console.log('🔍 Collections dans la base:', collections?.map((c) => c.name) || 'N/A');
-    } catch (e) {
-      console.log('⚠️ Impossible de lister les collections');
-    }
 
     const [totalUsers, newUsersThisWeek, totalCards, newCardsThisWeek, totalValue] =
       await Promise.all([
@@ -51,14 +47,6 @@ export class AdminService {
           .exec()
           .then((res) => res[0]?.total || 0),
       ]);
-
-    console.log('📊 Stats calculées:', {
-      totalUsers,
-      newUsersThisWeek,
-      totalCards,
-      newCardsThisWeek,
-      totalValue,
-    });
 
     return {
       totalUsers,
@@ -213,7 +201,6 @@ export class AdminService {
     const users = await this.userModel.find().select('-passwordHash -refreshToken').lean().exec();
 
     const userIds = users.map((u) => u._id);
-    console.log("👥 Nombre d'utilisateurs trouvés:", users.length);
 
     // Récupérer les stats de chaque user
     const stats = await this.userCardModel
@@ -232,9 +219,6 @@ export class AdminService {
         },
       ])
       .exec();
-
-    console.log('📈 Stats agrégées pour', stats.length, 'utilisateurs');
-    console.log('📈 Exemple de stats:', stats[0]);
 
     const statsMap = new Map(stats.map((s) => [s._id.toString(), s]));
 
@@ -310,5 +294,75 @@ export class AdminService {
       .exec();
 
     return result;
+  }
+
+  /**
+   * Backfill missing card metadata (imageUrl, imageUrlHiRes)
+   */
+  async backfillCardMetadata() {
+    this.logger.log('🔄 Starting card metadata backfill...');
+
+    // Find all cards with missing imageUrl
+    const cardsWithoutImages = await this.userCardModel
+      .find({
+        $or: [{ imageUrl: { $exists: false } }, { imageUrl: null }, { imageUrl: '' }],
+      })
+      .lean()
+      .exec();
+
+    this.logger.log(`📊 Found ${cardsWithoutImages.length} cards without images`);
+
+    let updated = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const userCard of cardsWithoutImages) {
+      try {
+        // Fetch card details from TCGdex
+        const cardDetails = await this.cardsService.getCardById(userCard.cardId, 'fr');
+
+        if (cardDetails) {
+          const imageUrl = cardDetails.image || cardDetails.images?.small;
+          const imageUrlHiRes = cardDetails.images?.large;
+
+          if (imageUrl) {
+            await this.userCardModel
+              .updateOne(
+                { _id: userCard._id },
+                {
+                  $set: {
+                    imageUrl,
+                    imageUrlHiRes: imageUrlHiRes || imageUrl,
+                  },
+                }
+              )
+              .exec();
+
+            updated++;
+            this.logger.log(`✅ Updated ${userCard.name} (${userCard.cardId})`);
+          } else {
+            this.logger.warn(`⚠️ No image found for ${userCard.name} (${userCard.cardId})`);
+            failed++;
+          }
+        } else {
+          this.logger.warn(`⚠️ Card not found in TCGdex: ${userCard.cardId}`);
+          failed++;
+          errors.push(`${userCard.name} (${userCard.cardId})`);
+        }
+      } catch (error) {
+        this.logger.error(`❌ Error processing ${userCard.name} (${userCard.cardId}):`, error);
+        failed++;
+        errors.push(`${userCard.name} (${userCard.cardId}): ${error}`);
+      }
+    }
+
+    this.logger.log(`🎉 Backfill complete: ${updated} updated, ${failed} failed`);
+
+    return {
+      total: cardsWithoutImages.length,
+      updated,
+      failed,
+      errors: errors.slice(0, 10), // Limit errors to first 10
+    };
   }
 }
