@@ -34,7 +34,7 @@ export default function Discover() {
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
-  const CARDS_PER_PAGE = 10;
+  const CARDS_PER_PAGE = 15;
 
   // Charger des cartes aléatoires au montage
   useEffect(() => {
@@ -48,6 +48,8 @@ export default function Discover() {
   const loadRandomCards = async () => {
     try {
       setLoading(true);
+      setDisplayedCards([]); // Réinitialiser pour l'affichage progressif
+
       // Liste de 40 Pokémon populaires pour garantir une variété
       const randomPokemons = [
         'Pikachu',
@@ -91,12 +93,15 @@ export default function Discover() {
         'Zamazenta',
       ];
 
-      // Mélanger et sélectionner 10 Pokémon différents pour le chargement initial
+      // Mélanger et sélectionner 15 Pokémon différents pour le chargement initial
       const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, CARDS_PER_PAGE);
 
-      // Charger les cartes en parallèle avec Promise.all
-      const promises = selected.map((pokemon) =>
+      let loadedCount = 0;
+      const loadedCards: Card[] = [];
+
+      // Charger les cartes progressivement (affichage au fur et à mesure)
+      selected.forEach((pokemon) => {
         cardsService
           .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
           .then((data) => {
@@ -112,31 +117,43 @@ export default function Discover() {
               );
             });
 
-            // Sélectionner une carte aléatoire et la retourner directement
+            // Sélectionner une carte aléatoire
             if (physicalCards.length > 0) {
               const randomCard = physicalCards[Math.floor(Math.random() * physicalCards.length)];
-              return randomCard || null;
+              if (randomCard) {
+                loadedCards.push(randomCard);
+                // Afficher immédiatement la carte (affichage progressif)
+                setDisplayedCards([...loadedCards]);
+              }
             }
-            return null;
+
+            // Vérifier si toutes les requêtes sont terminées
+            loadedCount++;
+            if (loadedCount >= selected.length) {
+              setAllCards(loadedCards);
+              setCurrentPage(1);
+              setHasMore(true);
+              setLoading(false);
+            }
           })
-          .catch(() => null)
-      );
-
-      const cards = (await Promise.all(promises)).filter(
-        (card: Card | null): card is Card => card !== null
-      );
-
-      setAllCards(cards);
-      setDisplayedCards(cards);
-      setCurrentPage(1);
-      setHasMore(true); // Pour les cartes aléatoires, on peut toujours en charger plus
+          .catch((err) => {
+            console.error(`Erreur chargement ${pokemon}:`, err);
+            loadedCount++;
+            // Retirer le loader même si certaines requêtes échouent
+            if (loadedCount >= selected.length) {
+              setAllCards(loadedCards);
+              setCurrentPage(1);
+              setHasMore(true);
+              setLoading(false);
+            }
+          });
+      });
     } catch (error) {
       console.error('Erreur lors du chargement des cartes:', error);
       setToast({
         message: 'Erreur lors du chargement des cartes aléatoires',
         type: 'error',
       });
-    } finally {
       setLoading(false);
     }
   };
