@@ -6,9 +6,11 @@ import {
   type TopCard,
   type TopUser,
   type SetDistribution,
+  type BackfillResult,
 } from '../../services/admin.service';
 import { FullScreenLoader } from '../../components/ui/FullScreenLoader';
 import { Button } from '../../components/ui/Button';
+import { Toast } from '../../components/ui/Toast';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
@@ -23,6 +25,8 @@ export default function AdminDashboard() {
   const [topCards, setTopCards] = useState<TopCard[]>([]);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [setDistribution, setSetDistribution] = useState<SetDistribution[]>([]);
+  const [backfilling, setBackfilling] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -48,6 +52,42 @@ export default function AdminDashboard() {
 
     void loadData();
   }, []);
+
+  const handleBackfillMetadata = async () => {
+    if (
+      !confirm(
+        'Voulez-vous vraiment lancer la récupération des métadonnées manquantes des cartes ? Cette opération peut prendre plusieurs minutes.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setBackfilling(true);
+      const result: BackfillResult = await adminService.backfillCardMetadata();
+
+      setToast({
+        message: `Backfill terminé : ${result.updated} cartes mises à jour, ${result.failed} échecs`,
+        type: result.failed > 0 ? 'error' : 'success',
+      });
+
+      // Recharger les données après le backfill
+      const [statsData, cardsData] = await Promise.all([
+        adminService.getGlobalStats(),
+        adminService.getTopCards(10),
+      ]);
+      setStats(statsData);
+      setTopCards(cardsData);
+    } catch (error) {
+      console.error('Error during backfill:', error);
+      setToast({
+        message: 'Erreur lors de la récupération des métadonnées',
+        type: 'error',
+      });
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   if (loading) {
     return <FullScreenLoader message="Chargement des statistiques..." />;
@@ -178,6 +218,28 @@ export default function AdminDashboard() {
           </table>
         )}
       </section>
+
+      {/* Maintenance */}
+      <section className={styles.section}>
+        <h2>Maintenance</h2>
+        <div className={styles.maintenance}>
+          <div className={styles.maintenanceItem}>
+            <div>
+              <h3>Récupérer les métadonnées manquantes des cartes</h3>
+              <p className={styles.maintenanceDesc}>
+                Récupère les images et métadonnées manquantes pour toutes les cartes depuis
+                l&apos;API TCGdex. Utile si des cartes ont été ajoutées sans images.
+              </p>
+            </div>
+            <Button onClick={handleBackfillMetadata} loading={backfilling} variant="secondary">
+              {backfilling ? 'En cours...' : 'Lancer'}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Toast */}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

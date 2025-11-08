@@ -95,6 +95,13 @@ export interface ActivityLog {
   updatedAt: string;
 }
 
+export interface BackfillResult {
+  total: number;
+  updated: number;
+  failed: number;
+  errors: string[];
+}
+
 export const adminService = {
   async getGlobalStats(): Promise<GlobalStats> {
     const response = await api.get<GlobalStats>('/admin/stats');
@@ -154,6 +161,11 @@ export const adminService = {
     const response = await api.get<{ logs: ActivityLog[]; total: number }>(
       `/admin/logs?${query.toString()}`
     );
+    return response.data;
+  },
+
+  async backfillCardMetadata(): Promise<BackfillResult> {
+    const response = await api.post<BackfillResult>('/admin/maintenance/backfill-card-metadata');
     return response.data;
   },
 };
