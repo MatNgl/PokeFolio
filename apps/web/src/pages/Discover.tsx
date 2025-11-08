@@ -19,20 +19,22 @@ export default function Discover() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CardSearchResult>({
-    cards: [],
-    total: 0,
-    page: 1,
-    limit: 20,
-  });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [allCards, setAllCards] = useState<Card[]>([]);
+  const [displayedCards, setDisplayedCards] = useState<Card[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>({ field: 'default', direction: 'asc' });
   const isInitialLoadRef = useRef(true);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
   } | null>(null);
+
+  const CARDS_PER_PAGE = 15;
 
   // Charger des cartes aléatoires au montage
   useEffect(() => {
@@ -90,9 +92,9 @@ export default function Discover() {
         'Zamazenta',
       ];
 
-      // Mélanger et sélectionner 20 Pokémon différents
+      // Mélanger et sélectionner 15 Pokémon différents pour le chargement initial
       const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 20);
+      const selected = shuffled.slice(0, CARDS_PER_PAGE);
 
       // Charger les cartes en parallèle avec Promise.all
       const promises = selected.map((pokemon) =>
@@ -130,14 +132,14 @@ export default function Discover() {
           .catch(() => null)
       );
 
-      const cards = (await Promise.all(promises)).filter((card): card is Card => card !== null);
+      const cards = (await Promise.all(promises)).filter(
+        (card: Card | null): card is Card => card !== null
+      );
 
-      setResult({
-        cards,
-        total: cards.length,
-        page: 1,
-        limit: 20,
-      });
+      setAllCards(cards);
+      setDisplayedCards(cards);
+      setCurrentPage(1);
+      setHasMore(true); // Pour les cartes aléatoires, on peut toujours en charger plus
     } catch (error) {
       console.error('Erreur lors du chargement des cartes:', error);
       setToast({
@@ -179,11 +181,11 @@ export default function Discover() {
           );
         });
 
-        setResult({
-          ...data,
-          cards: physicalCards,
-          total: physicalCards.length,
-        });
+        // Stocker toutes les cartes et n'afficher que les 15 premières
+        setAllCards(physicalCards);
+        setDisplayedCards(physicalCards.slice(0, CARDS_PER_PAGE));
+        setCurrentPage(1);
+        setHasMore(physicalCards.length > CARDS_PER_PAGE);
       } catch (error) {
         console.error('Erreur lors de la recherche:', error);
         setToast({
@@ -202,6 +204,109 @@ export default function Discover() {
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
+
+  // Charger plus de cartes (pagination)
+  const loadMoreCards = () => {
+    if (!hasMore || loadingMore) return;
+
+    const nextPage = currentPage + 1;
+    const startIndex = currentPage * CARDS_PER_PAGE;
+    const endIndex = startIndex + CARDS_PER_PAGE;
+
+    // Si on est en mode recherche, charger depuis allCards
+    if (allCards.length > 0) {
+      setLoadingMore(true);
+      // Simuler un délai pour une meilleure UX
+      setTimeout(() => {
+        const moreCards = allCards.slice(startIndex, endIndex);
+        if (moreCards.length > 0) {
+          setDisplayedCards((prev) => [...prev, ...moreCards]);
+          setCurrentPage(nextPage);
+          setHasMore(endIndex < allCards.length);
+        } else {
+          setHasMore(false);
+        }
+        setLoadingMore(false);
+      }, 300);
+    } else {
+      // Mode cartes aléatoires : charger de nouvelles cartes aléatoires
+      setLoadingMore(true);
+      void loadRandomCardsMore();
+    }
+  };
+
+  // Charger plus de cartes aléatoires
+  const loadRandomCardsMore = async () => {
+    try {
+      const randomPokemons = [
+        'Pikachu',
+        'Dracaufeu',
+        'Mewtwo',
+        'Evoli',
+        'Lucario',
+        'Salamèche',
+        'Ronflex',
+        'Lokhlass',
+        'Florizarre',
+        'Tortank',
+        'Drattak',
+        'Suicune',
+        'Raikou',
+        'Entei',
+        'Lugia',
+        'Ho-Oh',
+        'Celebi',
+        'Rayquaza',
+        'Kyogre',
+        'Groudon',
+      ];
+
+      const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, CARDS_PER_PAGE);
+
+      const promises = selected.map((pokemon) =>
+        cardsService
+          .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
+          .then(async (data) => {
+            const physicalCards = data.cards.filter((card: Card) => {
+              const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+              const setName = (card.set?.name || '').toLowerCase();
+              return (
+                !setId.includes('tcgp') &&
+                !setName.includes('tcgp') &&
+                !setName.includes('pocket') &&
+                !setId.startsWith('a-')
+              );
+            });
+
+            if (physicalCards.length > 0) {
+              const randomCard = physicalCards[Math.floor(Math.random() * physicalCards.length)];
+              if (!randomCard) return null;
+
+              try {
+                const fullCard = await cardsService.getCardById(randomCard.id, 'fr');
+                return fullCard || randomCard;
+              } catch {
+                return randomCard;
+              }
+            }
+            return null;
+          })
+          .catch(() => null)
+      );
+
+      const cards = (await Promise.all(promises)).filter(
+        (card: Card | null): card is Card => card !== null
+      );
+
+      setDisplayedCards((prev) => [...prev, ...cards]);
+      setCurrentPage((prev) => prev + 1);
+    } catch (error) {
+      console.error('Erreur lors du chargement de plus de cartes:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleAddCard = (card: Card) => {
     setSelectedCard(card);
@@ -230,7 +335,7 @@ export default function Discover() {
 
   // Trier les cartes selon l'option sélectionnée
   const getSortedCards = (): Card[] => {
-    const cards = [...result.cards];
+    const cards = [...displayedCards];
 
     if (sortOption.field === 'default') {
       return cards;
@@ -251,7 +356,32 @@ export default function Discover() {
     });
   };
 
-  const displayedCards = getSortedCards();
+  const sortedCards = getSortedCards();
+
+  // IntersectionObserver pour détecter quand l'utilisateur arrive en bas
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first && first.isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMoreCards();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, loadingMore]);
 
   return (
     <main className={styles.page}>
@@ -275,67 +405,95 @@ export default function Discover() {
 
       {loading && <FullScreenLoader message="Recherche de cartes..." />}
 
-      {!loading && displayedCards.length > 0 ? (
-        <section className={styles.grid}>
-          {displayedCards.map((card) => (
-            <article key={`${card.id}-${card.localId}`} className={styles.card}>
-              {/* ⬇️ Remplacement du div cliquable par un vrai bouton accessible */}
-              <button
-                type="button"
-                className={styles.cardImageWrap}
-                onClick={() => setDetailsCard(card)}
-                aria-label={`Voir les détails de ${card.name}`}
-                title={`Voir les détails de ${card.name}`}
-              >
-                <img
-                  src={getCardImageUrl(card)}
-                  alt={card.name}
-                  className={styles.cardImage}
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    const currentSrc = target.src;
+      {!loading && sortedCards.length > 0 ? (
+        <>
+          <section className={styles.grid}>
+            {sortedCards.map((card) => (
+              <article key={`${card.id}-${card.localId}`} className={styles.card}>
+                {/* ⬇️ Remplacement du div cliquable par un vrai bouton accessible */}
+                <button
+                  type="button"
+                  className={styles.cardImageWrap}
+                  onClick={() => setDetailsCard(card)}
+                  aria-label={`Voir les détails de ${card.name}`}
+                  title={`Voir les détails de ${card.name}`}
+                >
+                  <img
+                    src={getCardImageUrl(card)}
+                    alt={card.name}
+                    className={styles.cardImage}
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      const currentSrc = target.src;
 
-                    // Si l'URL contient "high.png", essayer avec "high.webp"
-                    if (currentSrc.includes('/high.png')) {
-                      target.src = currentSrc.replace('/high.png', '/high.webp');
-                    }
-                    // Si WebP échoue aussi, utiliser l'image de dos
-                    else if (currentSrc.includes('/high.webp')) {
-                      target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                    }
-                    // Sinon, directement l'image de dos
-                    else {
-                      target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                    }
+                      // Si l'URL contient "high.png", essayer avec "high.webp"
+                      if (currentSrc.includes('/high.png')) {
+                        target.src = currentSrc.replace('/high.png', '/high.webp');
+                      }
+                      // Si WebP échoue aussi, utiliser l'image de dos
+                      else if (currentSrc.includes('/high.webp')) {
+                        target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                      }
+                      // Sinon, directement l'image de dos
+                      else {
+                        target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                      }
+                    }}
+                  />
+                </button>
+
+                <div className={styles.cardInfo}>
+                  <h3 className={styles.cardName}>{card.name}</h3>
+                  <p className={styles.cardSet}>
+                    {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Set inconnu'}
+                    {card.localId && ` · #${card.localId.padStart(3, '0')}`}
+                    {card.set?.cardCount?.total &&
+                      `/${String(card.set.cardCount.total).padStart(3, '0')}`}
+                  </p>
+                  {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
+                </div>
+
+                <Button
+                  onClick={() => handleAddCard(card)}
+                  className={styles.addBtn}
+                  aria-label={`Ajouter ${card.name} au portfolio`}
+                  variant="success"
+                  size="sm"
+                >
+                  <PlusCircle size={18} aria-hidden />
+                  Ajouter
+                </Button>
+              </article>
+            ))}
+          </section>
+
+          {/* Loader pour charger plus de cartes */}
+          {hasMore && (
+            <div
+              ref={loadMoreRef}
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                minHeight: '100px',
+              }}
+            >
+              {loadingMore && (
+                <div
+                  style={{
+                    display: 'inline-block',
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid rgba(0, 0, 0, 0.1)',
+                    borderTopColor: '#3b82f6',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
                   }}
                 />
-              </button>
-
-              <div className={styles.cardInfo}>
-                <h3 className={styles.cardName}>{card.name}</h3>
-                <p className={styles.cardSet}>
-                  {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Set inconnu'}
-                  {card.localId && ` · #${card.localId.padStart(3, '0')}`}
-                  {card.set?.cardCount?.total &&
-                    `/${String(card.set.cardCount.total).padStart(3, '0')}`}
-                </p>
-                {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
-              </div>
-
-              <Button
-                onClick={() => handleAddCard(card)}
-                className={styles.addBtn}
-                aria-label={`Ajouter ${card.name} au portfolio`}
-                variant="success"
-                size="sm"
-              >
-                <PlusCircle size={18} aria-hidden />
-                Ajouter
-              </Button>
-            </article>
-          ))}
-        </section>
+              )}
+            </div>
+          )}
+        </>
       ) : !loading ? (
         <div className={styles.empty}>
           <svg
