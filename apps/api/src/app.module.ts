@@ -12,6 +12,8 @@ import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
 import { PortfolioModule } from './modules/portfolio/portfolio.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AdminModule } from './admin/admin.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 
 @Module({
   imports: [
@@ -91,6 +93,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     AuthModule,
     CardsModule,
     DashboardModule,
+    AdminModule,
+    ActivityLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
