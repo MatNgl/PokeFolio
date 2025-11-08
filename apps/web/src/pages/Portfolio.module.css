@@ -20,9 +20,13 @@
 
 .title {
   margin: 0 0 8px;
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1.2;
-  color: var(--text);
+  font-weight: 700;
+  background: linear-gradient(135deg, #7cf3ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {
@@ -40,26 +44,49 @@
 }
 
 .statCard {
-  background: var(--glass);
-  border: var(--border);
+  background: linear-gradient(
+    135deg,
+    rgba(11, 15, 26, 0.95) 0%,
+    rgba(15, 30, 50, 0.9) 50%,
+    rgba(11, 15, 26, 0.95) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.2);
   border-radius: var(--radii);
   padding: 20px;
-  backdrop-filter: blur(var(--blur));
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.statCard:hover {
+  border-color: rgba(124, 243, 255, 0.4);
+  box-shadow:
+    0 10px 15px -3px rgba(124, 243, 255, 0.1),
+    0 4px 6px -2px rgba(124, 243, 255, 0.05),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.1),
+    0 0 20px rgba(124, 243, 255, 0.15);
 }
 
 .statCard h3 {
   margin: 0 0 8px;
   font-size: 14px;
-  color: var(--muted);
+  color: rgba(124, 243, 255, 0.8);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .statValue {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: var(--text);
+  background: linear-gradient(135deg, #7cf3ff 0%, #60a5fa 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .profit {
@@ -120,18 +147,33 @@
 
 .card {
   position: relative;
-  background: var(--glass);
-  border: var(--border);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 20, 36, 0.95) 0%,
+    rgba(15, 30, 50, 0.9) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.2);
   border-radius: var(--radii);
   padding: 12px;
   backdrop-filter: blur(var(--blur));
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
-  border-color: var(--primary);
+  border-color: rgba(124, 243, 255, 0.5);
+  box-shadow:
+    0 10px 15px -3px rgba(124, 243, 255, 0.1),
+    0 4px 6px -2px rgba(124, 243, 255, 0.05),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.1),
+    0 0 24px rgba(124, 243, 255, 0.25);
 }
 
 .cardImageWrap {
@@ -366,19 +408,29 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--glass);
-  border: var(--border);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 20, 36, 0.95) 0%,
+    rgba(15, 30, 50, 0.9) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.2);
   border-radius: var(--radii);
   padding: 12px;
   backdrop-filter: blur(var(--blur));
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .compactCard:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(124, 243, 255, 0.15);
-  border-color: var(--primary);
+  border-color: rgba(124, 243, 255, 0.5);
+  box-shadow:
+    0 4px 16px rgba(124, 243, 255, 0.2),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.1);
 }
 
 .compactImage {
@@ -444,17 +496,27 @@
 .detailedCard {
   display: flex;
   gap: 24px;
-  background: var(--glass);
-  border: var(--border);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 20, 36, 0.95) 0%,
+    rgba(15, 30, 50, 0.9) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.2);
   border-radius: var(--radii);
   padding: 20px;
   backdrop-filter: blur(var(--blur));
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .detailedCard:hover {
-  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
-  border-color: var(--primary);
+  border-color: rgba(124, 243, 255, 0.5);
+  box-shadow:
+    0 8px 24px rgba(124, 243, 255, 0.2),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.1);
 }
 
 .detailedImageWrap {

@@ -1,8 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 20, 36, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(11, 15, 26, 0.85);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,13 +11,21 @@
 }
 
 .modal {
-  background: var(--card-bg, #1a1f35);
-  border: 1px solid var(--border-color, #2a3350);
-  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 20, 36, 0.98) 0%,
+    rgba(15, 30, 50, 0.95) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.3);
+  border-radius: 16px;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  animation: slideIn 0.2s ease-out;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(124, 243, 255, 0.1) inset,
+    0 0 40px rgba(124, 243, 255, 0.15);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
 }
 
 @keyframes slideIn {
@@ -33,14 +41,16 @@
 
 .header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color, #2a3350);
+  border-bottom: 1px solid rgba(124, 243, 255, 0.2);
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.05), rgba(56, 189, 248, 0.05));
 }
 
 .header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(124, 243, 255, 0.3);
 }
 
 .content {
@@ -51,15 +61,16 @@
   margin: 0;
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--text-secondary, #b0b8d4);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .actions {
   display: flex;
   gap: 0.75rem;
   padding: 1.5rem;
-  border-top: 1px solid var(--border-color, #2a3350);
+  border-top: 1px solid rgba(124, 243, 255, 0.2);
   justify-content: flex-end;
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.03), rgba(56, 189, 248, 0.03));
 }
 
 .deleteBtn {

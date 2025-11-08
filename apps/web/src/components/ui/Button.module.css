@@ -81,25 +81,36 @@
 
 /* ========= Variants ========= */
 .primary .buttonInner {
-  background: linear-gradient(135deg, var(--primary), var(--violet));
-  color: var(--bg);
+  background: linear-gradient(135deg, #7cf3ff 0%, #60a5fa 50%, #3b82f6 100%);
+  color: #0b0f1a;
   border-color: transparent;
+  box-shadow: 0 0 12px rgba(124, 243, 255, 0.4);
 }
 .primary:hover:not(:disabled)::before {
   opacity: 1;
 }
 .primary::before {
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.9), rgba(167, 139, 250, 0.9));
+  background: linear-gradient(135deg, rgba(124, 243, 255, 1), rgba(96, 165, 250, 1));
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.6);
+}
+.primary:hover:not(:disabled) .buttonInner {
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.6);
 }
 
 .secondary .buttonInner {
-  background: var(--glass-light);
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.6), rgba(11, 15, 26, 0.6));
+  border: 1px solid rgba(124, 243, 255, 0.3);
+  color: #7cf3ff;
 }
 .secondary:hover:not(:disabled)::before {
   opacity: 1;
 }
 .secondary::before {
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.6), rgba(167, 139, 250, 0.6));
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.6), rgba(96, 165, 250, 0.6));
+}
+.secondary:hover:not(:disabled) .buttonInner {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15), rgba(96, 165, 250, 0.15));
+  border-color: rgba(124, 243, 255, 0.6);
 }
 
 .ghost {
@@ -107,15 +118,18 @@
 }
 .ghost .buttonInner {
   background: transparent;
+  border: 1px solid transparent;
+  color: #7cf3ff;
 }
 .ghost:hover:not(:disabled) .buttonInner {
-  background: var(--glass);
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.1), rgba(96, 165, 250, 0.1));
+  border-color: rgba(124, 243, 255, 0.3);
 }
 .ghost:hover:not(:disabled)::before {
   opacity: 1;
 }
 .ghost::before {
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.35), rgba(167, 139, 250, 0.35));
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.4), rgba(96, 165, 250, 0.4));
 }
 
 /* neutral */

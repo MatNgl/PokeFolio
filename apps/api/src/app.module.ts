@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
 import { PortfolioModule } from './modules/portfolio/portfolio.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { PortfolioModule } from './modules/portfolio/portfolio.module';
     UsersModule,
     AuthModule,
     CardsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

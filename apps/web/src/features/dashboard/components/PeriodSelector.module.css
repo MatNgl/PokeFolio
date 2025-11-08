@@ -1,0 +1,86 @@
+.container {
+  margin-bottom: 1.5rem;
+}
+
+.controlsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Boutons de période rapide */
+.quickButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 30, 50, 0.4);
+  border: 1px solid rgba(124, 243, 255, 0.15);
+  border-radius: 10px;
+  padding: 0.25rem;
+}
+
+.quickButton {
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.quickButton:hover {
+  background: rgba(124, 243, 255, 0.08);
+  color: rgba(124, 243, 255, 0.9);
+}
+
+.quickButton.active {
+  background: linear-gradient(135deg, #7cf3ff 0%, #60a5fa 100%);
+  color: #0b0f1a;
+  box-shadow: 0 2px 8px rgba(124, 243, 255, 0.3);
+}
+
+.quickButton:focus-visible {
+  outline: 2px solid #7cf3ff;
+  outline-offset: 2px;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .controlsWrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .quickButtons {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .quickButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    margin-bottom: 1rem;
+  }
+
+  .quickButtons {
+    gap: 0.375rem;
+    padding: 0.25rem;
+  }
+
+  .quickButton {
+    padding: 0.4rem 0.625rem;
+    font-size: 0.7rem;
+  }
+}
