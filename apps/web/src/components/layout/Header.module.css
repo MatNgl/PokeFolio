@@ -86,12 +86,12 @@
   width: fit-content;
 }
 
-/* Glider : 3 onglets -> 33.333% */
+/* Glider : 4 onglets -> 25% */
 .glider {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 33.3333%;
+  width: 25%;
   border-radius: 1rem;
   z-index: 1;
   transition:
@@ -116,6 +116,10 @@
 }
 .glider[data-active='decouvrir'] {
   transform: translateX(200%);
+  opacity: 1;
+}
+.glider[data-active='admin'] {
+  transform: translateX(300%);
   opacity: 1;
 }
 

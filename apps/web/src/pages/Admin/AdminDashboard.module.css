@@ -6,6 +6,16 @@
 
 .header {
   margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
 }
 
 .title {
@@ -158,4 +168,14 @@
 
 .table td {
   color: var(--text);
+}
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
 }

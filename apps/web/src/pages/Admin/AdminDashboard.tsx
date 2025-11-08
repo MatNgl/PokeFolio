@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   adminService,
   type GlobalStats,
@@ -7,9 +8,12 @@ import {
   type SetDistribution,
 } from '../../services/admin.service';
 import { FullScreenLoader } from '../../components/ui/FullScreenLoader';
+import { Button } from '../../components/ui/Button';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = 'PokéFolio - Admin Dashboard';
   }, []);
@@ -52,8 +56,18 @@ export default function AdminDashboard() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Admin Dashboard</h1>
-        <p className={styles.subtitle}>Vue d&apos;ensemble de la plateforme</p>
+        <div>
+          <h1 className={styles.title}>Admin Dashboard</h1>
+          <p className={styles.subtitle}>Vue d&apos;ensemble de la plateforme</p>
+        </div>
+        <div className={styles.actions}>
+          <Button onClick={() => navigate('/admin/users')} variant="primary">
+            Gérer les utilisateurs
+          </Button>
+          <Button onClick={() => navigate('/admin/logs')} variant="secondary">
+            Voir les logs
+          </Button>
+        </div>
       </header>
 
       {/* Stats globales */}
@@ -82,75 +96,87 @@ export default function AdminDashboard() {
       {/* Top cartes */}
       <section className={styles.section}>
         <h2>Top 10 - Cartes les plus possédées</h2>
-        <div className={styles.topCards}>
-          {topCards.map((card, index) => (
-            <div key={card.cardId} className={styles.topCardItem}>
-              <span className={styles.rank}>#{index + 1}</span>
-              {card.imageUrl && (
-                <img src={card.imageUrl} alt={card.name} className={styles.cardImage} />
-              )}
-              <div className={styles.cardInfo}>
-                <p className={styles.cardName}>{card.name}</p>
-                <p className={styles.cardSet}>{card.setName}</p>
-                <p className={styles.cardStats}>
-                  {card.totalQuantity} exemplaires • {card.ownersCount} possesseurs
-                </p>
+        {topCards.length === 0 ? (
+          <p className={styles.empty}>Aucune carte dans la base de données</p>
+        ) : (
+          <div className={styles.topCards}>
+            {topCards.map((card, index) => (
+              <div key={card.cardId} className={styles.topCardItem}>
+                <span className={styles.rank}>#{index + 1}</span>
+                {card.imageUrl && (
+                  <img src={card.imageUrl} alt={card.name} className={styles.cardImage} />
+                )}
+                <div className={styles.cardInfo}>
+                  <p className={styles.cardName}>{card.name}</p>
+                  <p className={styles.cardSet}>{card.setName}</p>
+                  <p className={styles.cardStats}>
+                    {card.totalQuantity} exemplaires • {card.ownersCount} possesseurs
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Top users */}
       <section className={styles.section}>
         <h2>Top 10 - Collections les plus chères</h2>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Pseudo</th>
-              <th>Email</th>
-              <th>Cartes</th>
-              <th>Valeur totale</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topUsers.map((user, index) => (
-              <tr key={user.userId}>
-                <td>{index + 1}</td>
-                <td>{user.pseudo}</td>
-                <td>{user.email}</td>
-                <td>{user.cardsCount}</td>
-                <td>{user.totalValue.toFixed(2)} €</td>
+        {topUsers.length === 0 ? (
+          <p className={styles.empty}>Aucun utilisateur avec des cartes</p>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pseudo</th>
+                <th>Email</th>
+                <th>Cartes</th>
+                <th>Valeur totale</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {topUsers.map((user, index) => (
+                <tr key={user.userId}>
+                  <td>{index + 1}</td>
+                  <td>{user.pseudo}</td>
+                  <td>{user.email}</td>
+                  <td>{user.cardsCount}</td>
+                  <td>{user.totalValue.toFixed(2)} €</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       {/* Distribution par sets */}
       <section className={styles.section}>
         <h2>Top 10 - Sets les plus collectionnés</h2>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Set</th>
-              <th>Cartes totales</th>
-              <th>Cartes uniques</th>
-            </tr>
-          </thead>
-          <tbody>
-            {setDistribution.map((set, index) => (
-              <tr key={set.setName}>
-                <td>{index + 1}</td>
-                <td>{set.setName}</td>
-                <td>{set.cardsCount}</td>
-                <td>{set.uniqueCards}</td>
+        {setDistribution.length === 0 ? (
+          <p className={styles.empty}>Aucune carte collectionnée</p>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Set</th>
+                <th>Cartes totales</th>
+                <th>Cartes uniques</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {setDistribution.map((set, index) => (
+                <tr key={set.setName}>
+                  <td>{index + 1}</td>
+                  <td>{set.setName}</td>
+                  <td>{set.cardsCount}</td>
+                  <td>{set.uniqueCards}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </div>
   );
