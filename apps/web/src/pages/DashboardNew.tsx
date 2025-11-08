@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Layers, TrendingUp, Award, DollarSign } from 'lucide-react';
 import { dashboardApi } from '@/features/dashboard/api/dashboard.api';
@@ -16,6 +16,11 @@ import {
 import styles from './DashboardNew.module.css';
 
 export function DashboardNew(): JSX.Element {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Dashboard';
+  }, []);
+
   // Période globale partagée par tous les composants - par défaut 'all'
   const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>({
     type: PeriodType.ALL,

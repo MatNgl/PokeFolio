@@ -1,17 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from './FilterButton.module.css';
-import { SlidersHorizontal, Check } from 'lucide-react';
+import { SlidersHorizontal, Check, ArrowUp, ArrowDown } from 'lucide-react';
 
-export type SortOption =
-  | 'default'
-  | 'quantity-asc'
-  | 'quantity-desc'
-  | 'price-asc'
-  | 'price-desc'
-  | 'date-asc'
-  | 'date-desc'
-  | 'name-asc'
-  | 'name-desc';
+export type SortField = 'default' | 'name' | 'quantity' | 'price' | 'date';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortOption {
+  field: SortField;
+  direction: SortDirection;
+}
 
 interface FilterButtonProps {
   onSortChange: (sort: SortOption) => void;
@@ -19,43 +16,40 @@ interface FilterButtonProps {
   context?: 'portfolio' | 'discover';
 }
 
-const getSortOptions = (
-  context: 'portfolio' | 'discover'
-): { value: SortOption; label: string }[] => {
-  const baseOptions: { value: SortOption; label: string }[] = [
-    { value: 'name-asc', label: 'Nom (A → Z)' },
-    { value: 'name-desc', label: 'Nom (Z → A)' },
-  ];
-
+const getSortFields = (context: 'portfolio' | 'discover'): SortField[] => {
   if (context === 'portfolio') {
-    return [
-      { value: 'default', label: "Par défaut (ordre d'ajout)" },
-      ...baseOptions,
-      { value: 'quantity-desc', label: 'Quantité (↓)' },
-      { value: 'quantity-asc', label: 'Quantité (↑)' },
-      { value: 'price-desc', label: 'Prix (↓)' },
-      { value: 'price-asc', label: 'Prix (↑)' },
-      { value: 'date-desc', label: "Date d'achat (récent)" },
-      { value: 'date-asc', label: "Date d'achat (ancien)" },
-    ];
+    return ['default', 'name', 'quantity', 'price', 'date'];
   }
+  return ['default', 'name'];
+};
 
-  // Context 'discover'
-  return [{ value: 'default', label: 'Par défaut' }, ...baseOptions];
+const getFieldLabel = (field: SortField): string => {
+  switch (field) {
+    case 'default':
+      return "Par défaut (ordre d'ajout)";
+    case 'name':
+      return 'Nom';
+    case 'quantity':
+      return 'Quantité';
+    case 'price':
+      return 'Prix';
+    case 'date':
+      return "Date d'achat";
+    default:
+      return field;
+  }
 };
 
 export function FilterButton({
   onSortChange,
-  currentSort = 'default',
+  currentSort = { field: 'default', direction: 'asc' },
   context = 'portfolio',
 }: FilterButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Récupérer les options selon le contexte
-  const sortOptions = getSortOptions(context);
+  const sortFields = getSortFields(context);
 
-  // Fermer le menu au clic extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -72,12 +66,19 @@ export function FilterButton({
     };
   }, [isOpen]);
 
-  const handleSelect = (option: SortOption) => {
-    onSortChange(option);
+  const handleSelect = (field: SortField) => {
+    if (field === 'default') {
+      onSortChange({ field: 'default', direction: 'asc' });
+    } else if (currentSort.field === field) {
+      // Toggle direction si même champ
+      const newDirection = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      onSortChange({ field, direction: newDirection });
+    } else {
+      // Nouveau champ, commencer par ascendant
+      onSortChange({ field, direction: 'asc' });
+    }
     setIsOpen(false);
   };
-
-  const currentLabel = sortOptions.find((opt) => opt.value === currentSort)?.label || 'Trier';
 
   return (
     <div className={styles.filterContainer} ref={dropdownRef}>
@@ -99,20 +100,33 @@ export function FilterButton({
             <span>Trier par</span>
           </div>
           <ul className={styles.optionList}>
-            {sortOptions.map((option) => (
-              <li key={option.value}>
-                <button
-                  type="button"
-                  className={`${styles.option} ${currentSort === option.value ? styles.selected : ''}`}
-                  onClick={() => handleSelect(option.value)}
-                >
-                  <span>{option.label}</span>
-                  {currentSort === option.value && (
-                    <Check size={16} className={styles.checkIcon} aria-hidden />
-                  )}
-                </button>
-              </li>
-            ))}
+            {sortFields.map((field) => {
+              const isSelected = currentSort.field === field;
+              const showDirection = isSelected && field !== 'default';
+              return (
+                <li key={field}>
+                  <button
+                    type="button"
+                    className={`${styles.option} ${isSelected ? styles.selected : ''}`}
+                    onClick={() => handleSelect(field)}
+                  >
+                    <span>{getFieldLabel(field)}</span>
+                    <div className={styles.iconGroup}>
+                      {showDirection && (
+                        <>
+                          {currentSort.direction === 'asc' ? (
+                            <ArrowUp size={16} className={styles.directionIcon} aria-hidden />
+                          ) : (
+                            <ArrowDown size={16} className={styles.directionIcon} aria-hidden />
+                          )}
+                        </>
+                      )}
+                      {isSelected && <Check size={16} className={styles.checkIcon} aria-hidden />}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

@@ -15,6 +15,11 @@ import styles from './Auth.module.css';
 import { LogIn } from 'lucide-react';
 
 export function Login() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Connexion';
+  }, []);
+
   const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState('');

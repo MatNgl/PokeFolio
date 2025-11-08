@@ -9,15 +9,9 @@ import { UserCardsService } from './user-cards.service';
 import { UserCardsController } from './user-cards.controller';
 
 import { UserCard, UserCardSchema } from './schemas/user-card.schema';
-import { CardCache, CardCacheSchema } from './schemas/card-cache.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: UserCard.name, schema: UserCardSchema },
-      { name: CardCache.name, schema: CardCacheSchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: UserCard.name, schema: UserCardSchema }])],
   controllers: [CardsController, UserCardsController],
   providers: [CardsService, TcgdexService, UserCardsService],
   exports: [CardsService, UserCardsService],

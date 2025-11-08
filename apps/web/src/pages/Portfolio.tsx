@@ -13,7 +13,7 @@ import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
-import { FilterButton, type SortOption } from '../components/ui/FilterButton';
+import { FilterButton, type SortOption, type SortField } from '../components/ui/FilterButton';
 import { StatCard } from '../components/ui/StatCard';
 import { Layers, Award, DollarSign, TrendingUp } from 'lucide-react';
 import styles from './Portfolio.module.css';
@@ -181,6 +181,11 @@ function toUserCardView(entry: PortfolioCard): UserCardView {
 }
 
 export default function Portfolio() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Portfolio';
+  }, []);
+
   const [cards, setCards] = useState<UserCardView[]>([]);
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -195,7 +200,7 @@ export default function Portfolio() {
 
   // ➕ Recherche et tri
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [sortOption, setSortOption] = useState<SortOption>({ field: 'default', direction: 'asc' });
 
   const [toast, setToast] = useState<{
     message: string;
@@ -317,56 +322,92 @@ export default function Portfolio() {
     return null;
   };
 
+  // Normalise une string : enlève accents et met en minuscules
+  const normalizeString = (str: string): string => {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+  const fuzzyMatch = (text: string, search: string): boolean => {
+    const normalizedText = normalizeString(text);
+    const normalizedSearch = normalizeString(search);
+
+    // Correspondance exacte
+    if (normalizedText.includes(normalizedSearch)) {
+      return true;
+    }
+
+    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    if (normalizedSearch.length >= 3) {
+      let matches = 0;
+      for (let i = 0; i < normalizedSearch.length; i++) {
+        const char = normalizedSearch.charAt(i);
+        if (char && normalizedText.includes(char)) {
+          matches++;
+        }
+      }
+      // Si au moins 66% des caractères correspondent (2/3), on considère que c'est un match
+      return matches / normalizedSearch.length >= 0.66;
+    }
+
+    return false;
+  };
+
   // Filtrer et trier les cartes
   const getFilteredAndSortedCards = (): UserCardView[] => {
     let filtered = [...cards];
 
-    // Recherche
+    // Recherche (nom de carte, nom de set, ID de set, rareté)
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.trim();
       filtered = filtered.filter((card) => {
-        const name = card.name?.toLowerCase() || '';
-        const setName = card.setName?.toLowerCase() || '';
-        const rarity = card.rarity?.toLowerCase() || '';
-        return name.includes(query) || setName.includes(query) || rarity.includes(query);
+        const name = card.name || '';
+        const setName = card.setName || '';
+        const setId = card.setId || '';
+        const rarity = card.rarity || '';
+
+        return (
+          fuzzyMatch(name, query) ||
+          fuzzyMatch(setName, query) ||
+          fuzzyMatch(setId, query) ||
+          fuzzyMatch(rarity, query)
+        );
       });
     }
 
     // Tri (sauf si mode "default")
-    if (sortOption !== 'default') {
+    if (sortOption.field !== 'default') {
       filtered.sort((a, b) => {
-        switch (sortOption) {
-          case 'name-asc':
-            return (a.name || '').localeCompare(b.name || '');
-          case 'name-desc':
-            return (b.name || '').localeCompare(a.name || '');
-          case 'quantity-asc':
-            return (a.quantity || 0) - (b.quantity || 0);
-          case 'quantity-desc':
-            return (b.quantity || 0) - (a.quantity || 0);
-          case 'price-asc': {
+        let comparison = 0;
+
+        switch (sortOption.field) {
+          case 'name':
+            comparison = (a.name || '').localeCompare(b.name || '');
+            break;
+          case 'quantity':
+            comparison = (a.quantity || 0) - (b.quantity || 0);
+            break;
+          case 'price': {
             const priceA = calculateCardTotal(a) ?? 0;
             const priceB = calculateCardTotal(b) ?? 0;
-            return priceA - priceB;
+            comparison = priceA - priceB;
+            break;
           }
-          case 'price-desc': {
-            const priceA = calculateCardTotal(a) ?? 0;
-            const priceB = calculateCardTotal(b) ?? 0;
-            return priceB - priceA;
-          }
-          case 'date-asc': {
+          case 'date': {
             const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
             const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
-            return dateA - dateB;
-          }
-          case 'date-desc': {
-            const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
-            const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
-            return dateB - dateA;
+            comparison = dateA - dateB;
+            break;
           }
           default:
-            return 0;
+            comparison = 0;
         }
+
+        // Appliquer la direction
+        return sortOption.direction === 'desc' ? -comparison : comparison;
       });
     }
 
@@ -423,8 +464,8 @@ export default function Portfolio() {
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Rechercher dans votre collection..."
-              ariaLabel="Rechercher une carte dans votre portfolio"
+              placeholder="Rechercher par carte, set, rareté..."
+              ariaLabel="Rechercher dans votre portfolio"
               className={styles.searchBar}
             />
             <FilterButton onSortChange={setSortOption} currentSort={sortOption} />

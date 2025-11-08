@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '../components/ui/Button';
@@ -5,6 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import styles from './Home.module.css';
 
 export function Home() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio';
+  }, []);
+
   const { isAuthenticated } = useAuth();
 
   return (
