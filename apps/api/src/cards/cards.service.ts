@@ -10,6 +10,44 @@ export class CardsService {
 
   constructor(private readonly tcgdexService: TcgdexService) {}
 
+  /**
+   * Normalise une string : enlève les accents et met en minuscules
+   */
+  private normalizeString(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  /**
+   * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+   */
+  private fuzzyMatch(text: string, search: string): boolean {
+    const normalizedText = this.normalizeString(text);
+    const normalizedSearch = this.normalizeString(search);
+
+    // Correspondance exacte
+    if (normalizedText.includes(normalizedSearch)) {
+      return true;
+    }
+
+    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    if (normalizedSearch.length >= 4) {
+      let matches = 0;
+      for (let i = 0; i < normalizedSearch.length; i++) {
+        const char = normalizedSearch.charAt(i);
+        if (char && normalizedText.includes(char)) {
+          matches++;
+        }
+      }
+      // Si au moins 80% des caractères correspondent, on considère que c'est un match
+      return matches / normalizedSearch.length >= 0.8;
+    }
+
+    return false;
+  }
+
   async searchCards(dto: SearchCardsDto): Promise<CardSearchResult> {
     const query = dto.q?.trim() || '';
     const lang = dto.lang || 'fr';
@@ -56,6 +94,23 @@ export class CardsService {
       if (cards.length === 0 && lang === 'fr') {
         this.logger.log(`Fallback EN pour: ${searchName || query}`);
         cards = await this.tcgdexService.searchCards(searchName || query, 'en');
+      }
+
+      // Filtrage fuzzy supplémentaire (ignore les accents et tolère les fautes)
+      if (searchName && cards.length > 0) {
+        const originalLength = cards.length;
+        cards = cards.filter((card) => {
+          const cardName = card.name || '';
+          const setName = card.set?.name || '';
+
+          return this.fuzzyMatch(cardName, searchName) || this.fuzzyMatch(setName, searchName);
+        });
+
+        if (cards.length < originalLength) {
+          this.logger.log(
+            `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}")`
+          );
+        }
       }
 
       // Filtrer par numéro et préfixe si spécifié

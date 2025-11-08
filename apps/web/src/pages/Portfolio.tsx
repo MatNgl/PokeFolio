@@ -317,24 +317,58 @@ export default function Portfolio() {
     return null;
   };
 
+  // Normalise une string : enlève accents et met en minuscules
+  const normalizeString = (str: string): string => {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+  const fuzzyMatch = (text: string, search: string): boolean => {
+    const normalizedText = normalizeString(text);
+    const normalizedSearch = normalizeString(search);
+
+    // Correspondance exacte
+    if (normalizedText.includes(normalizedSearch)) {
+      return true;
+    }
+
+    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    if (normalizedSearch.length >= 4) {
+      let matches = 0;
+      for (let i = 0; i < normalizedSearch.length; i++) {
+        const char = normalizedSearch.charAt(i);
+        if (char && normalizedText.includes(char)) {
+          matches++;
+        }
+      }
+      // Si au moins 80% des caractères correspondent, on considère que c'est un match
+      return matches / normalizedSearch.length >= 0.8;
+    }
+
+    return false;
+  };
+
   // Filtrer et trier les cartes
   const getFilteredAndSortedCards = (): UserCardView[] => {
     let filtered = [...cards];
 
     // Recherche (nom de carte, nom de set, ID de set, rareté)
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.trim();
       filtered = filtered.filter((card) => {
-        const name = card.name?.toLowerCase() || '';
-        const setName = card.setName?.toLowerCase() || '';
-        const setId = card.setId?.toLowerCase() || '';
-        const rarity = card.rarity?.toLowerCase() || '';
+        const name = card.name || '';
+        const setName = card.setName || '';
+        const setId = card.setId || '';
+        const rarity = card.rarity || '';
 
         return (
-          name.includes(query) ||
-          setName.includes(query) ||
-          setId.includes(query) ||
-          rarity.includes(query)
+          fuzzyMatch(name, query) ||
+          fuzzyMatch(setName, query) ||
+          fuzzyMatch(setId, query) ||
+          fuzzyMatch(rarity, query)
         );
       });
     }
