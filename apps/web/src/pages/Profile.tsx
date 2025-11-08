@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -11,6 +11,11 @@ import styles from './Profile.module.css';
 import { UserRoundPen, KeyRound, LogOut, Trash2, XCircle, CheckCircle } from 'lucide-react';
 
 export function Profile() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Profil';
+  }, []);
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 

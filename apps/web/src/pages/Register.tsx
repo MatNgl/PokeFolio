@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import type { RegisterDto } from '@pokefolio/types';
@@ -33,6 +33,11 @@ function hasThreeClasses(password: string): boolean {
 }
 
 export function Register() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Inscription';
+  }, []);
+
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
   const [error, setError] = useState('');

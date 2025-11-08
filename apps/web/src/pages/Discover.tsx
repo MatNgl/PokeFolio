@@ -12,6 +12,11 @@ import styles from './Discover.module.css';
 import { PlusCircle } from 'lucide-react';
 
 export default function Discover() {
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Découvrir';
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CardSearchResult>({

@@ -33,7 +33,7 @@ export class CardsService {
     }
 
     // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
-    if (normalizedSearch.length >= 4) {
+    if (normalizedSearch.length >= 3) {
       let matches = 0;
       for (let i = 0; i < normalizedSearch.length; i++) {
         const char = normalizedSearch.charAt(i);
@@ -41,8 +41,8 @@ export class CardsService {
           matches++;
         }
       }
-      // Si au moins 80% des caractères correspondent, on considère que c'est un match
-      return matches / normalizedSearch.length >= 0.8;
+      // Si au moins 66% des caractères correspondent (2/3), on considère que c'est un match
+      return matches / normalizedSearch.length >= 0.66;
     }
 
     return false;
