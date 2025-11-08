@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDoc } from '../users/schemas/user.schema';
-import { UserCard, UserCardDoc } from '../cards/schemas/user-card.schema';
+import { UserCard, UserCardDocument } from '../cards/schemas/user-card.schema';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDoc>,
-    @InjectModel(UserCard.name) private readonly userCardModel: Model<UserCardDoc>
+    @InjectModel(UserCard.name) private readonly userCardModel: Model<UserCardDocument>
   ) {}
 
   /**
@@ -185,7 +185,8 @@ export class AdminService {
   /**
    * Liste des users avec stats
    */
-  async getAllUsers() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getAllUsers(): Promise<any[]> {
     const users = await this.userModel.find().select('-passwordHash -refreshToken').lean().exec();
 
     const userIds = users.map((u) => u._id);

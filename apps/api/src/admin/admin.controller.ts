@@ -63,7 +63,8 @@ export class AdminController {
 
   @Get('users')
   @ApiOperation({ summary: 'Get all users with their stats' })
-  async getAllUsers() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getAllUsers(): Promise<any[]> {
     return this.adminService.getAllUsers();
   }
 

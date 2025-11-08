@@ -1,0 +1,122 @@
+.page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7cf3ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+}
+
+.searchBar {
+  margin-bottom: 24px;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 500px;
+  padding: 12px 16px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.tableContainer {
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: rgba(124, 243, 255, 0.1);
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.table th {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.table tbody tr {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table tbody tr:hover {
+  background: rgba(124, 243, 255, 0.05);
+}
+
+.table td {
+  color: var(--text);
+}
+
+.roleAdmin {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(167, 139, 250, 0.2);
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.roleUser {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(124, 243, 255, 0.2);
+  color: #7cf3ff;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
