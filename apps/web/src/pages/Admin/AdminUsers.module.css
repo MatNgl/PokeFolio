@@ -4,6 +4,10 @@
   margin: 0 auto;
 }
 
+.backBtn {
+  margin-bottom: 16px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

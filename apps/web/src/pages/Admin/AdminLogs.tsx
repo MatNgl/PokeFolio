@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminService, type ActivityLog } from '../../services/admin.service';
 import { FullScreenLoader } from '../../components/ui/FullScreenLoader';
+import { Button } from '../../components/ui/Button';
 import styles from './AdminLogs.module.css';
 
 const ACTIVITY_TYPES = [
@@ -11,6 +13,8 @@ const ACTIVITY_TYPES = [
 ];
 
 export default function AdminLogs() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = 'PokéFolio - Admin Logs';
   }, []);
@@ -56,6 +60,10 @@ export default function AdminLogs() {
 
   return (
     <div className={styles.page}>
+      <Button onClick={() => navigate('/admin')} variant="secondary" className={styles.backBtn}>
+        ← Retour au dashboard
+      </Button>
+
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Logs d&apos;activité</h1>

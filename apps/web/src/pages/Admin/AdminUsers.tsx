@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { adminService, type UserWithStats } from '../../services/admin.service';
 import { FullScreenLoader } from '../../components/ui/FullScreenLoader';
 import { Button } from '../../components/ui/Button';
 import styles from './AdminUsers.module.css';
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = 'PokéFolio - Admin Users';
   }, []);
@@ -55,6 +57,10 @@ export default function AdminUsers() {
 
   return (
     <div className={styles.page}>
+      <Button onClick={() => navigate('/admin')} variant="secondary" className={styles.backBtn}>
+        ← Retour au dashboard
+      </Button>
+
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Gestion des utilisateurs</h1>
