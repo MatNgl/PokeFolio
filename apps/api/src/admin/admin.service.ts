@@ -19,11 +19,12 @@ export class AdminService {
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     // Debug: Liste des collections
-    const collections = await this.userCardModel.db.db.listCollections().toArray();
-    console.log(
-      '🔍 Collections dans la base:',
-      collections.map((c) => c.name)
-    );
+    try {
+      const collections = await this.userCardModel.db?.db?.listCollections().toArray();
+      console.log('🔍 Collections dans la base:', collections?.map((c) => c.name) || 'N/A');
+    } catch (e) {
+      console.log('⚠️ Impossible de lister les collections');
+    }
 
     const [totalUsers, newUsersThisWeek, totalCards, newCardsThisWeek, totalValue] =
       await Promise.all([
