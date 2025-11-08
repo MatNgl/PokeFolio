@@ -22,7 +22,7 @@ export default function Discover() {
   });
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
-  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [sortOption, setSortOption] = useState<SortOption>({ field: 'default', direction: 'asc' });
   const isInitialLoadRef = useRef(true);
   const [toast, setToast] = useState<{
     message: string;
@@ -227,27 +227,22 @@ export default function Discover() {
   const getSortedCards = (): Card[] => {
     const cards = [...result.cards];
 
-    if (sortOption === 'default') {
+    if (sortOption.field === 'default') {
       return cards;
     }
 
     return cards.sort((a, b) => {
-      switch (sortOption) {
-        case 'name-asc':
-          return (a.name || '').localeCompare(b.name || '');
-        case 'name-desc':
-          return (b.name || '').localeCompare(a.name || '');
-        case 'quantity-asc':
-        case 'quantity-desc':
-        case 'price-asc':
-        case 'price-desc':
-        case 'date-asc':
-        case 'date-desc':
-          // Ces options n'ont pas de sens pour Discover (pas de quantité/prix/date)
-          return 0;
+      let comparison = 0;
+
+      switch (sortOption.field) {
+        case 'name':
+          comparison = (a.name || '').localeCompare(b.name || '');
+          break;
         default:
-          return 0;
+          comparison = 0;
       }
+
+      return sortOption.direction === 'desc' ? -comparison : comparison;
     });
   };
 

@@ -13,7 +13,7 @@ import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
-import { FilterButton, type SortOption } from '../components/ui/FilterButton';
+import { FilterButton, type SortOption, type SortField } from '../components/ui/FilterButton';
 import { StatCard } from '../components/ui/StatCard';
 import { Layers, Award, DollarSign, TrendingUp } from 'lucide-react';
 import styles from './Portfolio.module.css';
@@ -195,7 +195,7 @@ export default function Portfolio() {
 
   // ➕ Recherche et tri
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [sortOption, setSortOption] = useState<SortOption>({ field: 'default', direction: 'asc' });
 
   const [toast, setToast] = useState<{
     message: string;
@@ -333,40 +333,35 @@ export default function Portfolio() {
     }
 
     // Tri (sauf si mode "default")
-    if (sortOption !== 'default') {
+    if (sortOption.field !== 'default') {
       filtered.sort((a, b) => {
-        switch (sortOption) {
-          case 'name-asc':
-            return (a.name || '').localeCompare(b.name || '');
-          case 'name-desc':
-            return (b.name || '').localeCompare(a.name || '');
-          case 'quantity-asc':
-            return (a.quantity || 0) - (b.quantity || 0);
-          case 'quantity-desc':
-            return (b.quantity || 0) - (a.quantity || 0);
-          case 'price-asc': {
+        let comparison = 0;
+
+        switch (sortOption.field) {
+          case 'name':
+            comparison = (a.name || '').localeCompare(b.name || '');
+            break;
+          case 'quantity':
+            comparison = (a.quantity || 0) - (b.quantity || 0);
+            break;
+          case 'price': {
             const priceA = calculateCardTotal(a) ?? 0;
             const priceB = calculateCardTotal(b) ?? 0;
-            return priceA - priceB;
+            comparison = priceA - priceB;
+            break;
           }
-          case 'price-desc': {
-            const priceA = calculateCardTotal(a) ?? 0;
-            const priceB = calculateCardTotal(b) ?? 0;
-            return priceB - priceA;
-          }
-          case 'date-asc': {
+          case 'date': {
             const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
             const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
-            return dateA - dateB;
-          }
-          case 'date-desc': {
-            const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
-            const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
-            return dateB - dateA;
+            comparison = dateA - dateB;
+            break;
           }
           default:
-            return 0;
+            comparison = 0;
         }
+
+        // Appliquer la direction
+        return sortOption.direction === 'desc' ? -comparison : comparison;
       });
     }
 

@@ -131,6 +131,18 @@
   font-weight: 600;
 }
 
+.iconGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.directionIcon {
+  flex-shrink: 0;
+  color: var(--primary, #7cf3ff);
+  opacity: 0.8;
+}
+
 .checkIcon {
   flex-shrink: 0;
   color: var(--primary, #7cf3ff);
