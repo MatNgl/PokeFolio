@@ -321,14 +321,21 @@ export default function Portfolio() {
   const getFilteredAndSortedCards = (): UserCardView[] => {
     let filtered = [...cards];
 
-    // Recherche
+    // Recherche (nom de carte, nom de set, ID de set, rareté)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((card) => {
         const name = card.name?.toLowerCase() || '';
         const setName = card.setName?.toLowerCase() || '';
+        const setId = card.setId?.toLowerCase() || '';
         const rarity = card.rarity?.toLowerCase() || '';
-        return name.includes(query) || setName.includes(query) || rarity.includes(query);
+
+        return (
+          name.includes(query) ||
+          setName.includes(query) ||
+          setId.includes(query) ||
+          rarity.includes(query)
+        );
       });
     }
 
@@ -418,8 +425,8 @@ export default function Portfolio() {
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Rechercher dans votre collection..."
-              ariaLabel="Rechercher une carte dans votre portfolio"
+              placeholder="Rechercher par carte, set, rareté..."
+              ariaLabel="Rechercher dans votre portfolio"
               className={styles.searchBar}
             />
             <FilterButton onSortChange={setSortOption} currentSort={sortOption} />

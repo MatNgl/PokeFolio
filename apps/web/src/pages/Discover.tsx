@@ -261,8 +261,8 @@ export default function Discover() {
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Rechercher une carte (ex: Pikachu, Dracaufeu...)"
-          ariaLabel="Rechercher une carte Pokémon"
+          placeholder="Rechercher une carte ou un set (ex: Pikachu, Destinées Occultes...)"
+          ariaLabel="Rechercher une carte Pokémon ou un set"
           className={styles.searchBar}
         />
         <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="discover" />
