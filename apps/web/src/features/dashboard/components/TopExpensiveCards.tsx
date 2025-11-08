@@ -16,7 +16,7 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
             <div className={styles.iconWrapper} aria-hidden="true">
               <DollarSign size={16} />
             </div>
-            Top Cartes les Plus Chères
+            vos cartes les plus chères
           </div>
         </div>
         <div className={styles.list}>
@@ -42,7 +42,7 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
             <div className={styles.iconWrapper} aria-hidden="true">
               <DollarSign size={16} />
             </div>
-            Top Cartes les Plus Chères
+            vos cartes les plus chères
           </div>
         </div>
         <div className={styles.emptyState}>

@@ -20,9 +20,13 @@
 
 .title {
   margin: 0 0 8px;
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1.2;
-  color: var(--text);
+  font-weight: 700;
+  background: linear-gradient(135deg, #7cf3ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {

@@ -23,6 +23,18 @@ export function DashboardNew(): JSX.Element {
 
   // Déterminer le bucket automatiquement selon la période
   const getAutoBucket = (period: PeriodFilter): TimeSeriesBucket => {
+    // Si on utilise des ISO dates, calculer le bucket selon la durée
+    if (period.startDate && period.endDate) {
+      const start = new Date(period.startDate);
+      const end = new Date(period.endDate);
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 31) return TimeSeriesBucket.DAILY;
+      if (diffDays <= 90) return TimeSeriesBucket.WEEKLY;
+      return TimeSeriesBucket.MONTHLY;
+    }
+
+    // Sinon, utiliser la logique hiérarchique
     if (period.type === PeriodType.WEEK) {
       return TimeSeriesBucket.DAILY;
     }
@@ -38,10 +50,21 @@ export function DashboardNew(): JSX.Element {
 
   // Générer une clé de query unique basée sur le filtre de période
   const getPeriodQueryKey = (period: PeriodFilter): string => {
-    const parts = [period.type || 'all'];
-    if (period.year) parts.push(period.year.toString());
-    if (period.month) parts.push(period.month.toString());
-    if (period.week) parts.push(period.week.toString());
+    const parts: string[] = [];
+
+    // Priorité 1: ISO dates (startDate/endDate)
+    if (period.startDate || period.endDate) {
+      parts.push('iso');
+      if (period.startDate) parts.push(`start:${period.startDate}`);
+      if (period.endDate) parts.push(`end:${period.endDate}`);
+    } else {
+      // Priorité 2: Filtres hiérarchiques (type/year/month/week)
+      parts.push(period.type || 'all');
+      if (period.year) parts.push(period.year.toString());
+      if (period.month) parts.push(period.month.toString());
+      if (period.week) parts.push(period.week.toString());
+    }
+
     return parts.join('-');
   };
 
@@ -136,25 +159,25 @@ export function DashboardNew(): JSX.Element {
       {/* KPIs */}
       <section className={styles.kpiGrid} aria-label="Key Performance Indicators">
         <KpiCard
-          title="Total Cartes"
+          title="total cartes"
           icon={<Layers size={20} />}
           value={summary ? formatNumber(summary.totalCards) : '0'}
           loading={summaryLoading}
         />
         <KpiCard
-          title="Total Sets"
+          title="total sets"
           icon={<Award size={20} />}
           value={summary ? formatNumber(summary.totalSets) : '0'}
           loading={summaryLoading}
         />
         <KpiCard
-          title="Valeur Totale"
+          title="valeur totale"
           icon={<DollarSign size={20} />}
           value={summary ? formatCurrency(summary.totalValue) : '0€'}
           loading={summaryLoading}
         />
         <KpiCard
-          title="Cartes Gradées"
+          title="cartes gradées"
           icon={<TrendingUp size={20} />}
           value={summary ? formatNumber(summary.gradedCount) : '0'}
           loading={summaryLoading}
@@ -164,14 +187,14 @@ export function DashboardNew(): JSX.Element {
       {/* Charts Row 1: Time Series */}
       <section className={styles.chartsRow} aria-label="Time Series Charts">
         <TimeSeriesChart
-          title="Évolution du Nombre de Cartes"
+          title="évolution du nombre de cartes"
           data={countSeries?.data || []}
           loading={countLoading}
           valueFormatter={formatNumber}
           color="#7cf3ff"
         />
         <TimeSeriesChart
-          title="Évolution de la Valeur"
+          title="évolution de la valeur"
           data={valueSeries?.data || []}
           loading={valueLoading}
           valueFormatter={formatCurrency}
