@@ -404,15 +404,15 @@ export default function Portfolio() {
               loading={loading}
             />
             <StatCard
-              title="valeur totale"
-              icon={<DollarSign size={20} />}
-              value={euro(stats.totalCost)}
-              loading={loading}
-            />
-            <StatCard
               title="cartes gradées"
               icon={<TrendingUp size={20} />}
               value={String(stats.gradedCards ?? 0)}
+              loading={loading}
+            />
+            <StatCard
+              title="valeur totale"
+              icon={<DollarSign size={20} />}
+              value={euro(stats.totalCost)}
               loading={loading}
             />
           </section>

@@ -707,29 +707,8 @@ export class DashboardService {
     return {
       $dateToString: {
         format,
-        date: {
-          $ifNull: [
-            '$purchaseDate',
-            {
-              $cond: {
-                if: { $isArray: '$variants' },
-                then: {
-                  $arrayElemAt: [
-                    {
-                      $map: {
-                        input: '$variants',
-                        as: 'v',
-                        in: '$$v.purchaseDate',
-                      },
-                    },
-                    0,
-                  ],
-                },
-                else: '$createdAt',
-              },
-            },
-          ],
-        },
+        // Toujours utiliser createdAt pour les timeseries (date d'ajout au portfolio)
+        date: '$createdAt',
       },
     };
   }

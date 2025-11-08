@@ -171,15 +171,15 @@ export function DashboardNew(): JSX.Element {
           loading={summaryLoading}
         />
         <KpiCard
-          title="valeur totale"
-          icon={<DollarSign size={20} />}
-          value={summary ? formatCurrency(summary.totalValue) : '0€'}
-          loading={summaryLoading}
-        />
-        <KpiCard
           title="cartes gradées"
           icon={<TrendingUp size={20} />}
           value={summary ? formatNumber(summary.gradedCount) : '0'}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          title="valeur totale"
+          icon={<DollarSign size={20} />}
+          value={summary ? formatCurrency(summary.totalValue) : '0€'}
           loading={summaryLoading}
         />
       </section>
