@@ -18,6 +18,13 @@ export class AdminService {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // Debug: Liste des collections
+    const collections = await this.userCardModel.db.db.listCollections().toArray();
+    console.log(
+      '🔍 Collections dans la base:',
+      collections.map((c) => c.name)
+    );
+
     const [totalUsers, newUsersThisWeek, totalCards, newCardsThisWeek, totalValue] =
       await Promise.all([
         this.userModel.countDocuments().exec(),
@@ -36,6 +43,14 @@ export class AdminService {
           .exec()
           .then((res) => res[0]?.total || 0),
       ]);
+
+    console.log('📊 Stats calculées:', {
+      totalUsers,
+      newUsersThisWeek,
+      totalCards,
+      newCardsThisWeek,
+      totalValue,
+    });
 
     return {
       totalUsers,
@@ -190,6 +205,7 @@ export class AdminService {
     const users = await this.userModel.find().select('-passwordHash -refreshToken').lean().exec();
 
     const userIds = users.map((u) => u._id);
+    console.log("👥 Nombre d'utilisateurs trouvés:", users.length);
 
     // Récupérer les stats de chaque user
     const stats = await this.userCardModel
@@ -204,6 +220,9 @@ export class AdminService {
         },
       ])
       .exec();
+
+    console.log('📈 Stats agrégées pour', stats.length, 'utilisateurs');
+    console.log('📈 Exemple de stats:', stats[0]);
 
     const statsMap = new Map(stats.map((s) => [s._id.toString(), s]));
 
