@@ -34,7 +34,7 @@ export default function Discover() {
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
-  const CARDS_PER_PAGE = 15;
+  const CARDS_PER_PAGE = 10;
 
   // Charger des cartes aléatoires au montage
   useEffect(() => {
@@ -58,7 +58,6 @@ export default function Discover() {
         'Salamèche',
         'Ronflex',
         'Lokhlass',
-        'Dracaufeu',
         'Florizarre',
         'Tortank',
         'Drattak',
@@ -92,7 +91,7 @@ export default function Discover() {
         'Zamazenta',
       ];
 
-      // Mélanger et sélectionner 15 Pokémon différents pour le chargement initial
+      // Mélanger et sélectionner 10 Pokémon différents pour le chargement initial
       const shuffled = [...randomPokemons].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, CARDS_PER_PAGE);
 
@@ -100,7 +99,7 @@ export default function Discover() {
       const promises = selected.map((pokemon) =>
         cardsService
           .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
-          .then(async (data) => {
+          .then((data) => {
             // Filtrer pour exclure les cartes TCGP (jeu en ligne)
             const physicalCards = data.cards.filter((card: Card) => {
               const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
@@ -113,19 +112,10 @@ export default function Discover() {
               );
             });
 
-            // Sélectionner une carte aléatoire
+            // Sélectionner une carte aléatoire et la retourner directement
             if (physicalCards.length > 0) {
               const randomCard = physicalCards[Math.floor(Math.random() * physicalCards.length)];
-
-              if (!randomCard) return null;
-
-              // Charger les détails complets de la carte pour avoir les infos du set
-              try {
-                const fullCard = await cardsService.getCardById(randomCard.id, 'fr');
-                return fullCard || randomCard;
-              } catch {
-                return randomCard;
-              }
+              return randomCard || null;
             }
             return null;
           })
@@ -267,7 +257,7 @@ export default function Discover() {
       const promises = selected.map((pokemon) =>
         cardsService
           .searchCards({ q: pokemon, limit: 10, lang: 'fr' })
-          .then(async (data) => {
+          .then((data) => {
             const physicalCards = data.cards.filter((card: Card) => {
               const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
               const setName = (card.set?.name || '').toLowerCase();
@@ -279,16 +269,10 @@ export default function Discover() {
               );
             });
 
+            // Sélectionner une carte aléatoire et la retourner directement
             if (physicalCards.length > 0) {
               const randomCard = physicalCards[Math.floor(Math.random() * physicalCards.length)];
-              if (!randomCard) return null;
-
-              try {
-                const fullCard = await cardsService.getCardById(randomCard.id, 'fr');
-                return fullCard || randomCard;
-              } catch {
-                return randomCard;
-              }
+              return randomCard || null;
             }
             return null;
           })
