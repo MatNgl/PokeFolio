@@ -549,10 +549,11 @@ export class DashboardService {
         if (snapshot?.image) {
           if (typeof snapshot.image === 'string') {
             imageUrl = snapshot.image;
+          } else if (snapshot.image.small) {
+            // Priorité aux images small pour optimiser les performances
+            imageUrl = snapshot.image.small;
           } else if (snapshot.image.large) {
             imageUrl = snapshot.image.large;
-          } else if (snapshot.image.small) {
-            imageUrl = snapshot.image.small;
           }
         }
 

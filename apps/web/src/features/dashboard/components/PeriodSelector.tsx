@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { RotateCcw } from 'lucide-react';
 import { PeriodFilter } from '../types/dashboard.types';
 import styles from './PeriodSelector.module.css';
 
@@ -63,11 +62,6 @@ export function PeriodSelector({
     });
   };
 
-  const handleReset = (): void => {
-    setSelectedQuickPeriod('all');
-    onPeriodChange({});
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.controlsWrapper}>
@@ -118,19 +112,6 @@ export function PeriodSelector({
             aria-pressed={selectedQuickPeriod === 'all'}
           >
             Tout
-          </button>
-        </div>
-
-        {/* Bouton reset */}
-        <div className={styles.customControls}>
-          <button
-            type="button"
-            className={styles.resetButton}
-            onClick={handleReset}
-            aria-label="Réinitialiser les filtres"
-            title="Réinitialiser"
-          >
-            <RotateCcw size={16} />
           </button>
         </div>
       </div>

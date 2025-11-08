@@ -14,6 +14,8 @@ import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
+import { StatCard } from '../components/ui/StatCard';
+import { Layers, Award, DollarSign, TrendingUp } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 
@@ -389,22 +391,30 @@ export default function Portfolio() {
 
         {stats && (
           <section className={styles.stats} aria-label="Statistiques du portfolio">
-            <div className={styles.statCard}>
-              <h3>Cartes totales</h3>
-              <p className={styles.statValue}>{stats.totalCards ?? 0}</p>
-            </div>
-            <div className={styles.statCard}>
-              <h3>Cartes uniques</h3>
-              <p className={styles.statValue}>{stats.uniqueCards ?? 0}</p>
-            </div>
-            <div className={styles.statCard}>
-              <h3>Valeur totale</h3>
-              <p className={styles.statValue}>{euro(stats.totalCost)}</p>
-            </div>
-            <div className={styles.statCard}>
-              <h3>Cartes gradées</h3>
-              <p className={styles.statValue}>{stats.gradedCards ?? 0}</p>
-            </div>
+            <StatCard
+              title="cartes totales"
+              icon={<Layers size={20} />}
+              value={String(stats.totalCards ?? 0)}
+              loading={loading}
+            />
+            <StatCard
+              title="cartes uniques"
+              icon={<Award size={20} />}
+              value={String(stats.uniqueCards ?? 0)}
+              loading={loading}
+            />
+            <StatCard
+              title="valeur totale"
+              icon={<DollarSign size={20} />}
+              value={euro(stats.totalCost)}
+              loading={loading}
+            />
+            <StatCard
+              title="cartes gradées"
+              icon={<TrendingUp size={20} />}
+              value={String(stats.gradedCards ?? 0)}
+              loading={loading}
+            />
           </section>
         )}
 
