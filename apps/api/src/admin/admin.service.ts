@@ -408,6 +408,112 @@ export class AdminService {
   }
 
   /**
+   * Check current user's cards and verify userId consistency
+   */
+  async debugCurrentUserCards(currentUserId: string) {
+    // 1. Récupérer l'utilisateur actuel
+    const currentUser = await this.userModel.findById(currentUserId).lean().exec();
+
+    if (!currentUser) {
+      return { error: 'User not found' };
+    }
+
+    // 2. Chercher les cartes avec ce userId
+    const cardsWithCurrentId = await this.userCardModel
+      .find({ userId: new Types.ObjectId(currentUserId) })
+      .select('name quantity')
+      .lean()
+      .exec();
+
+    const totalWithCurrentId = cardsWithCurrentId.reduce((sum, c) => sum + (c.quantity || 0), 0);
+
+    // 3. Chercher toutes les cartes orphelines (userId qui ne correspond à aucun user)
+    const allUsers = await this.userModel.find().select('_id').lean().exec();
+    const allUserIds = new Set(allUsers.map((u) => u._id.toString()));
+
+    const allCards = await this.userCardModel.find().select('userId name quantity').lean().exec();
+    const orphanedCards = allCards.filter((c) => !allUserIds.has(c.userId.toString()));
+
+    // 4. Grouper les cartes orphelines par userId
+    const orphanedByUserId = new Map<
+      string,
+      Array<{ userId: Types.ObjectId; name: string; quantity: number }>
+    >();
+    orphanedCards.forEach((card) => {
+      const uid = card.userId.toString();
+      if (!orphanedByUserId.has(uid)) {
+        orphanedByUserId.set(uid, []);
+      }
+      orphanedByUserId.get(uid)!.push(card);
+    });
+
+    const orphanedSummary = Array.from(orphanedByUserId.entries()).map(([userId, cards]) => ({
+      orphanedUserId: userId,
+      cardsCount: cards.reduce((sum, c) => sum + (c.quantity || 0), 0),
+      sampleCards: cards.slice(0, 5).map((c) => ({ name: c.name, quantity: c.quantity })),
+    }));
+
+    return {
+      currentUser: {
+        _id: currentUser._id.toString(),
+        email: currentUser.email,
+        pseudo: currentUser.pseudo,
+      },
+      cardsWithCurrentUserId: {
+        count: totalWithCurrentId,
+        samples: cardsWithCurrentId
+          .slice(0, 5)
+          .map((c) => ({ name: c.name, quantity: c.quantity })),
+      },
+      orphanedCards: {
+        totalOrphanedUserIds: orphanedByUserId.size,
+        orphanedGroups: orphanedSummary,
+      },
+    };
+  }
+
+  /**
+   * Migrate orphaned cards to a target user
+   */
+  async migrateOrphanedCards(targetUserId: string, orphanedUserId: string) {
+    this.logger.log(`🔄 Migrating cards from ${orphanedUserId} to ${targetUserId}`);
+
+    // Vérifier que le target user existe
+    const targetUser = await this.userModel.findById(targetUserId).lean().exec();
+    if (!targetUser) {
+      throw new Error('Target user not found');
+    }
+
+    // Compter les cartes à migrer
+    const cardsToMigrate = await this.userCardModel
+      .find({ userId: new Types.ObjectId(orphanedUserId) })
+      .lean()
+      .exec();
+
+    this.logger.log(`📦 Found ${cardsToMigrate.length} cards to migrate`);
+
+    // Mettre à jour toutes les cartes
+    const result = await this.userCardModel
+      .updateMany(
+        { userId: new Types.ObjectId(orphanedUserId) },
+        { $set: { userId: new Types.ObjectId(targetUserId) } }
+      )
+      .exec();
+
+    this.logger.log(`✅ Migrated ${result.modifiedCount} cards`);
+
+    return {
+      success: true,
+      migratedCount: result.modifiedCount,
+      targetUser: {
+        _id: targetUser._id.toString(),
+        email: targetUser.email,
+        pseudo: targetUser.pseudo,
+      },
+    };
+  }
+
+  /**
    * Backfill missing card metadata (imageUrl, imageUrlHiRes)
    */
   async backfillCardMetadata() {

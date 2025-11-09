@@ -128,4 +128,28 @@ export class AdminController {
   async debugDataConsistency() {
     return this.adminService.debugDataConsistency();
   }
+
+  @Get('debug/user-cards')
+  @ApiOperation({ summary: 'Check user cards and orphaned cards' })
+  async debugUserCards(@Query('userId') userId: string) {
+    if (!userId) {
+      throw new HttpException('userId query parameter is required', HttpStatus.BAD_REQUEST);
+    }
+    return this.adminService.debugCurrentUserCards(userId);
+  }
+
+  @Post('maintenance/migrate-orphaned-cards')
+  @ApiOperation({ summary: 'Migrate orphaned cards to target user' })
+  async migrateOrphanedCards(
+    @Query('targetUserId') targetUserId: string,
+    @Query('orphanedUserId') orphanedUserId: string
+  ) {
+    if (!targetUserId || !orphanedUserId) {
+      throw new HttpException(
+        'targetUserId and orphanedUserId are required',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    return this.adminService.migrateOrphanedCards(targetUserId, orphanedUserId);
+  }
 }
