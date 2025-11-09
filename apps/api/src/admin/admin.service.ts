@@ -514,6 +514,60 @@ export class AdminService {
   }
 
   /**
+   * Auto-fix all users: find their JWT userId and migrate to current _id
+   */
+  async autoFixAllUsers() {
+    this.logger.log('🔄 Starting auto-fix for all users...');
+
+    // 1. Récupérer tous les utilisateurs
+    const allUsers = await this.userModel.find().select('_id email').lean().exec();
+    const allUserIds = new Set(allUsers.map((u) => u._id.toString()));
+
+    // 2. Récupérer toutes les cartes
+    const allCards = await this.userCardModel.find().select('userId').lean().exec();
+
+    // 3. Trouver tous les userId uniques dans les cartes
+    const cardUserIds = new Set(allCards.map((c) => c.userId.toString()));
+
+    // 4. Trouver les userId orphelins
+    const orphanedUserIds = [...cardUserIds].filter((id) => !allUserIds.has(id));
+
+    this.logger.log(`📊 Found ${orphanedUserIds.length} orphaned userIds`);
+    this.logger.log(`👥 Current users: ${allUsers.length}`);
+
+    const migrations: Array<{ from: string; to: string; email: string; cardsCount: number }> = [];
+
+    // 5. Pour chaque userId orphelin, compter les cartes
+    for (const orphanedId of orphanedUserIds) {
+      const cardsCount = await this.userCardModel
+        .countDocuments({ userId: new Types.ObjectId(orphanedId) })
+        .exec();
+
+      this.logger.log(`📦 Orphaned userId ${orphanedId}: ${cardsCount} cards`);
+
+      // Pour l'instant, on ne peut pas deviner quel user correspond
+      // On va juste lister les cartes orphelines
+      migrations.push({
+        from: orphanedId,
+        to: 'UNKNOWN',
+        email: 'UNKNOWN',
+        cardsCount,
+      });
+    }
+
+    return {
+      summary: {
+        totalUsers: allUsers.length,
+        totalOrphanedUserIds: orphanedUserIds.length,
+        totalOrphanedCards: migrations.reduce((sum, m) => sum + m.cardsCount, 0),
+      },
+      migrations,
+      message:
+        'Cannot auto-migrate without knowing which user owns which orphaned cards. Use migrate-orphaned-cards endpoint manually.',
+    };
+  }
+
+  /**
    * Backfill missing card metadata (imageUrl, imageUrlHiRes)
    */
   async backfillCardMetadata() {

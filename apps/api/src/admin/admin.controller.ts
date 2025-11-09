@@ -152,4 +152,10 @@ export class AdminController {
     }
     return this.adminService.migrateOrphanedCards(targetUserId, orphanedUserId);
   }
+
+  @Get('debug/orphaned-summary')
+  @ApiOperation({ summary: 'Get summary of all orphaned cards grouped by userId' })
+  async getOrphanedSummary() {
+    return this.adminService.autoFixAllUsers();
+  }
 }
