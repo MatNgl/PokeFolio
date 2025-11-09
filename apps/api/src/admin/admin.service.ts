@@ -78,6 +78,13 @@ export class AdminService {
       ])
       .exec();
 
+    this.logger.log(`🔝 Top ${limit} cartes:`);
+    topCards.forEach((card, idx) => {
+      this.logger.log(
+        `  ${idx + 1}. ${card.cardName} (${card._id}): ${card.totalQuantity} exemplaires, ${card.owners} possesseurs, image: ${card.imageUrl ? '✓' : '✗'}`
+      );
+    });
+
     return topCards.map((card) => ({
       cardId: card._id,
       name: card.cardName,
@@ -202,6 +209,11 @@ export class AdminService {
 
     const userIds = users.map((u) => u._id);
 
+    this.logger.log(
+      `👥 Found ${users.length} users with IDs:`,
+      userIds.map((id) => id.toString())
+    );
+
     // Récupérer les stats de chaque user
     const stats = await this.userCardModel
       .aggregate([
@@ -219,6 +231,24 @@ export class AdminService {
         },
       ])
       .exec();
+
+    this.logger.log(`📊 Stats found for ${stats.length} users`);
+    stats.forEach((s) => {
+      this.logger.log(`  User ${s._id}: ${s.cardsCount} cartes, ${s.totalValue}€`);
+    });
+
+    // Debug: Vérifier les cartes sans match
+    const allCards = await this.userCardModel.find().select('userId').lean().exec();
+    const cardUserIds = new Set(allCards.map((c) => c.userId.toString()));
+    const userIdsSet = new Set(userIds.map((id) => id.toString()));
+
+    const orphanedUserIds = [...cardUserIds].filter((id) => !userIdsSet.has(id));
+    if (orphanedUserIds.length > 0) {
+      this.logger.warn(
+        `⚠️ Found ${orphanedUserIds.length} cards with userId that don't match any user:`
+      );
+      orphanedUserIds.forEach((id) => this.logger.warn(`  - ${id}`));
+    }
 
     const statsMap = new Map(stats.map((s) => [s._id.toString(), s]));
 

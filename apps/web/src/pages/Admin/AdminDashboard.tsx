@@ -89,6 +89,11 @@ export default function AdminDashboard() {
     }
   };
 
+  const getCardImageUrl = (imageUrl?: string): string => {
+    // Image de dos de carte Pokémon par défaut si pas d'image
+    return imageUrl || 'https://images.pokemontcg.io/swsh1/back.png';
+  };
+
   if (loading) {
     return <FullScreenLoader message="Chargement des statistiques..." />;
   }
@@ -143,9 +148,18 @@ export default function AdminDashboard() {
             {topCards.map((card, index) => (
               <div key={card.cardId} className={styles.topCardItem}>
                 <span className={styles.rank}>#{index + 1}</span>
-                {card.imageUrl && (
-                  <img src={card.imageUrl} alt={card.name} className={styles.cardImage} />
-                )}
+                <img
+                  src={getCardImageUrl(card.imageUrl)}
+                  alt={card.name}
+                  className={styles.cardImage}
+                  onError={(e) => {
+                    // Fallback en cas d'erreur de chargement
+                    const target = e.currentTarget as HTMLImageElement;
+                    if (target.src !== 'https://images.pokemontcg.io/swsh1/back.png') {
+                      target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }
+                  }}
+                />
                 <div className={styles.cardInfo}>
                   <p className={styles.cardName}>{card.name}</p>
                   <p className={styles.cardSet}>{card.setName}</p>
