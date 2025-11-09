@@ -122,4 +122,10 @@ export class AdminController {
   async backfillCardMetadata() {
     return this.adminService.backfillCardMetadata();
   }
+
+  @Get('debug/data-consistency')
+  @ApiOperation({ summary: 'Debug endpoint to check data consistency issues' })
+  async debugDataConsistency() {
+    return this.adminService.debugDataConsistency();
+  }
 }

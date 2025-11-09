@@ -327,6 +327,87 @@ export class AdminService {
   }
 
   /**
+   * Debug endpoint to check data consistency
+   */
+  async debugDataConsistency() {
+    // 1. Compter les utilisateurs
+    const usersCount = await this.userModel.countDocuments().exec();
+    const users = await this.userModel.find().select('_id email pseudo').lean().exec();
+
+    // 2. Compter les cartes totales
+    const totalCardsCount = await this.userCardModel.countDocuments().exec();
+
+    // 3. Pour chaque user, compter ses cartes directement
+    const userCardDetails = await Promise.all(
+      users.map(async (user) => {
+        const userCards = await this.userCardModel
+          .find({ userId: user._id })
+          .select('_id name quantity')
+          .limit(3)
+          .lean()
+          .exec();
+
+        const totalQuantity = await this.userCardModel
+          .aggregate([
+            { $match: { userId: user._id } },
+            { $group: { _id: null, total: { $sum: '$quantity' } } },
+          ])
+          .exec();
+
+        return {
+          userId: user._id.toString(),
+          email: user.email,
+          pseudo: user.pseudo,
+          totalQuantity: totalQuantity[0]?.total || 0,
+          sampleCards: userCards.map((c) => ({
+            name: c.name,
+            quantity: c.quantity,
+          })),
+        };
+      })
+    );
+
+    // 4. Regarder quelques exemples de cartes et leurs userId
+    const allCardsWithUserId = await this.userCardModel
+      .find()
+      .select('userId name quantity')
+      .limit(20)
+      .lean()
+      .exec();
+
+    // 5. Vérifier les aggregations (comme dans getAllUsers)
+    const userIds = users.map((u) => u._id);
+    const aggregatedStats = await this.userCardModel
+      .aggregate([
+        { $match: { userId: { $in: userIds } } },
+        {
+          $group: {
+            _id: '$userId',
+            cardsCount: { $sum: '$quantity' },
+          },
+        },
+      ])
+      .exec();
+
+    return {
+      summary: {
+        totalUsers: usersCount,
+        totalCardDocuments: totalCardsCount,
+      },
+      allUsers: userCardDetails,
+      aggregationResults: aggregatedStats.map((s) => ({
+        userId: s._id.toString(),
+        cardsCount: s.cardsCount,
+      })),
+      sampleCardsWithUserIds: allCardsWithUserId.map((c) => ({
+        userId: c.userId.toString(),
+        name: c.name,
+        quantity: c.quantity,
+      })),
+    };
+  }
+
+  /**
    * Backfill missing card metadata (imageUrl, imageUrlHiRes)
    */
   async backfillCardMetadata() {
