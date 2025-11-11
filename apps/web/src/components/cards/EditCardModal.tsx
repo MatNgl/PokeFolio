@@ -78,11 +78,6 @@ const GRADING_COMPANIES = [
     name: 'TAG (The Authentication Group)',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
-  {
-    id: 'MNT',
-    name: 'MNT (Mint Grading)',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
-  },
 ] as const;
 
 export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) {
@@ -209,7 +204,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
     setSaving(true);
     try {
       // Construire les données de mise à jour
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
 
       // Mode variantes si quantity >= 2
       if (data.quantity >= 2 && data.variants && data.variants.length > 0) {
@@ -227,8 +222,8 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
           notes: v.notes,
         }));
       } else {
-        // Mode simple (quantité = 1 ou pas de variantes)
-        updateData.quantity = data.quantity;
+        // Mode simple (quantité = 1)
+        updateData.quantity = data.quantity || 1;
         updateData.graded = data.isGraded;
         updateData.grading =
           data.isGraded && (data.gradeCompany || data.gradeScore)
@@ -237,9 +232,10 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
                 grade: data.gradeScore?.toString(),
               }
             : undefined;
-        updateData.purchasePrice = data.purchasePrice;
-        updateData.purchaseDate = data.purchaseDate;
-        updateData.notes = data.notes;
+        // Send null explicitly to remove the value if empty
+        updateData.purchasePrice = data.purchasePrice ?? null;
+        updateData.purchaseDate = data.purchaseDate ?? null;
+        updateData.notes = data.notes ?? null;
       }
 
       await portfolioService.updateCard(card._id, updateData);

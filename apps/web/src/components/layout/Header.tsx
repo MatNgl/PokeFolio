@@ -5,7 +5,7 @@ import styles from './Header.module.css';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo-pokefolio.png';
 
-type Tab = 'portfolio' | 'dashboard' | 'decouvrir' | null;
+type Tab = 'portfolio' | 'dashboard' | 'decouvrir' | 'admin' | null;
 
 export function Header() {
   const navigate = useNavigate();
@@ -66,7 +66,9 @@ export function Header() {
       ? 'dashboard'
       : pathname.startsWith('/decouvrir')
         ? 'decouvrir'
-        : null;
+        : pathname.startsWith('/admin')
+          ? 'admin'
+          : null;
 
   return (
     <>
@@ -119,6 +121,17 @@ export function Header() {
             >
               Découvrir
             </Link>
+            {user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                role="tab"
+                aria-selected={activeTab === 'admin'}
+                aria-current={activeTab === 'admin' ? 'page' : undefined}
+                className={styles.tab}
+              >
+                Admin
+              </Link>
+            )}
           </div>
         </nav>
 
@@ -184,6 +197,18 @@ export function Header() {
               Découvrir
             </Link>
           </li>
+          {user?.role === 'admin' && (
+            <li>
+              <Link
+                to="/admin"
+                className={styles.mobileLink}
+                aria-current={activeTab === 'admin' ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                Admin
+              </Link>
+            </li>
+          )}
           <li className={styles.mobileDivider} />
           <li>
             <Link

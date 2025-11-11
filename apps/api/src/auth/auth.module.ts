@@ -7,9 +7,15 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { CryptoService } from './crypto.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 
 @Module({
-  imports: [forwardRef(() => UsersModule), PassportModule, JwtModule.register({})],
+  imports: [
+    forwardRef(() => UsersModule),
+    PassportModule,
+    JwtModule.register({}),
+    ActivityLogsModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService, CryptoService, JwtStrategy],
   exports: [AuthService, CryptoService],

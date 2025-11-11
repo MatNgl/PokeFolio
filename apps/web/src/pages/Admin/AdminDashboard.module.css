@@ -1,0 +1,213 @@
+.page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7cf3ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+}
+
+.globalStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 24px;
+  backdrop-filter: blur(var(--blur));
+}
+
+.statCard h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bigNumber {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.detail {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.section {
+  margin-bottom: 40px;
+}
+
+.section h2 {
+  margin: 0 0 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.topCardItem {
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 40px;
+}
+
+.cardImage {
+  width: 60px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.cardInfo {
+  flex: 1;
+}
+
+.cardName {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cardSet {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cardStats {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  overflow: hidden;
+}
+
+.table thead {
+  background: rgba(124, 243, 255, 0.1);
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.table th {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.table tbody tr {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table tbody tr:hover {
+  background: rgba(124, 243, 255, 0.05);
+}
+
+.table td {
+  color: var(--text);
+}
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+}
+
+.maintenance {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.maintenanceItem {
+  background: var(--glass);
+  border: var(--border);
+  border-radius: var(--radii);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.maintenanceItem h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.maintenanceDesc {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 600px;
+}

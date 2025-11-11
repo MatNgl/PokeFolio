@@ -1,0 +1,133 @@
+/* === Conteneur principal === */
+.gradedFrame {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+
+/* === Étiquette colorée === */
+.slabHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  gap: 10px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.gradeDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  min-width: 55px;
+}
+
+.gradeValue {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  color: #1a1a1a;
+}
+
+/* === Tailles === */
+/* Small : pour le mode détaillé (très compact) */
+.gradedFrame.size-small .slabHeader {
+  padding: 4px 8px !important;
+  gap: 6px !important;
+}
+
+.gradedFrame.size-small .logo {
+  height: 20px !important;
+}
+
+.gradedFrame.size-small .gradeDisplay {
+  padding: 2px 8px !important;
+  min-width: 40px !important;
+}
+
+.gradedFrame.size-small .gradeValue {
+  font-size: 16px !important;
+}
+
+/* Medium : taille normale pour le grid */
+.gradedFrame.size-medium .slabHeader {
+  padding: 6px 10px !important;
+  gap: 8px !important;
+}
+
+.gradedFrame.size-medium .logo {
+  height: 28px !important;
+}
+
+.gradedFrame.size-medium .gradeDisplay {
+  padding: 3px 10px !important;
+  min-width: 50px !important;
+}
+
+.gradedFrame.size-medium .gradeValue {
+  font-size: 20px !important;
+}
+
+/* Large : pour le modal */
+.gradedFrame.size-large .slabHeader {
+  padding: 10px 14px !important;
+  gap: 12px !important;
+}
+
+.gradedFrame.size-large .logo {
+  height: 40px !important;
+}
+
+.gradedFrame.size-large .gradeDisplay {
+  padding: 6px 14px !important;
+  min-width: 60px !important;
+}
+
+.gradedFrame.size-large .gradeValue {
+  font-size: 28px !important;
+}
+
+/* === Zone de la carte === */
+.cardArea {
+  position: relative;
+  z-index: 1;
+  margin-top: -2px; /* Coller à l'étiquette */
+}
+
+.cardArea img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .slabHeader {
+    padding: 6px 10px;
+  }
+
+  .logo {
+    height: 24px;
+  }
+
+  .gradeValue {
+    font-size: 20px;
+  }
+}

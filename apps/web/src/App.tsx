@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import Dashboard from './pages/DashboardNew';
@@ -12,6 +13,10 @@ import Portfolio from './pages/Portfolio';
 import Discover from './pages/Discover';
 import { Profile } from './pages/Profile';
 import { ScrollToTop } from './components/ui/ScrollToTop';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import AdminUsers from './pages/Admin/AdminUsers';
+import AdminUserDetail from './pages/Admin/AdminUserDetail';
+import AdminLogs from './pages/Admin/AdminLogs';
 
 // Redirection racine vers Portfolio si connecté, sinon Login
 function RootRedirect() {
@@ -96,6 +101,40 @@ function AppInner() {
             <ProtectedRoute>
               <Profile />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Admin (protégé avec rôle admin) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users/:userId"
+          element={
+            <AdminRoute>
+              <AdminUserDetail />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/logs"
+          element={
+            <AdminRoute>
+              <AdminLogs />
+            </AdminRoute>
           }
         />
 

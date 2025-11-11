@@ -12,6 +12,8 @@ import { CryptoService } from './crypto.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserDoc } from '../users/schemas/user.schema';
+import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { ActivityType } from '../activity-logs/schemas/activity-log.schema';
 
 type UserDto = ReturnType<UsersService['toUserResponse']>;
 export interface AuthResult {
@@ -25,7 +27,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly cryptoService: CryptoService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly activityLogsService: ActivityLogsService
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResult> {
@@ -45,6 +48,13 @@ export class AuthService {
     const passwordHash = await this.cryptoService.hashPassword(dto.password);
     const user = await this.usersService.create(email, pseudo, passwordHash); // UserDoc
 
+    // Logger la création de compte
+    void this.activityLogsService.create({
+      userId: user._id,
+      userEmail: user.email,
+      type: ActivityType.USER_CREATED,
+    });
+
     const accessToken = this.generateAccessToken(user);
     return { user: this.usersService.toUserResponse(user), accessToken };
   }
@@ -59,11 +69,24 @@ export class AuthService {
     );
     if (!isPasswordValid) throw new UnauthorizedException('Email ou mot de passe incorrect');
 
+    // Logger la connexion
+    void this.activityLogsService.create({
+      userId: user._id,
+      userEmail: user.email,
+      type: ActivityType.LOGIN,
+    });
+
     const accessToken = this.generateAccessToken(user);
     return { user: this.usersService.toUserResponse(user), accessToken };
   }
 
-  async logout(_userId: string): Promise<void> {
+  async logout(userId: string, userEmail: string): Promise<void> {
+    // Logger la déconnexion
+    void this.activityLogsService.create({
+      userId,
+      userEmail,
+      type: ActivityType.LOGOUT,
+    });
     return;
   }
 
