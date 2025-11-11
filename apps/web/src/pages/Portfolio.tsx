@@ -15,9 +15,11 @@ import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption, type SortField } from '../components/ui/FilterButton';
 import { StatCard } from '../components/ui/StatCard';
-import { Layers, Award, DollarSign, TrendingUp } from 'lucide-react';
+import { Layers, Award, Euro, TrendingUp } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
+import GradedCardFrame from '../components/grading/GradedCardFrame';
+import GradingBadge from '../components/grading/GradingBadge';
 
 /** ---- Types côté UI ---- */
 type PortfolioVariant = {
@@ -335,22 +337,33 @@ export default function Portfolio() {
     const normalizedText = normalizeString(text);
     const normalizedSearch = normalizeString(search);
 
-    // Correspondance exacte
+    // Correspondance exacte ou substring
     if (normalizedText.includes(normalizedSearch)) {
       return true;
     }
 
-    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    // Fuzzy match : vérifie si les caractères apparaissent dans l'ordre
+    // Ex: "hypor" match "Hyporoi" mais pas "Arceus"
     if (normalizedSearch.length >= 3) {
-      let matches = 0;
-      for (let i = 0; i < normalizedSearch.length; i++) {
-        const char = normalizedSearch.charAt(i);
-        if (char && normalizedText.includes(char)) {
-          matches++;
+      let textIndex = 0;
+      let searchIndex = 0;
+      let consecutiveMatches = 0;
+      let maxConsecutive = 0;
+
+      while (textIndex < normalizedText.length && searchIndex < normalizedSearch.length) {
+        if (normalizedText[textIndex] === normalizedSearch[searchIndex]) {
+          searchIndex++;
+          consecutiveMatches++;
+          maxConsecutive = Math.max(maxConsecutive, consecutiveMatches);
+        } else {
+          consecutiveMatches = 0;
         }
+        textIndex++;
       }
-      // Si au moins 66% des caractères correspondent (2/3), on considère que c'est un match
-      return matches / normalizedSearch.length >= 0.66;
+
+      // Tous les caractères doivent être trouvés dans l'ordre
+      // ET au moins 3 caractères consécutifs doivent matcher
+      return searchIndex === normalizedSearch.length && maxConsecutive >= 3;
     }
 
     return false;
@@ -400,6 +413,13 @@ export default function Portfolio() {
             const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
             const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
             comparison = dateA - dateB;
+            break;
+          }
+          case 'graded': {
+            // Les cartes gradées en premier (desc par défaut)
+            const gradedA = a.isGraded ? 1 : 0;
+            const gradedB = b.isGraded ? 1 : 0;
+            comparison = gradedB - gradedA; // Inversé pour avoir gradées en premier
             break;
           }
           default:
@@ -452,7 +472,7 @@ export default function Portfolio() {
             />
             <StatCard
               title="valeur totale"
-              icon={<DollarSign size={20} />}
+              icon={<Euro size={20} />}
               value={euro(stats.totalCost)}
               loading={loading}
             />
@@ -595,6 +615,14 @@ export default function Portfolio() {
                         {total !== null ? euro(total) : '—'}
                       </span>
                     </div>
+                    {card.isGraded && card.gradeCompany && card.gradeScore && (
+                      <div className={styles.compactField}>
+                        <span className={styles.compactLabel}>Gradée:</span>
+                        <span className={styles.compactValue}>
+                          {card.gradeCompany} {card.gradeScore}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className={styles.compactActions}>
                     <IconButton
@@ -701,15 +729,16 @@ export default function Portfolio() {
                           </span>
                         </div>
                       )}
-                      {card.isGraded && (
-                        <>
-                          <div className={styles.detailedItem}>
-                            <span className={styles.detailedLabel}>Gradée</span>
-                            <span className={styles.detailedValue}>
-                              {card.gradeCompany} {card.gradeScore}
-                            </span>
-                          </div>
-                        </>
+                      {card.isGraded && card.gradeCompany && card.gradeScore && (
+                        <div className={styles.detailedItem}>
+                          <span className={styles.detailedLabel}>Gradée</span>
+                          <span className={styles.detailedValue}>
+                            <GradingBadge
+                              company={card.gradeCompany as any}
+                              grade={card.gradeScore}
+                            />
+                          </span>
+                        </div>
                       )}
                       {card.notes && (
                         <div className={styles.detailedItem} style={{ gridColumn: '1 / -1' }}>
@@ -742,24 +771,40 @@ export default function Portfolio() {
                     aria-label={`Voir les détails de ${card.name}`}
                     title={`Voir les détails de ${card.name}`}
                   >
-                    <img
-                      src={img}
-                      alt={card.name}
-                      className={styles.cardImage}
-                      loading="lazy"
-                      width={245}
-                      height={342}
-                      onError={(e) => {
-                        const t = e.currentTarget as HTMLImageElement;
-                        t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                      }}
-                    />
-                    {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
-                    {card.isGraded && (
-                      <span className={styles.gradeBadge}>
-                        {card.gradeCompany} {card.gradeScore}
-                      </span>
+                    {card.isGraded && card.gradeCompany && card.gradeScore ? (
+                      <GradedCardFrame
+                        company={card.gradeCompany as any}
+                        grade={card.gradeScore}
+                        size="medium"
+                      >
+                        <img
+                          src={img}
+                          alt={card.name}
+                          className={styles.cardImage}
+                          loading="lazy"
+                          width={245}
+                          height={342}
+                          onError={(e) => {
+                            const t = e.currentTarget as HTMLImageElement;
+                            t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                          }}
+                        />
+                      </GradedCardFrame>
+                    ) : (
+                      <img
+                        src={img}
+                        alt={card.name}
+                        className={styles.cardImage}
+                        loading="lazy"
+                        width={245}
+                        height={342}
+                        onError={(e) => {
+                          const t = e.currentTarget as HTMLImageElement;
+                          t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                        }}
+                      />
                     )}
+                    {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
                   </button>
 
                   <div className={styles.cardInfo}>

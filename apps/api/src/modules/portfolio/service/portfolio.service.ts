@@ -96,6 +96,95 @@ export class PortfolioService {
       subtypes?: string[];
     }
   ) {
+    // Check if card already exists for this user with same cardId and language
+    const existingItem = await this.model.findOne({
+      ownerId,
+      cardId: dto.cardId,
+      language: dto.language,
+    });
+
+    // Helper to check if two variant data are identical
+    const areVariantsIdentical = (v1: StoredVariant, v2: StoredVariant) => {
+      return (
+        v1.purchasePrice === v2.purchasePrice &&
+        v1.purchaseDate === v2.purchaseDate &&
+        v1.graded === v2.graded &&
+        v1.grading?.company === v2.grading?.company &&
+        v1.grading?.grade === v2.grading?.grade &&
+        v1.booster === v2.booster
+      );
+    };
+
+    if (existingItem) {
+      // Card already exists - either increment quantity or add variant
+      const newVariantData = {
+        purchasePrice: dto.purchasePrice,
+        purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : undefined,
+        booster: dto.booster,
+        graded: dto.graded,
+        grading: normalizeGrading(dto.grading),
+        notes: dto.notes,
+      };
+
+      // If item is in Mode A (no variants)
+      if (!existingItem.variants || existingItem.variants.length === 0) {
+        const existingData = {
+          purchasePrice: existingItem.purchasePrice,
+          purchaseDate: existingItem.purchaseDate,
+          booster: existingItem.booster,
+          graded: existingItem.graded,
+          grading: existingItem.grading,
+          notes: existingItem.notes,
+        };
+
+        // Check if new data is identical to existing
+        if (areVariantsIdentical(existingData, newVariantData)) {
+          // Just increment quantity
+          existingItem.quantity += dto.quantity || 1;
+        } else {
+          // Convert to Mode B with variants
+          existingItem.variants = [existingData, newVariantData];
+          existingItem.quantity = 2;
+          // Clear Mode A fields
+          existingItem.booster = undefined;
+          existingItem.purchasePrice = undefined;
+          existingItem.purchaseDate = undefined;
+          existingItem.graded = undefined;
+          existingItem.grading = undefined;
+          existingItem.notes = undefined;
+        }
+      } else {
+        // Already in Mode B - add new variant
+        existingItem.variants.push(newVariantData);
+        existingItem.quantity = existingItem.variants.length;
+      }
+
+      await existingItem.save();
+
+      // Return formatted response
+      const obj = existingItem.toObject();
+      const snapshot = obj.cardSnapshot as CardSnapshot;
+      const mappedVariants = obj.variants?.map((v: StoredVariant) => ({
+        purchasePrice: v.purchasePrice,
+        purchaseDate: v.purchaseDate,
+        isGraded: v.graded,
+        gradeCompany: v.grading?.company,
+        gradeScore: v.grading?.grade,
+        notes: v.notes,
+      }));
+
+      return {
+        ...obj,
+        name: snapshot?.name,
+        setId: snapshot?.set?.id,
+        setName: snapshot?.set?.name,
+        imageUrl: snapshot?.imageUrl,
+        imageUrlHiRes: snapshot?.imageUrlHiRes,
+        variants: mappedVariants,
+      };
+    }
+
+    // Card doesn't exist - create new
     const base = {
       ownerId,
       cardId: dto.cardId,
@@ -227,6 +316,12 @@ export class PortfolioService {
         notes: v.notes,
       }));
 
+      // Calculer isGraded : true si au moins une variante est gradée, sinon utiliser item.graded
+      const isGraded =
+        mappedVariants && mappedVariants.length > 0
+          ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
+          : item.graded;
+
       return {
         ...item,
         // Ajouter les métadonnées au niveau racine
@@ -242,7 +337,7 @@ export class PortfolioService {
         supertype: snapshot?.supertype,
         subtypes: snapshot?.subtypes,
         // Ajouter isGraded (alias de graded) et les infos de gradation
-        isGraded: item.graded,
+        isGraded,
         gradeCompany: item.grading?.company,
         gradeScore: item.grading?.grade,
         // S'assurer que purchasePrice et variants sont bien inclus
@@ -316,17 +411,35 @@ export class PortfolioService {
       item.notes = undefined;
     } else {
       // Mise à jour Mode A (champs unitaires)
-      if (dto.quantity !== undefined) item.quantity = Math.max(1, dto.quantity);
-      if (dto.booster !== undefined) item.booster = dto.booster;
-      if (dto.purchasePrice !== undefined) item.purchasePrice = dto.purchasePrice;
-      if (dto.purchaseDate !== undefined) {
-        item.purchaseDate = dto.purchaseDate ? new Date(dto.purchaseDate) : undefined;
+      if (dto.quantity !== undefined) {
+        item.quantity = Math.max(1, dto.quantity);
+        // Si quantity = 1, nettoyer les variantes pour revenir en Mode A
+        if (item.quantity === 1 && item.variants && item.variants.length > 0) {
+          item.variants = [];
+        }
       }
+      if (dto.booster !== undefined) item.booster = dto.booster;
+
+      // Allow null to remove values
+      if ('purchasePrice' in dto) {
+        item.purchasePrice = dto.purchasePrice === null ? undefined : dto.purchasePrice;
+      }
+      if ('purchaseDate' in dto) {
+        item.purchaseDate =
+          dto.purchaseDate === null
+            ? undefined
+            : dto.purchaseDate
+              ? new Date(dto.purchaseDate)
+              : undefined;
+      }
+      if ('notes' in dto) {
+        item.notes = dto.notes === null ? undefined : dto.notes;
+      }
+
       if (dto.graded !== undefined) item.graded = dto.graded;
       if (dto.grading !== undefined) {
         item.grading = normalizeGrading(dto.grading); // ⬅️ normalisation
       }
-      if (dto.notes !== undefined) item.notes = dto.notes;
       if (dto.language !== undefined) item.language = dto.language;
     }
 
@@ -346,6 +459,12 @@ export class PortfolioService {
       notes: v.notes,
     }));
 
+    // Calculer isGraded : true si au moins une variante est gradée, sinon utiliser obj.graded
+    const isGraded =
+      mappedVariants && mappedVariants.length > 0
+        ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
+        : obj.graded;
+
     return {
       ...obj,
       name: snapshot?.name,
@@ -359,6 +478,10 @@ export class PortfolioService {
       types: snapshot?.types,
       supertype: snapshot?.supertype,
       subtypes: snapshot?.subtypes,
+      // Ajouter isGraded (alias de graded) et les infos de gradation
+      isGraded,
+      gradeCompany: obj.grading?.company,
+      gradeScore: obj.grading?.grade,
       variants: mappedVariants,
     };
   }

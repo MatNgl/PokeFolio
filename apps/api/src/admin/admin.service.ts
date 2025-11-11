@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDoc } from '../users/schemas/user.schema';
-import { UserCard, UserCardDocument } from '../cards/schemas/user-card.schema';
+import {
+  PortfolioItem,
+  PortfolioItemDocument,
+} from '../modules/portfolio/schemas/portfolio-item.schema';
 import { CardsService } from '../cards/cards.service';
 
 @Injectable()
@@ -11,7 +14,8 @@ export class AdminService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDoc>,
-    @InjectModel(UserCard.name) private readonly userCardModel: Model<UserCardDocument>,
+    @InjectModel(PortfolioItem.name)
+    private readonly portfolioItemModel: Model<PortfolioItemDocument>,
     private readonly cardsService: CardsService
   ) {}
 
@@ -22,36 +26,41 @@ export class AdminService {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const [totalUsers, newUsersThisWeek, totalCards, newCardsThisWeek, totalValue] =
-      await Promise.all([
-        this.userModel.countDocuments().exec(),
-        this.userModel.countDocuments({ createdAt: { $gte: oneWeekAgo } }).exec(),
-        this.userCardModel.countDocuments().exec(),
-        this.userCardModel.countDocuments({ createdAt: { $gte: oneWeekAgo } }).exec(),
-        this.userCardModel
-          .aggregate([
-            {
-              $group: {
-                _id: null,
-                total: {
-                  $sum: {
-                    $multiply: [
-                      '$quantity',
-                      { $ifNull: ['$currentValue', 0] }, // Gérer les valeurs null
-                    ],
-                  },
-                },
-              },
+    const [totalUsers, newUsersThisWeek, totalCardsResult, newCardsThisWeek] = await Promise.all([
+      this.userModel.countDocuments().exec(),
+      this.userModel.countDocuments({ createdAt: { $gte: oneWeekAgo } }).exec(),
+      // Sum all quantities from portfolio items
+      this.portfolioItemModel
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              total: { $sum: '$quantity' },
             },
-          ])
-          .exec()
-          .then((res) => res[0]?.total || 0),
-      ]);
+          },
+        ])
+        .exec(),
+      this.portfolioItemModel.countDocuments({ createdAt: { $gte: oneWeekAgo } }).exec(),
+    ]);
+
+    // Calculate total value taking variants into account (same logic as portfolio.service.ts)
+    const items = await this.portfolioItemModel.find().lean();
+    let totalValue = 0;
+
+    for (const item of items) {
+      if (Array.isArray(item.variants) && item.variants.length > 0) {
+        // Somme des prix d'achat par variante
+        totalValue += item.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
+      } else {
+        const unit = item.purchasePrice || 0;
+        totalValue += unit * (item.quantity ?? 0);
+      }
+    }
 
     return {
       totalUsers,
       newUsersThisWeek,
-      totalCards,
+      totalCards: totalCardsResult[0]?.total || 0,
       newCardsThisWeek,
       totalValue,
     };
@@ -61,16 +70,15 @@ export class AdminService {
    * Top 10 cartes les plus possédées
    */
   async getTopCards(limit = 10) {
-    const topCards = await this.userCardModel
+    const topCards = await this.portfolioItemModel
       .aggregate([
         {
           $group: {
             _id: '$cardId',
             totalQuantity: { $sum: '$quantity' },
             owners: { $sum: 1 },
-            cardName: { $first: '$name' },
-            setName: { $first: '$setName' },
-            imageUrl: { $first: '$imageUrl' },
+            // Extract metadata from cardSnapshot
+            cardSnapshot: { $first: '$cardSnapshot' },
           },
         },
         { $sort: { totalQuantity: -1 } },
@@ -80,41 +88,68 @@ export class AdminService {
 
     this.logger.log(`🔝 Top ${limit} cartes:`);
     topCards.forEach((card, idx) => {
+      const snapshot = card.cardSnapshot as Record<string, unknown>;
+      const cardName = (snapshot?.name as string) || (snapshot?.localId as string) || 'Unknown';
+      const imageUrl = (snapshot?.imageUrl as string) || (snapshot?.imageUrlHiRes as string);
       this.logger.log(
-        `  ${idx + 1}. ${card.cardName} (${card._id}): ${card.totalQuantity} exemplaires, ${card.owners} possesseurs, image: ${card.imageUrl ? '✓' : '✗'}`
+        `  ${idx + 1}. ${cardName} (${card._id}): ${card.totalQuantity} exemplaires, ${card.owners} possesseurs, image: ${imageUrl ? '✓' : '✗'}`
       );
     });
 
-    return topCards.map((card) => ({
-      cardId: card._id,
-      name: card.cardName,
-      setName: card.setName,
-      imageUrl: card.imageUrl,
-      totalQuantity: card.totalQuantity,
-      ownersCount: card.owners,
-    }));
+    return topCards.map((card) => {
+      const snapshot = card.cardSnapshot as Record<string, unknown>;
+      const cardName = (snapshot?.name as string) || (snapshot?.localId as string) || 'Unknown';
+      const set = snapshot?.set as Record<string, unknown> | undefined;
+      const setName = (set?.name as string) || 'Unknown';
+      const imageUrl = (snapshot?.imageUrl as string) || (snapshot?.imageUrlHiRes as string);
+
+      return {
+        cardId: card._id,
+        name: cardName,
+        setName: setName,
+        imageUrl: imageUrl,
+        totalQuantity: card.totalQuantity,
+        ownersCount: card.owners,
+      };
+    });
   }
 
   /**
    * Top 10 users avec les collections les plus chères
    */
   async getTopUsers(limit = 10) {
-    const topUsers = await this.userCardModel
-      .aggregate([
-        {
-          $group: {
-            _id: '$userId',
-            totalValue: { $sum: { $multiply: ['$quantity', '$currentValue'] } },
-            cardsCount: { $sum: '$quantity' },
-          },
-        },
-        { $sort: { totalValue: -1 } },
-        { $limit: limit },
-      ])
-      .exec();
+    // Get all portfolio items and calculate value per user (taking variants into account)
+    const items = await this.portfolioItemModel.find().lean();
 
-    // Récupérer les infos des users
-    const userIds = topUsers.map((u) => u._id);
+    const userStats = new Map<string, { totalValue: number; cardsCount: number }>();
+
+    for (const item of items) {
+      const ownerId = item.ownerId;
+      const existing = userStats.get(ownerId) || { totalValue: 0, cardsCount: 0 };
+
+      let itemValue = 0;
+      if (Array.isArray(item.variants) && item.variants.length > 0) {
+        // Somme des prix d'achat par variante
+        itemValue = item.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
+      } else {
+        const unit = item.purchasePrice || 0;
+        itemValue = unit * (item.quantity ?? 0);
+      }
+
+      userStats.set(ownerId, {
+        totalValue: existing.totalValue + itemValue,
+        cardsCount: existing.cardsCount + (item.quantity ?? 0),
+      });
+    }
+
+    // Sort by totalValue and take top N
+    const topUsers = Array.from(userStats.entries())
+      .map(([ownerId, stats]) => ({ ownerId, ...stats }))
+      .sort((a, b) => b.totalValue - a.totalValue)
+      .slice(0, limit);
+
+    // Récupérer les infos des users (ownerId est un string, pas un ObjectId)
+    const userIds = topUsers.map((u) => new Types.ObjectId(u.ownerId));
     const users = await this.userModel
       .find({ _id: { $in: userIds } })
       .lean()
@@ -123,9 +158,9 @@ export class AdminService {
     const usersMap = new Map(users.map((u) => [u._id.toString(), u]));
 
     return topUsers.map((item) => {
-      const user = usersMap.get(item._id.toString());
+      const user = usersMap.get(item.ownerId);
       return {
-        userId: item._id,
+        userId: item.ownerId,
         email: user?.email || 'Unknown',
         pseudo: user?.pseudo || 'Unknown',
         totalValue: item.totalValue,
@@ -154,7 +189,7 @@ export class AdminService {
           { $sort: { _id: 1 } },
         ])
         .exec(),
-      this.userCardModel
+      this.portfolioItemModel
         .aggregate([
           { $match: { createdAt: { $gte: startDate } } },
           {
@@ -178,12 +213,12 @@ export class AdminService {
    * Répartition par sets
    */
   async getSetDistribution(limit = 20) {
-    const distribution = await this.userCardModel
+    const distribution = await this.portfolioItemModel
       .aggregate([
-        { $match: { setName: { $exists: true, $ne: null } } },
+        { $match: { 'cardSnapshot.set.name': { $exists: true, $ne: null } } },
         {
           $group: {
-            _id: '$setName',
+            _id: '$cardSnapshot.set.name',
             cardsCount: { $sum: '$quantity' },
             uniqueCards: { $sum: 1 },
           },
@@ -207,53 +242,41 @@ export class AdminService {
   async getAllUsers(): Promise<any[]> {
     const users = await this.userModel.find().select('-passwordHash -refreshToken').lean().exec();
 
-    const userIds = users.map((u) => u._id);
+    const userIds = users.map((u) => u._id.toString());
 
-    this.logger.log(
-      `👥 Found ${users.length} users with IDs:`,
-      userIds.map((id) => id.toString())
-    );
+    this.logger.log(`👥 Found ${users.length} users with IDs:`, userIds);
 
-    // Récupérer les stats de chaque user
-    const stats = await this.userCardModel
-      .aggregate([
-        { $match: { userId: { $in: userIds } } },
-        {
-          $group: {
-            _id: '$userId',
-            cardsCount: { $sum: '$quantity' },
-            totalValue: {
-              $sum: {
-                $multiply: ['$quantity', { $ifNull: ['$currentValue', 0] }],
-              },
-            },
-          },
-        },
-      ])
-      .exec();
+    // Get all portfolio items and calculate stats per user (taking variants into account)
+    const items = await this.portfolioItemModel.find({ ownerId: { $in: userIds } }).lean();
 
-    this.logger.log(`📊 Stats found for ${stats.length} users`);
-    stats.forEach((s) => {
-      this.logger.log(`  User ${s._id}: ${s.cardsCount} cartes, ${s.totalValue}€`);
-    });
+    const userStatsMap = new Map<string, { cardsCount: number; totalValue: number }>();
 
-    // Debug: Vérifier les cartes sans match
-    const allCards = await this.userCardModel.find().select('userId').lean().exec();
-    const cardUserIds = new Set(allCards.map((c) => c.userId.toString()));
-    const userIdsSet = new Set(userIds.map((id) => id.toString()));
+    for (const item of items) {
+      const ownerId = item.ownerId;
+      const existing = userStatsMap.get(ownerId) || { cardsCount: 0, totalValue: 0 };
 
-    const orphanedUserIds = [...cardUserIds].filter((id) => !userIdsSet.has(id));
-    if (orphanedUserIds.length > 0) {
-      this.logger.warn(
-        `⚠️ Found ${orphanedUserIds.length} cards with userId that don't match any user:`
-      );
-      orphanedUserIds.forEach((id) => this.logger.warn(`  - ${id}`));
+      let itemValue = 0;
+      if (Array.isArray(item.variants) && item.variants.length > 0) {
+        // Somme des prix d'achat par variante
+        itemValue = item.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
+      } else {
+        const unit = item.purchasePrice || 0;
+        itemValue = unit * (item.quantity ?? 0);
+      }
+
+      userStatsMap.set(ownerId, {
+        cardsCount: existing.cardsCount + (item.quantity ?? 0),
+        totalValue: existing.totalValue + itemValue,
+      });
     }
 
-    const statsMap = new Map(stats.map((s) => [s._id.toString(), s]));
+    this.logger.log(`📊 Stats found for ${userStatsMap.size} users`);
+    userStatsMap.forEach((stats, ownerId) => {
+      this.logger.log(`  User ${ownerId}: ${stats.cardsCount} cartes, ${stats.totalValue}€`);
+    });
 
     return users.map((user) => {
-      const userStats = statsMap.get(user._id.toString());
+      const userStats = userStatsMap.get(user._id.toString());
       return {
         ...user,
         cardsCount: userStats?.cardsCount || 0,
@@ -276,16 +299,40 @@ export class AdminService {
       return null;
     }
 
-    const cards = await this.userCardModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .lean()
-      .exec();
+    const portfolioItems = await this.portfolioItemModel.find({ ownerId: userId }).lean().exec();
 
-    const totalValue = cards.reduce(
-      (sum, card) => sum + (card.quantity || 0) * (card.currentValue || 0),
-      0
-    );
-    const cardsCount = cards.reduce((sum, card) => sum + (card.quantity || 0), 0);
+    // Calculate total value taking variants into account
+    let totalValue = 0;
+    for (const item of portfolioItems) {
+      if (Array.isArray(item.variants) && item.variants.length > 0) {
+        totalValue += item.variants.reduce((acc, v) => acc + (v.purchasePrice || 0), 0);
+      } else {
+        const unit = item.purchasePrice || 0;
+        totalValue += unit * (item.quantity ?? 0);
+      }
+    }
+
+    const cardsCount = portfolioItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+    // Transform portfolio items to include card metadata
+    const cards = portfolioItems.map((item) => {
+      const snapshot = item.cardSnapshot as Record<string, unknown>;
+      const set = snapshot?.set as Record<string, unknown> | undefined;
+      return {
+        _id: item._id,
+        cardId: item.cardId,
+        name: (snapshot?.name as string) || (snapshot?.localId as string) || 'Unknown',
+        setName: (set?.name as string) || 'Unknown',
+        imageUrl: (snapshot?.imageUrl as string) || (snapshot?.imageUrlHiRes as string),
+        quantity: item.quantity,
+        purchasePrice: item.purchasePrice,
+        purchaseDate: item.purchaseDate,
+        graded: item.graded,
+        grading: item.grading,
+        notes: item.notes,
+        language: item.language,
+      };
+    });
 
     return {
       user,
@@ -303,8 +350,8 @@ export class AdminService {
   async deleteUser(userId: string) {
     const userObjectId = new Types.ObjectId(userId);
 
-    // Supprimer les cartes du user
-    await this.userCardModel.deleteMany({ userId: userObjectId }).exec();
+    // Supprimer les portfolio items du user
+    await this.portfolioItemModel.deleteMany({ ownerId: userId }).exec();
 
     // Supprimer le user
     const result = await this.userModel.findByIdAndDelete(userObjectId).exec();
@@ -316,324 +363,13 @@ export class AdminService {
    * Supprimer une carte du portfolio d'un user
    */
   async deleteUserCard(userId: string, cardId: string) {
-    const result = await this.userCardModel
+    const result = await this.portfolioItemModel
       .findOneAndDelete({
         _id: new Types.ObjectId(cardId),
-        userId: new Types.ObjectId(userId),
+        ownerId: userId,
       })
       .exec();
 
     return result;
-  }
-
-  /**
-   * Debug endpoint to check data consistency
-   */
-  async debugDataConsistency() {
-    // 1. Compter les utilisateurs
-    const usersCount = await this.userModel.countDocuments().exec();
-    const users = await this.userModel.find().select('_id email pseudo').lean().exec();
-
-    // 2. Compter les cartes totales
-    const totalCardsCount = await this.userCardModel.countDocuments().exec();
-
-    // 3. Pour chaque user, compter ses cartes directement
-    const userCardDetails = await Promise.all(
-      users.map(async (user) => {
-        const userCards = await this.userCardModel
-          .find({ userId: user._id })
-          .select('_id name quantity')
-          .limit(3)
-          .lean()
-          .exec();
-
-        const totalQuantity = await this.userCardModel
-          .aggregate([
-            { $match: { userId: user._id } },
-            { $group: { _id: null, total: { $sum: '$quantity' } } },
-          ])
-          .exec();
-
-        return {
-          userId: user._id.toString(),
-          email: user.email,
-          pseudo: user.pseudo,
-          totalQuantity: totalQuantity[0]?.total || 0,
-          sampleCards: userCards.map((c) => ({
-            name: c.name,
-            quantity: c.quantity,
-          })),
-        };
-      })
-    );
-
-    // 4. Regarder quelques exemples de cartes et leurs userId
-    const allCardsWithUserId = await this.userCardModel
-      .find()
-      .select('userId name quantity')
-      .limit(20)
-      .lean()
-      .exec();
-
-    // 5. Vérifier les aggregations (comme dans getAllUsers)
-    const userIds = users.map((u) => u._id);
-    const aggregatedStats = await this.userCardModel
-      .aggregate([
-        { $match: { userId: { $in: userIds } } },
-        {
-          $group: {
-            _id: '$userId',
-            cardsCount: { $sum: '$quantity' },
-          },
-        },
-      ])
-      .exec();
-
-    return {
-      summary: {
-        totalUsers: usersCount,
-        totalCardDocuments: totalCardsCount,
-      },
-      allUsers: userCardDetails,
-      aggregationResults: aggregatedStats.map((s) => ({
-        userId: s._id.toString(),
-        cardsCount: s.cardsCount,
-      })),
-      sampleCardsWithUserIds: allCardsWithUserId.map((c) => ({
-        userId: c.userId.toString(),
-        name: c.name,
-        quantity: c.quantity,
-      })),
-    };
-  }
-
-  /**
-   * Check current user's cards and verify userId consistency
-   */
-  async debugCurrentUserCards(currentUserId: string) {
-    // 1. Récupérer l'utilisateur actuel
-    const currentUser = await this.userModel.findById(currentUserId).lean().exec();
-
-    if (!currentUser) {
-      return { error: 'User not found' };
-    }
-
-    // 2. Chercher les cartes avec ce userId
-    const cardsWithCurrentId = await this.userCardModel
-      .find({ userId: new Types.ObjectId(currentUserId) })
-      .select('name quantity')
-      .lean()
-      .exec();
-
-    const totalWithCurrentId = cardsWithCurrentId.reduce((sum, c) => sum + (c.quantity || 0), 0);
-
-    // 3. Chercher toutes les cartes orphelines (userId qui ne correspond à aucun user)
-    const allUsers = await this.userModel.find().select('_id').lean().exec();
-    const allUserIds = new Set(allUsers.map((u) => u._id.toString()));
-
-    const allCards = await this.userCardModel.find().select('userId name quantity').lean().exec();
-    const orphanedCards = allCards.filter((c) => !allUserIds.has(c.userId.toString()));
-
-    // 4. Grouper les cartes orphelines par userId
-    const orphanedByUserId = new Map<
-      string,
-      Array<{ userId: Types.ObjectId; name: string; quantity: number }>
-    >();
-    orphanedCards.forEach((card) => {
-      const uid = card.userId.toString();
-      if (!orphanedByUserId.has(uid)) {
-        orphanedByUserId.set(uid, []);
-      }
-      orphanedByUserId.get(uid)!.push(card);
-    });
-
-    const orphanedSummary = Array.from(orphanedByUserId.entries()).map(([userId, cards]) => ({
-      orphanedUserId: userId,
-      cardsCount: cards.reduce((sum, c) => sum + (c.quantity || 0), 0),
-      sampleCards: cards.slice(0, 5).map((c) => ({ name: c.name, quantity: c.quantity })),
-    }));
-
-    return {
-      currentUser: {
-        _id: currentUser._id.toString(),
-        email: currentUser.email,
-        pseudo: currentUser.pseudo,
-      },
-      cardsWithCurrentUserId: {
-        count: totalWithCurrentId,
-        samples: cardsWithCurrentId
-          .slice(0, 5)
-          .map((c) => ({ name: c.name, quantity: c.quantity })),
-      },
-      orphanedCards: {
-        totalOrphanedUserIds: orphanedByUserId.size,
-        orphanedGroups: orphanedSummary,
-      },
-    };
-  }
-
-  /**
-   * Migrate orphaned cards to a target user
-   */
-  async migrateOrphanedCards(targetUserId: string, orphanedUserId: string) {
-    this.logger.log(`🔄 Migrating cards from ${orphanedUserId} to ${targetUserId}`);
-
-    // Vérifier que le target user existe
-    const targetUser = await this.userModel.findById(targetUserId).lean().exec();
-    if (!targetUser) {
-      throw new Error('Target user not found');
-    }
-
-    // Compter les cartes à migrer
-    const cardsToMigrate = await this.userCardModel
-      .find({ userId: new Types.ObjectId(orphanedUserId) })
-      .lean()
-      .exec();
-
-    this.logger.log(`📦 Found ${cardsToMigrate.length} cards to migrate`);
-
-    // Mettre à jour toutes les cartes
-    const result = await this.userCardModel
-      .updateMany(
-        { userId: new Types.ObjectId(orphanedUserId) },
-        { $set: { userId: new Types.ObjectId(targetUserId) } }
-      )
-      .exec();
-
-    this.logger.log(`✅ Migrated ${result.modifiedCount} cards`);
-
-    return {
-      success: true,
-      migratedCount: result.modifiedCount,
-      targetUser: {
-        _id: targetUser._id.toString(),
-        email: targetUser.email,
-        pseudo: targetUser.pseudo,
-      },
-    };
-  }
-
-  /**
-   * Auto-fix all users: find their JWT userId and migrate to current _id
-   */
-  async autoFixAllUsers() {
-    this.logger.log('🔄 Starting auto-fix for all users...');
-
-    // 1. Récupérer tous les utilisateurs
-    const allUsers = await this.userModel.find().select('_id email').lean().exec();
-    const allUserIds = new Set(allUsers.map((u) => u._id.toString()));
-
-    // 2. Récupérer toutes les cartes
-    const allCards = await this.userCardModel.find().select('userId').lean().exec();
-
-    // 3. Trouver tous les userId uniques dans les cartes
-    const cardUserIds = new Set(allCards.map((c) => c.userId.toString()));
-
-    // 4. Trouver les userId orphelins
-    const orphanedUserIds = [...cardUserIds].filter((id) => !allUserIds.has(id));
-
-    this.logger.log(`📊 Found ${orphanedUserIds.length} orphaned userIds`);
-    this.logger.log(`👥 Current users: ${allUsers.length}`);
-
-    const migrations: Array<{ from: string; to: string; email: string; cardsCount: number }> = [];
-
-    // 5. Pour chaque userId orphelin, compter les cartes
-    for (const orphanedId of orphanedUserIds) {
-      const cardsCount = await this.userCardModel
-        .countDocuments({ userId: new Types.ObjectId(orphanedId) })
-        .exec();
-
-      this.logger.log(`📦 Orphaned userId ${orphanedId}: ${cardsCount} cards`);
-
-      // Pour l'instant, on ne peut pas deviner quel user correspond
-      // On va juste lister les cartes orphelines
-      migrations.push({
-        from: orphanedId,
-        to: 'UNKNOWN',
-        email: 'UNKNOWN',
-        cardsCount,
-      });
-    }
-
-    return {
-      summary: {
-        totalUsers: allUsers.length,
-        totalOrphanedUserIds: orphanedUserIds.length,
-        totalOrphanedCards: migrations.reduce((sum, m) => sum + m.cardsCount, 0),
-      },
-      migrations,
-      message:
-        'Cannot auto-migrate without knowing which user owns which orphaned cards. Use migrate-orphaned-cards endpoint manually.',
-    };
-  }
-
-  /**
-   * Backfill missing card metadata (imageUrl, imageUrlHiRes)
-   */
-  async backfillCardMetadata() {
-    this.logger.log('🔄 Starting card metadata backfill...');
-
-    // Find all cards with missing imageUrl
-    const cardsWithoutImages = await this.userCardModel
-      .find({
-        $or: [{ imageUrl: { $exists: false } }, { imageUrl: null }, { imageUrl: '' }],
-      })
-      .lean()
-      .exec();
-
-    this.logger.log(`📊 Found ${cardsWithoutImages.length} cards without images`);
-
-    let updated = 0;
-    let failed = 0;
-    const errors: string[] = [];
-
-    for (const userCard of cardsWithoutImages) {
-      try {
-        // Fetch card details from TCGdex
-        const cardDetails = await this.cardsService.getCardById(userCard.cardId, 'fr');
-
-        if (cardDetails) {
-          const imageUrl = cardDetails.image || cardDetails.images?.small;
-          const imageUrlHiRes = cardDetails.images?.large;
-
-          if (imageUrl) {
-            await this.userCardModel
-              .updateOne(
-                { _id: userCard._id },
-                {
-                  $set: {
-                    imageUrl,
-                    imageUrlHiRes: imageUrlHiRes || imageUrl,
-                  },
-                }
-              )
-              .exec();
-
-            updated++;
-            this.logger.log(`✅ Updated ${userCard.name} (${userCard.cardId})`);
-          } else {
-            this.logger.warn(`⚠️ No image found for ${userCard.name} (${userCard.cardId})`);
-            failed++;
-          }
-        } else {
-          this.logger.warn(`⚠️ Card not found in TCGdex: ${userCard.cardId}`);
-          failed++;
-          errors.push(`${userCard.name} (${userCard.cardId})`);
-        }
-      } catch (error) {
-        this.logger.error(`❌ Error processing ${userCard.name} (${userCard.cardId}):`, error);
-        failed++;
-        errors.push(`${userCard.name} (${userCard.cardId}): ${error}`);
-      }
-    }
-
-    this.logger.log(`🎉 Backfill complete: ${updated} updated, ${failed} failed`);
-
-    return {
-      total: cardsWithoutImages.length,
-      updated,
-      failed,
-      errors: errors.slice(0, 10), // Limit errors to first 10
-    };
   }
 }

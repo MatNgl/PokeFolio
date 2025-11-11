@@ -51,20 +51,19 @@ export interface UserCard {
   _id: string;
   cardId: string;
   name: string;
-  setId?: string;
   setName?: string;
-  number?: string;
-  rarity?: string;
   imageUrl?: string;
-  imageUrlHiRes?: string;
   quantity: number;
-  isGraded: boolean;
-  gradeCompany?: string;
-  gradeScore?: string;
   purchasePrice?: number;
   purchaseDate?: string;
-  currentValue?: number;
+  graded?: boolean;
+  grading?: {
+    company?: string;
+    grade?: string;
+    certificationNumber?: string;
+  };
   notes?: string;
+  language?: string;
 }
 
 export interface UserDetails {
@@ -93,13 +92,6 @@ export interface ActivityLog {
   userAgent?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface BackfillResult {
-  total: number;
-  updated: number;
-  failed: number;
-  errors: string[];
 }
 
 export const adminService = {
@@ -161,11 +153,6 @@ export const adminService = {
     const response = await api.get<{ logs: ActivityLog[]; total: number }>(
       `/admin/logs?${query.toString()}`
     );
-    return response.data;
-  },
-
-  async backfillCardMetadata(): Promise<BackfillResult> {
-    const response = await api.post<BackfillResult>('/admin/maintenance/backfill-card-metadata');
     return response.data;
   },
 };

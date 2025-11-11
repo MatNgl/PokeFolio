@@ -85,6 +85,16 @@ export default function AdminUserDetail() {
     );
   }
 
+  // Helper pour construire l'URL de l'image TCGdex
+  const buildImageUrl = (imageUrl?: string): string | undefined => {
+    if (!imageUrl) return undefined;
+    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
+    if (imageUrl.includes('assets.tcgdex.net') && !imageUrl.match(/\.(png|jpg|jpeg|webp)$/i)) {
+      return `${imageUrl}/high.webp`;
+    }
+    return imageUrl;
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -133,14 +143,18 @@ export default function AdminUserDetail() {
             {details.cards.map((card: UserCard) => (
               <div key={card._id} className={styles.card}>
                 {card.imageUrl && (
-                  <img src={card.imageUrl} alt={card.name} className={styles.cardImage} />
+                  <img
+                    src={buildImageUrl(card.imageUrl)}
+                    alt={card.name}
+                    className={styles.cardImage}
+                  />
                 )}
                 <div className={styles.cardInfo}>
                   <p className={styles.cardName}>{card.name}</p>
                   <p className={styles.cardSet}>{card.setName}</p>
                   <p className={styles.cardQuantity}>Quantité: {card.quantity}</p>
                   <p className={styles.cardValue}>
-                    {((card.currentValue || 0) * (card.quantity || 0)).toFixed(2)} €
+                    {((card.purchasePrice || 0) * (card.quantity || 0)).toFixed(2)} €
                   </p>
                 </div>
                 <Button

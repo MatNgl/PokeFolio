@@ -5,6 +5,7 @@ import { cardsService } from '../../services/cards.service';
 import { Button } from '../ui/Button';
 import { Loader } from '../ui/FullScreenLoader';
 import styles from './PortfolioCardDetailsModal.module.css';
+import GradedCardFrame from '../grading/GradedCardFrame';
 
 type PortfolioVariant = {
   purchasePrice?: number;
@@ -150,15 +151,33 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
         ) : (
           <div className={styles.content}>
             <div className={styles.left}>
-              <img
-                className={styles.image}
-                src={imageHi}
-                alt={title}
-                onError={(e) => {
-                  const t = e.currentTarget as HTMLImageElement;
-                  t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                }}
-              />
+              {entry.isGraded && entry.gradeCompany && entry.gradeScore ? (
+                <GradedCardFrame
+                  company={entry.gradeCompany as any}
+                  grade={entry.gradeScore}
+                  size="large"
+                >
+                  <img
+                    className={styles.image}
+                    src={imageHi}
+                    alt={title}
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }}
+                  />
+                </GradedCardFrame>
+              ) : (
+                <img
+                  className={styles.image}
+                  src={imageHi}
+                  alt={title}
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                  }}
+                />
+              )}
             </div>
 
             <div className={styles.right}>

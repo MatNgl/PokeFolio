@@ -42,28 +42,43 @@ const GRADING_COMPANIES = [
   { id: 'PSA', name: 'PSA', grades: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'] },
   {
     id: 'PCA',
-    name: 'PCA (Pokémon Card Authentication)',
+    name: 'PCA',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'CollectAura',
+    id: 'COLLECT_AURA',
     name: 'Collect Aura',
     grades: ['10+', '10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'],
   },
   {
     id: 'CGC',
-    name: 'CGC (Certified Guaranty Company)',
+    name: 'CGC',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'BGS',
-    name: 'BGS (Beckett Grading Services)',
+    name: 'BGS',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'Other',
-    name: 'Autre',
-    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5', '4', '3', '2', '1'],
+    id: 'AGS',
+    name: 'AGS',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+  },
+  {
+    id: 'CCC',
+    name: 'CCC',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+  },
+  {
+    id: 'SGC',
+    name: 'SGC',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+  },
+  {
+    id: 'TAG',
+    name: 'TAG',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
 ] as const;
 

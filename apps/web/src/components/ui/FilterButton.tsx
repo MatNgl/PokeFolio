@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from './FilterButton.module.css';
-import { SlidersHorizontal, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { SlidersHorizontal, Check, ChevronUp, ChevronDown } from 'lucide-react';
 
-export type SortField = 'default' | 'name' | 'quantity' | 'price' | 'date';
+export type SortField = 'default' | 'name' | 'quantity' | 'price' | 'date' | 'graded';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortOption {
@@ -18,7 +18,7 @@ interface FilterButtonProps {
 
 const getSortFields = (context: 'portfolio' | 'discover'): SortField[] => {
   if (context === 'portfolio') {
-    return ['default', 'name', 'quantity', 'price', 'date'];
+    return ['default', 'name', 'quantity', 'price', 'date', 'graded'];
   }
   return ['default', 'name'];
 };
@@ -35,6 +35,8 @@ const getFieldLabel = (field: SortField): string => {
       return 'Prix';
     case 'date':
       return "Date d'achat";
+    case 'graded':
+      return 'Gradées';
     default:
       return field;
   }
@@ -115,9 +117,9 @@ export function FilterButton({
                       {showDirection && (
                         <>
                           {currentSort.direction === 'asc' ? (
-                            <ArrowUp size={16} className={styles.directionIcon} aria-hidden />
+                            <ChevronUp size={16} className={styles.directionIcon} aria-hidden />
                           ) : (
-                            <ArrowDown size={16} className={styles.directionIcon} aria-hidden />
+                            <ChevronDown size={16} className={styles.directionIcon} aria-hidden />
                           )}
                         </>
                       )}

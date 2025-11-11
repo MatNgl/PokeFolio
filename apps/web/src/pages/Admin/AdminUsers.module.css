@@ -80,6 +80,38 @@
   color: var(--primary);
 }
 
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+  position: relative;
+  padding-right: 32px !important;
+}
+
+.sortableHeader:hover {
+  background: rgba(124, 243, 255, 0.15);
+}
+
+.sortIcons {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inactiveIcon {
+  color: rgba(255, 255, 255, 0.2);
+  transition: color 0.2s ease;
+}
+
+.activeIcon {
+  color: var(--primary);
+  transition: color 0.2s ease;
+}
+
 .table tbody tr {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
