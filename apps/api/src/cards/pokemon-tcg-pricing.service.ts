@@ -30,6 +30,40 @@ interface PokemonTCGResponse {
   data: PokemonTCGCard;
 }
 
+interface PokemonTCGSearchResponse {
+  data: PokemonTCGCard[];
+}
+
+/**
+ * Mapping entre les codes de set TCGdex et Pokemon TCG API
+ * TCGdex utilise des codes différents de l'API officielle Pokemon TCG
+ */
+const SET_CODE_MAPPING: Record<string, string> = {
+  // Scarlet & Violet
+  sv01: 'sv1',
+  sv02: 'sv2',
+  sv03: 'sv3',
+  sv04: 'sv4',
+  sv05: 'sv5',
+  sv06: 'sv6',
+  sv07: 'sv7',
+  // Sword & Shield
+  swsh01: 'swsh1',
+  swsh02: 'swsh2',
+  swsh03: 'swsh3',
+  swsh04: 'swsh4',
+  swsh05: 'swsh5',
+  swsh06: 'swsh6',
+  swsh07: 'swsh7',
+  swsh08: 'swsh8',
+  swsh09: 'swsh9',
+  swsh10: 'swsh10',
+  swsh11: 'swsh11',
+  swsh12: 'swsh12',
+  // Autres sets populaires
+  me01: 'cel25', // Celebrations
+};
+
 @Injectable()
 export class PokemonTCGPricingService {
   private readonly logger = new Logger(PokemonTCGPricingService.name);
@@ -50,6 +84,60 @@ export class PokemonTCGPricingService {
       );
     } else {
       this.logger.log('✓ Pokemon TCG API Key configurée');
+    }
+  }
+
+  /**
+   * Convertit un ID TCGdex en ID Pokemon TCG API
+   * Exemple: "me01-144" -> "cel25-144"
+   */
+  private convertTcgdexIdToPokemonTCG(tcgdexId: string): string {
+    const parts = tcgdexId.split('-');
+    if (parts.length < 2) {
+      return tcgdexId; // Retourner tel quel si format invalide
+    }
+
+    const setCode = parts[0]?.toLowerCase() ?? '';
+    const cardNumber = parts.slice(1).join('-'); // Rejoindre au cas où il y a plusieurs "-"
+
+    const mappedSetCode = SET_CODE_MAPPING[setCode] || setCode;
+    return `${mappedSetCode}-${cardNumber}`;
+  }
+
+  /**
+   * Recherche une carte par set et numéro si l'ID direct échoue
+   */
+  private async searchCardBySetAndNumber(
+    setCode: string,
+    number: string
+  ): Promise<PokemonTCGCard | null> {
+    try {
+      const headers: Record<string, string> = {};
+      if (this.apiKey) {
+        headers['X-Api-Key'] = this.apiKey;
+      }
+
+      const query = `set.id:${setCode} number:${number}`;
+      const url = `${this.baseUrl}/cards?q=${encodeURIComponent(query)}`;
+
+      this.logger.log(`Searching card with query: ${query}`);
+
+      const response = await this.fetchWithTimeout(url, { headers });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = (await response.json()) as PokemonTCGSearchResponse;
+
+      if (data.data && data.data.length > 0) {
+        return data.data[0] ?? null;
+      }
+
+      return null;
+    } catch (error) {
+      this.logger.warn(`Search failed for set:${setCode} number:${number}`);
+      return null;
     }
   }
 
@@ -111,33 +199,46 @@ export class PokemonTCGPricingService {
         headers['X-Api-Key'] = this.apiKey;
       }
 
-      const url = `${this.baseUrl}/cards/${encodeURIComponent(cardId)}`;
+      // Convertir l'ID TCGdex en ID Pokemon TCG
+      const convertedId = this.convertTcgdexIdToPokemonTCG(cardId);
+      this.logger.log(`Trying ID conversion: ${cardId} -> ${convertedId}`);
+
+      let url = `${this.baseUrl}/cards/${encodeURIComponent(convertedId)}`;
       this.logger.log(`Fetching pricing from Pokemon TCG: ${url}`);
 
-      const response = await this.fetchWithTimeout(url, { headers });
+      let response = await this.fetchWithTimeout(url, { headers });
+      let cardData: PokemonTCGCard | null = null;
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          this.logger.log(`Carte ${cardId} non trouvée sur Pokemon TCG API`);
-          return null;
+      if (response.ok) {
+        const data = (await response.json()) as PokemonTCGResponse;
+        cardData = data.data;
+      } else if (response.status === 404) {
+        // Si l'ID converti ne fonctionne pas, essayer de chercher par set + numéro
+        this.logger.log(`ID ${convertedId} not found, trying search by set and number`);
+
+        const parts = convertedId.split('-');
+        if (parts.length >= 2) {
+          const setCode = parts[0] ?? '';
+          const number = parts.slice(1).join('-');
+
+          cardData = await this.searchCardBySetAndNumber(setCode, number);
         }
-        this.logger.warn(
-          `Pokemon TCG API error pour ${cardId}: ${response.status} ${response.statusText}`
-        );
+      }
+
+      if (!cardData) {
+        this.logger.log(`Carte ${cardId} non trouvée sur Pokemon TCG API après toutes tentatives`);
         return null;
       }
 
-      const data = (await response.json()) as PokemonTCGResponse;
-
-      if (!data.data?.tcgplayer?.prices) {
+      if (!cardData.tcgplayer?.prices) {
         this.logger.log(`Pas de prix TCGPlayer disponibles pour ${cardId}`);
         return null;
       }
 
       const pricing: CardPricing = {
         cardId,
-        updatedAt: data.data.tcgplayer.updatedAt,
-        prices: data.data.tcgplayer.prices,
+        updatedAt: cardData.tcgplayer.updatedAt,
+        prices: cardData.tcgplayer.prices,
       };
 
       // Mettre en cache
@@ -146,6 +247,7 @@ export class PokemonTCGPricingService {
         timestamp: Date.now(),
       });
 
+      this.logger.log(`Prix récupérés avec succès pour ${cardId} (${cardData.id})`);
       return pricing;
     } catch (err) {
       const error = err as Error;
