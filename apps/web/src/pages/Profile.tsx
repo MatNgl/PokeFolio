@@ -12,7 +12,15 @@ import type { UserCard } from '@pokefolio/types';
 import styles from './Profile.module.css';
 
 // Icônes pro
-import { UserRoundPen, KeyRound, LogOut, Trash2, XCircle, CheckCircle, Download } from 'lucide-react';
+import {
+  UserRoundPen,
+  KeyRound,
+  LogOut,
+  Trash2,
+  XCircle,
+  CheckCircle,
+  Download,
+} from 'lucide-react';
 
 export function Profile() {
   // Définir le titre de la page
@@ -57,15 +65,15 @@ export function Profile() {
 
       // Exporter vers Excel
       await exportToExcel(
-        portfolioCards as UserCard[],
-        wishlistData.items,
+        portfolioCards as unknown as UserCard[],
+        wishlistData.items as unknown as Record<string, unknown>[],
         user?.pseudo || user?.email || 'user'
       );
 
       showToast('Export Excel réussi !', 'success');
     } catch (error) {
-      console.error('Erreur lors de l\'export:', error);
-      showToast('Erreur lors de l\'export Excel', 'error');
+      console.error("Erreur lors de l'export:", error);
+      showToast("Erreur lors de l'export Excel", 'error');
     } finally {
       setExporting(false);
     }
@@ -235,7 +243,12 @@ export function Profile() {
           <p className={styles.description}>
             Téléchargez vos données (portfolio + wishlist) au format Excel
           </p>
-          <Button onClick={handleExport} variant="success" type="button" disabled={exporting || loading}>
+          <Button
+            onClick={handleExport}
+            variant="success"
+            type="button"
+            disabled={exporting || loading}
+          >
             <Download size={18} aria-hidden />
             {exporting ? 'Export en cours...' : 'Exporter en Excel'}
           </Button>

@@ -19,9 +19,7 @@ export function parseCardText(ocrText: string): ParsedCardInfo | null {
   }
 
   // Nettoyer le texte
-  const cleanedText = ocrText
-    .replace(/[^\w\s\-éèêëàâäôöûüçÉÈÊËÀÂÄÔÖÛÜÇ/]/gi, ' ')
-    .trim();
+  const cleanedText = ocrText.replace(/[^\w\s\-éèêëàâäôöûüçÉÈÊËÀÂÄÔÖÛÜÇ/]/gi, ' ').trim();
 
   console.log('🧹 [parseCardText] Texte nettoyé:', cleanedText);
 
@@ -41,7 +39,7 @@ export function parseCardText(ocrText: string): ParsedCardInfo | null {
       // Prendre les deux derniers nombres trouvés
       const num1 = allMatches[allMatches.length - 2];
       const num2 = allMatches[allMatches.length - 1];
-      numberMatch = [null, num1, num2] as RegExpMatchArray;
+      numberMatch = ['', num1, num2] as unknown as RegExpMatchArray;
       console.log(`🔢 [parseCardText] Pattern alternatif trouvé: ${num1}/${num2}`);
     }
   }
@@ -52,18 +50,18 @@ export function parseCardText(ocrText: string): ParsedCardInfo | null {
     return null;
   }
 
-  const cardNumber = numberMatch[1];
-  const setTotal = numberMatch[2];
+  const cardNumber = numberMatch[1] || '';
+  const setTotal = numberMatch[2] || '';
   console.log(`🔢 [parseCardText] Numéro trouvé: ${cardNumber}/${setTotal}`);
 
   // Extraire le nom (tout ce qui précède le numéro)
-  const textBeforeNumber = cleanedText.substring(0, numberMatch.index || 0);
+  const textBeforeNumber = cleanedText.substring(0, numberMatch.index ?? 0);
 
   // Prendre la dernière ligne non-vide avant le numéro comme nom
   const lines = textBeforeNumber
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
   const name = lines[lines.length - 1] || '';
   console.log(`📝 [parseCardText] Nom extrait: "${name}"`);
@@ -88,18 +86,20 @@ export function parseCardText(ocrText: string): ParsedCardInfo | null {
  * Nettoie et améliore le texte OCR pour de meilleurs résultats
  */
 export function cleanOCRText(text: string): string {
-  return text
-    // Supprimer les caractères spéciaux parasites
-    .replace(/[|_~`]/g, '')
-    // Normaliser les espaces multiples
-    .replace(/\s+/g, ' ')
-    // Corriger les confusions OCR communes
-    .replace(/[0O]/g, match => {
-      // Si entouré de lettres, c'est probablement un O
-      // Si entouré de chiffres, c'est probablement un 0
-      return match;
-    })
-    .trim();
+  return (
+    text
+      // Supprimer les caractères spéciaux parasites
+      .replace(/[|_~`]/g, '')
+      // Normaliser les espaces multiples
+      .replace(/\s+/g, ' ')
+      // Corriger les confusions OCR communes
+      .replace(/[0O]/g, (match) => {
+        // Si entouré de lettres, c'est probablement un O
+        // Si entouré de chiffres, c'est probablement un 0
+        return match;
+      })
+      .trim()
+  );
 }
 
 /**

@@ -31,16 +31,16 @@ const resolveImageUrl = (imageUrl?: string): string => {
  */
 const RARITY_ORDER: Record<string, number> = {
   // Commune (niveau 1)
-  'Common': 1,
-  'Commune': 1,
+  Common: 1,
+  Commune: 1,
 
   // Peu commune (niveau 2)
-  'Uncommon': 2,
+  Uncommon: 2,
   'Peu commune': 2,
   'Peu Commune': 2,
 
   // Rare (niveau 3)
-  'Rare': 3,
+  Rare: 3,
 
   // Holo Rare (niveau 4)
   'Holo Rare': 4,
@@ -52,7 +52,7 @@ const RARITY_ORDER: Record<string, number> = {
   'Rare Reverse Holo': 5,
 
   // Holo (niveau 6)
-  'Holo': 6,
+  Holo: 6,
 
   // Double Rare (niveau 7)
   'Double Rare': 7,
@@ -213,30 +213,34 @@ export function SetDetail() {
     if (!currentSet) return [];
 
     // Choisir la source de données selon showCompleteSet
-    const sourceCards: CompleteSetCard[] = showCompleteSet && completeSetData
-      ? completeSetData
-      : currentSet.cards.map(card => ({ ...card, owned: true }));
+    const sourceCards: CompleteSetCard[] =
+      showCompleteSet && completeSetData
+        ? completeSetData
+        : currentSet.cards.map((card) => ({ ...card, owned: true }));
 
     let filtered = sourceCards;
 
     // Filtrage par recherche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((card) =>
-        card.name?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((card) => card.name?.toLowerCase().includes(query));
     }
 
     // Filtrage par rareté - afficher uniquement les cartes des raretés sélectionnées
     // Si aucune rareté n'est sélectionnée, afficher toutes les cartes
     if (selectedRarities.size > 0 && selectedRarities.size < availableRarities.length) {
-      filtered = filtered.filter((card) =>
-        card.rarity && selectedRarities.has(card.rarity)
-      );
+      filtered = filtered.filter((card) => card.rarity && selectedRarities.has(card.rarity));
     }
 
     return filtered;
-  }, [currentSet, completeSetData, searchQuery, selectedRarities, showCompleteSet, availableRarities.length]);
+  }, [
+    currentSet,
+    completeSetData,
+    searchQuery,
+    selectedRarities,
+    showCompleteSet,
+    availableRarities.length,
+  ]);
 
   const toggleRarity = (rarity: string) => {
     setSelectedRarities((prev) => {
@@ -264,11 +268,7 @@ export function SetDetail() {
       <div className={styles.error}>
         <Package className={styles.errorIcon} />
         <p>Erreur lors du chargement du set</p>
-        <button
-          type="button"
-          onClick={() => navigate('/portfolio')}
-          className={styles.backButton}
-        >
+        <button type="button" onClick={() => navigate('/portfolio')} className={styles.backButton}>
           Retour au portfolio
         </button>
       </div>
@@ -411,35 +411,38 @@ export function SetDetail() {
       )}
 
       {/* Modal de détails de carte */}
-      {selectedCard && (() => {
-        const currentIndex = filteredCards.findIndex((c) => c.itemId === selectedCard.itemId);
-        const hasPrevious = currentIndex > 0;
-        const hasNext = currentIndex < filteredCards.length - 1;
+      {selectedCard &&
+        (() => {
+          const currentIndex = filteredCards.findIndex((c) => c.itemId === selectedCard.itemId);
+          const hasPrevious = currentIndex > 0;
+          const hasNext = currentIndex < filteredCards.length - 1;
 
-        const handleNavigatePrevious = () => {
-          if (hasPrevious) {
-            setSelectedCard(filteredCards[currentIndex - 1]);
-          }
-        };
+          const handleNavigatePrevious = () => {
+            const prevCard = filteredCards[currentIndex - 1];
+            if (hasPrevious && prevCard) {
+              setSelectedCard(prevCard);
+            }
+          };
 
-        const handleNavigateNext = () => {
-          if (hasNext) {
-            setSelectedCard(filteredCards[currentIndex + 1]);
-          }
-        };
+          const handleNavigateNext = () => {
+            const nextCard = filteredCards[currentIndex + 1];
+            if (hasNext && nextCard) {
+              setSelectedCard(nextCard);
+            }
+          };
 
-        return (
-          <SetCardDetailsModal
-            card={selectedCard}
-            setName={currentSet.setName || 'Set inconnu'}
-            onClose={() => setSelectedCard(null)}
-            onNavigatePrevious={handleNavigatePrevious}
-            onNavigateNext={handleNavigateNext}
-            hasPrevious={hasPrevious}
-            hasNext={hasNext}
-          />
-        );
-      })()}
+          return (
+            <SetCardDetailsModal
+              card={selectedCard}
+              setName={currentSet.setName || 'Set inconnu'}
+              onClose={() => setSelectedCard(null)}
+              onNavigatePrevious={handleNavigatePrevious}
+              onNavigateNext={handleNavigateNext}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+            />
+          );
+        })()}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>

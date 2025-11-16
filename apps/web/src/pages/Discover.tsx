@@ -339,16 +339,12 @@ export default function Discover() {
         setId: card.set?.id,
         setName: card.set?.name,
         setLogo: card.set?.logo,
-        setSymbol: card.set?.symbol,
-        setReleaseDate: card.set?.releaseDate,
-        number: card.localId,
         setCardCount: card.set?.cardCount?.total,
         rarity: card.rarity,
         imageUrl: card.image || card.images?.small,
         imageUrlHiRes: card.images?.large,
         types: card.types,
         supertype: card.category,
-        subtypes: card.subtypes,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
@@ -538,8 +534,6 @@ export default function Discover() {
                       setId: card.set?.id,
                       setName: card.set?.name,
                       setLogo: card.set?.logo,
-                      setSymbol: card.set?.symbol,
-                      setReleaseDate: card.set?.releaseDate,
                       number: card.localId,
                       rarity: card.rarity,
                       imageUrl: card.image || card.images?.small,
@@ -644,39 +638,42 @@ export default function Discover() {
         />
       )}
 
-      {detailsCard && (() => {
-        const currentIndex = displayedCards.findIndex((c) => c.id === detailsCard.id);
-        const hasPrevious = currentIndex > 0;
-        const hasNext = currentIndex < displayedCards.length - 1;
+      {detailsCard &&
+        (() => {
+          const currentIndex = displayedCards.findIndex((c) => c.id === detailsCard.id);
+          const hasPrevious = currentIndex > 0;
+          const hasNext = currentIndex < displayedCards.length - 1;
 
-        const handleNavigatePrevious = () => {
-          if (hasPrevious) {
-            setDetailsCard(displayedCards[currentIndex - 1]);
-          }
-        };
+          const handleNavigatePrevious = () => {
+            const prevCard = displayedCards[currentIndex - 1];
+            if (hasPrevious && prevCard) {
+              setDetailsCard(prevCard);
+            }
+          };
 
-        const handleNavigateNext = () => {
-          if (hasNext) {
-            setDetailsCard(displayedCards[currentIndex + 1]);
-          }
-        };
+          const handleNavigateNext = () => {
+            const nextCard = displayedCards[currentIndex + 1];
+            if (hasNext && nextCard) {
+              setDetailsCard(nextCard);
+            }
+          };
 
-        return (
-          <CardDetailsModal
-            card={detailsCard}
-            onClose={() => setDetailsCard(null)}
-            onAdd={(card) => {
-              setSelectedCard(card);
-              setShowQuickAdd(true);
-              setDetailsCard(null);
-            }}
-            onNavigatePrevious={handleNavigatePrevious}
-            onNavigateNext={handleNavigateNext}
-            hasPrevious={hasPrevious}
-            hasNext={hasNext}
-          />
-        );
-      })()}
+          return (
+            <CardDetailsModal
+              card={detailsCard}
+              onClose={() => setDetailsCard(null)}
+              onAdd={(card) => {
+                setSelectedCard(card);
+                setShowQuickAdd(true);
+                setDetailsCard(null);
+              }}
+              onNavigatePrevious={handleNavigatePrevious}
+              onNavigateNext={handleNavigateNext}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+            />
+          );
+        })()}
 
       {showRecognition && (
         <CardRecognition

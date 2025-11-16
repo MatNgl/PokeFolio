@@ -22,19 +22,19 @@ function formatDate(date: string | Date | undefined): string {
  */
 interface PortfolioRow {
   'Nom de la carte': string;
-  'Numéro': string;
-  'Set': string;
-  'Rareté': string;
-  'Type': string;
+  Numéro: string;
+  Set: string;
+  Rareté: string;
+  Type: string;
   'Quantité totale': number;
   'Nombre de variantes': number;
-  'Date d\'ajout': string;
+  "Date d'ajout": string;
   'Carte gradée': string;
   'Société de gradation': string;
-  'Note': string;
-  'Prix d\'achat (€)': string;
-  'Date d\'achat': string;
-  'Notes': string;
+  Note: string;
+  "Prix d'achat (€)": string;
+  "Date d'achat": string;
+  Notes: string;
   'Prix total (€)': string;
 }
 
@@ -43,12 +43,12 @@ interface PortfolioRow {
  */
 interface WishlistRow {
   'Nom de la carte': string;
-  'Numéro': string;
-  'Set': string;
-  'Rareté': string;
-  'Type': string;
-  'Date d\'ajout': string;
-  'Notes': string;
+  Numéro: string;
+  Set: string;
+  Rareté: string;
+  Type: string;
+  "Date d'ajout": string;
+  Notes: string;
 }
 
 /**
@@ -63,20 +63,20 @@ function portfolioToRows(cards: UserCard[]): PortfolioRow[] {
       card.variants.forEach((variant) => {
         rows.push({
           'Nom de la carte': card.name || '',
-          'Numéro': card.number || '',
-          'Set': card.setName || '',
-          'Rareté': card.rarity || '',
-          'Type': card.types?.join(', ') || '',
+          Numéro: card.number || '',
+          Set: card.setName || '',
+          Rareté: card.rarity || '',
+          Type: card.types?.join(', ') || '',
           'Quantité totale': card.quantity || 0,
           'Nombre de variantes': card.variants?.length || 0,
-          'Date d\'ajout': formatDate(card.createdAt),
-          'Carte gradée': variant.graded ? 'Oui' : 'Non',
-          'Société de gradation': variant.grading?.company || '',
-          'Note': variant.grading?.grade || '',
-          'Prix d\'achat (€)': variant.purchasePrice ? variant.purchasePrice.toFixed(2) : '',
-          'Date d\'achat': formatDate(variant.purchaseDate),
-          'Notes': variant.notes || '',
-          'Prix total (€)': card.variants
+          "Date d'ajout": formatDate(card.createdAt),
+          'Carte gradée': variant.isGraded ? 'Oui' : 'Non',
+          'Société de gradation': variant.gradeCompany || '',
+          Note: variant.gradeScore || '',
+          "Prix d'achat (€)": variant.purchasePrice ? variant.purchasePrice.toFixed(2) : '',
+          "Date d'achat": formatDate(variant.purchaseDate),
+          Notes: variant.notes || '',
+          'Prix total (€)': (card.variants || [])
             .reduce((sum, v) => sum + (v.purchasePrice || 0), 0)
             .toFixed(2),
         });
@@ -85,19 +85,19 @@ function portfolioToRows(cards: UserCard[]): PortfolioRow[] {
       // Carte sans variantes (mode A legacy)
       rows.push({
         'Nom de la carte': card.name || '',
-        'Numéro': card.number || '',
-        'Set': card.setName || '',
-        'Rareté': card.rarity || '',
-        'Type': card.types?.join(', ') || '',
+        Numéro: card.number || '',
+        Set: card.setName || '',
+        Rareté: card.rarity || '',
+        Type: card.types?.join(', ') || '',
         'Quantité totale': card.quantity || 0,
         'Nombre de variantes': 1,
-        'Date d\'ajout': formatDate(card.createdAt),
+        "Date d'ajout": formatDate(card.createdAt),
         'Carte gradée': card.isGraded ? 'Oui' : 'Non',
         'Société de gradation': card.gradeCompany || '',
-        'Note': card.gradeScore || '',
-        'Prix d\'achat (€)': card.purchasePrice ? card.purchasePrice.toFixed(2) : '',
-        'Date d\'achat': formatDate(card.purchaseDate),
-        'Notes': card.notes || '',
+        Note: card.gradeScore || '',
+        "Prix d'achat (€)": card.purchasePrice ? card.purchasePrice.toFixed(2) : '',
+        "Date d'achat": formatDate(card.purchaseDate),
+        Notes: card.notes || '',
         'Prix total (€)': card.purchasePrice ? card.purchasePrice.toFixed(2) : '',
       });
     }
@@ -112,12 +112,12 @@ function portfolioToRows(cards: UserCard[]): PortfolioRow[] {
 function wishlistToRows(cards: Record<string, unknown>[]): WishlistRow[] {
   return cards.map((card) => ({
     'Nom de la carte': (card.name as string) || '',
-    'Numéro': (card.number as string) || '',
-    'Set': (card.setName as string) || ((card.set as { name?: string })?.name) || '',
-    'Rareté': (card.rarity as string) || '',
-    'Type': (card.types as string[])?.join(', ') || '',
-    'Date d\'ajout': formatDate((card.addedAt || card.createdAt) as string | Date | undefined),
-    'Notes': (card.notes as string) || '',
+    Numéro: (card.number as string) || '',
+    Set: (card.setName as string) || (card.set as { name?: string })?.name || '',
+    Rareté: (card.rarity as string) || '',
+    Type: (card.types as string[])?.join(', ') || '',
+    "Date d'ajout": formatDate((card.addedAt || card.createdAt) as string | Date | undefined),
+    Notes: (card.notes as string) || '',
   }));
 }
 
@@ -149,7 +149,7 @@ export async function exportToExcel(
       { wch: 12 }, // Date d'ajout
       { wch: 13 }, // Carte gradée
       { wch: 20 }, // Société de gradation
-      { wch: 8 },  // Note
+      { wch: 8 }, // Note
       { wch: 15 }, // Prix d'achat
       { wch: 12 }, // Date d'achat
       { wch: 30 }, // Notes
@@ -183,7 +183,7 @@ export async function exportToExcel(
     // Télécharger le fichier
     XLSX.writeFile(workbook, filename);
   } catch (error) {
-    console.error('Erreur lors de l\'export Excel:', error);
-    throw new Error('Impossible d\'exporter les données');
+    console.error("Erreur lors de l'export Excel:", error);
+    throw new Error("Impossible d'exporter les données");
   }
 }

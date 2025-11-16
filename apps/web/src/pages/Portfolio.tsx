@@ -198,7 +198,7 @@ export default function Portfolio() {
   }, []);
 
   const [cards, setCards] = useState<UserCardView[]>([]);
-  const [setStats] = useState<PortfolioStats | null>(null);
+  const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -243,7 +243,9 @@ export default function Portfolio() {
       const cardsNormalized = (cardsData as ApiCard[] | undefined)?.map(normalizeCard) ?? [];
       setCards(cardsNormalized);
 
-      setStats(statsData ? normalizeStats(statsData as ApiStats) : null);
+      if (statsData) {
+        setStats(normalizeStats(statsData as ApiStats));
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Erreur de chargement:', error);
@@ -297,8 +299,8 @@ export default function Portfolio() {
 
       // Exporter vers Excel
       await exportToExcel(
-        portfolioCards as UserCard[],
-        wishlistData.items,
+        portfolioCards as unknown as UserCard[],
+        wishlistData.items as unknown as Record<string, unknown>[],
         user?.pseudo || user?.email || 'user'
       );
 
@@ -845,9 +847,7 @@ export default function Portfolio() {
                   >
                     {card.isGraded && card.gradeCompany && card.gradeScore ? (
                       <GradedCardFrame
-                        company={
-                          card.gradeCompany as 'PSA' | 'BGS' | 'CGC' | 'PCA' | 'Collect Aura'
-                        }
+                        company={card.gradeCompany as 'PSA' | 'BGS' | 'CGC' | 'PCA' | 'CollectAura'}
                         grade={card.gradeScore}
                         size="medium"
                       >
@@ -963,15 +963,15 @@ export default function Portfolio() {
             const hasNext = currentIndex < displayedCards.length - 1;
 
             const handleNavigatePrevious = () => {
-              if (hasPrevious) {
-                const prevCard = displayedCards[currentIndex - 1];
+              const prevCard = displayedCards[currentIndex - 1];
+              if (hasPrevious && prevCard) {
                 setDetailsEntry(createEntryLike(prevCard) as PortfolioCard);
               }
             };
 
             const handleNavigateNext = () => {
-              if (hasNext) {
-                const nextCard = displayedCards[currentIndex + 1];
+              const nextCard = displayedCards[currentIndex + 1];
+              if (hasNext && nextCard) {
                 setDetailsEntry(createEntryLike(nextCard) as PortfolioCard);
               }
             };

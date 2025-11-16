@@ -104,7 +104,9 @@ export const setsService = {
       // On fait ça en parallèle pour optimiser
       const cardDetailsPromises = allCards.map(async (tcgCard: Record<string, unknown>) => {
         try {
-          const detailsResponse = await fetch(`https://api.tcgdex.net/v2/fr/cards/${tcgCard.id as string}`);
+          const detailsResponse = await fetch(
+            `https://api.tcgdex.net/v2/fr/cards/${tcgCard.id as string}`
+          );
           if (detailsResponse.ok) {
             const details = await detailsResponse.json();
             return details as Record<string, unknown>;
@@ -118,23 +120,25 @@ export const setsService = {
       const cardsWithDetails = await Promise.all(cardDetailsPromises);
 
       // Fusionner les données
-      const completeCards: CompleteSetCard[] = cardsWithDetails.map((tcgCard: Record<string, unknown>) => {
-        const cardId = `${setId}-${tcgCard.localId}`;
-        const ownedCard = ownedMap.get(cardId);
+      const completeCards: CompleteSetCard[] = cardsWithDetails.map(
+        (tcgCard: Record<string, unknown>) => {
+          const cardId = `${setId}-${tcgCard.localId as string}`;
+          const ownedCard = ownedMap.get(cardId);
 
-        return {
-          itemId: ownedCard?.itemId || `placeholder-${cardId}`,
-          cardId,
-          name: tcgCard.name,
-          number: tcgCard.localId,
-          imageUrl: tcgCard.image,
-          rarity: tcgCard.rarity, // Maintenant présent grâce aux détails
-          quantity: ownedCard?.quantity || 0,
-          isGraded: ownedCard?.isGraded || false,
-          purchasePrice: ownedCard?.purchasePrice,
-          owned: !!ownedCard,
-        };
-      });
+          return {
+            itemId: ownedCard?.itemId || `placeholder-${cardId}`,
+            cardId,
+            name: tcgCard.name as string | undefined,
+            number: tcgCard.localId as string | undefined,
+            imageUrl: tcgCard.image as string | undefined,
+            rarity: tcgCard.rarity as string | undefined,
+            quantity: ownedCard?.quantity || 0,
+            isGraded: ownedCard?.isGraded || false,
+            purchasePrice: ownedCard?.purchasePrice,
+            owned: !!ownedCard,
+          };
+        }
+      );
 
       // Trier par numéro
       completeCards.sort((a, b) => {

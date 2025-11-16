@@ -1,7 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { setsService, type PortfolioSet, type SetCard } from '../../services/sets.service';
+import {
+  setsService,
+  type PortfolioSet,
+  type SetCard,
+  type CompleteSetCard,
+} from '../../services/sets.service';
 import { FilterButton, type SortOption as FilterSortOption } from '../ui/FilterButton';
 import SearchBar from '../ui/Search';
 import SetCardDetailsModal from '../cards/SetCardDetailsModal';
@@ -28,9 +33,12 @@ export function SetsView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<FilterSortOption>({
     field: 'date',
-    direction: 'desc'
+    direction: 'desc',
   });
-  const [selectedCard, setSelectedCard] = useState<{ card: SetCard; setName: string } | null>(null);
+  const [selectedCard, setSelectedCard] = useState<{
+    card: CompleteSetCard;
+    setName: string;
+  } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['portfolio', 'sets'],
@@ -65,7 +73,9 @@ export function SetsView() {
         case 'date': // Date de sortie
           if (!a.releaseDate) return 1;
           if (!b.releaseDate) return -1;
-          return multiplier * (new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime());
+          return (
+            multiplier * (new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+          );
         case 'name': // Nom du set
           return multiplier * (a.setName || '').localeCompare(b.setName || '');
         case 'default':
@@ -112,11 +122,7 @@ export function SetsView() {
           ariaLabel="Rechercher dans vos sets"
           className={styles.searchBar}
         />
-        <FilterButton
-          onSortChange={setSortOption}
-          currentSort={sortOption}
-          context="sets"
-        />
+        <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="sets" />
       </div>
 
       {filteredAndSortedSets.length === 0 ? (
@@ -127,151 +133,155 @@ export function SetsView() {
       ) : (
         <div className={styles.setsList}>
           {filteredAndSortedSets.map((set: PortfolioSet) => (
-          <div key={set.setId} className={styles.setCard}>
-            <div className={styles.setHeader}>
-              {set.setLogo ? (
-                <img src={set.setLogo} alt={set.setName || 'Set'} className={styles.setLogo} />
-              ) : (
-                <div className={styles.setLogoPlaceholder}>
-                  <Package size={32} />
+            <div key={set.setId} className={styles.setCard}>
+              <div className={styles.setHeader}>
+                {set.setLogo ? (
+                  <img src={set.setLogo} alt={set.setName || 'Set'} className={styles.setLogo} />
+                ) : (
+                  <div className={styles.setLogoPlaceholder}>
+                    <Package size={32} />
+                  </div>
+                )}
+                <div className={styles.setInfo}>
+                  <button
+                    className={styles.setName}
+                    onClick={() => navigate(`/portfolio/set/${set.setId}`)}
+                    type="button"
+                  >
+                    {set.setName || 'Set inconnu'}
+
+                    <ChevronRight size={20} className={styles.setNameArrow} />
+                  </button>
+                  <div className={styles.setMeta}>
+                    <span className={styles.setStats}>
+                      {set.completion.owned}
+                      {set.completion.total && ` / ${set.completion.total}`} cartes
+                    </span>
+                    {set.completion.percentage !== undefined && (
+                      <span className={styles.completionBadge}>{set.completion.percentage}%</span>
+                    )}
+                  </div>
                 </div>
-              )}
-              <div className={styles.setInfo}>
-                <h3
-                  className={styles.setName}
-                  onClick={() => navigate(`/portfolio/set/${set.setId}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      navigate(`/portfolio/set/${set.setId}`);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  {set.setName || 'Set inconnu'}
-                  <ChevronRight size={20} className={styles.setNameArrow} />
-                </h3>
-                <div className={styles.setMeta}>
-                  <span className={styles.setStats}>
-                    {set.completion.owned}
-                    {set.completion.total && ` / ${set.completion.total}`} cartes
-                  </span>
-                  {set.completion.percentage !== undefined && (
-                    <span className={styles.completionBadge}>{set.completion.percentage}%</span>
+              </div>
+
+              <div className={styles.setBody}>
+                {set.completion.total && (
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progressFill}
+                      style={{ width: `${set.completion.percentage || 0}%` }}
+                    />
+                  </div>
+                )}
+
+                <div className={styles.setDetails}>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Quantité totale</span>
+                    <span className={styles.detailValue}>{set.totalQuantity || 0}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Valeur</span>
+                    <span className={styles.detailValue}>{set.totalValue.toFixed(2)}€</span>
+                  </div>
+                </div>
+
+                {/* Cards grid */}
+                <div className={styles.cardsGrid}>
+                  {set.cards.slice(0, 8).map((card) => (
+                    <div
+                      key={card.itemId}
+                      className={styles.cardThumbnail}
+                      onClick={() =>
+                        setSelectedCard({
+                          card: { ...card, owned: true },
+                          setName: set.setName || 'Set inconnu',
+                        })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          setSelectedCard({
+                            card: { ...card, owned: true },
+                            setName: set.setName || 'Set inconnu',
+                          });
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <img
+                        src={resolveImageUrl(card.imageUrl)}
+                        alt={card.name || card.cardId}
+                        className={styles.cardImage}
+                        loading="lazy"
+                        width={245}
+                        height={342}
+                        onError={(e) => {
+                          const t = e.currentTarget as HTMLImageElement;
+                          t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                        }}
+                      />
+                    </div>
+                  ))}
+                  {set.cards.length > 8 && (
+                    <div className={styles.moreCards}>+{set.cards.length - 8}</div>
                   )}
                 </div>
               </div>
             </div>
-
-            <div className={styles.setBody}>
-              {set.completion.total && (
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progressFill}
-                    style={{ width: `${set.completion.percentage || 0}%` }}
-                  />
-                </div>
-              )}
-
-              <div className={styles.setDetails}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Quantité totale</span>
-                  <span className={styles.detailValue}>{set.totalQuantity || 0}</span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Valeur</span>
-                  <span className={styles.detailValue}>{set.totalValue.toFixed(2)}€</span>
-                </div>
-              </div>
-
-              {/* Cards grid */}
-              <div className={styles.cardsGrid}>
-                {set.cards.slice(0, 8).map((card) => (
-                  <div
-                    key={card.itemId}
-                    className={styles.cardThumbnail}
-                    onClick={() => setSelectedCard({
-                      card: { ...card, owned: true },
-                      setName: set.setName || 'Set inconnu'
-                    })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setSelectedCard({
-                          card: { ...card, owned: true },
-                          setName: set.setName || 'Set inconnu'
-                        });
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <img
-                      src={resolveImageUrl(card.imageUrl)}
-                      alt={card.name || card.cardId}
-                      className={styles.cardImage}
-                      loading="lazy"
-                      width={245}
-                      height={342}
-                      onError={(e) => {
-                        const t = e.currentTarget as HTMLImageElement;
-                        t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                      }}
-                    />
-                  </div>
-                ))}
-                {set.cards.length > 8 && (
-                  <div className={styles.moreCards}>+{set.cards.length - 8}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
         </div>
       )}
 
       {/* Modal de détails de carte */}
-      {selectedCard && (() => {
-        // Trouver le set contenant la carte sélectionnée
-        const currentSet = filteredAndSortedSets.find((s) =>
-          s.cards.some((c) => c.itemId === selectedCard.card.itemId)
-        );
-        if (!currentSet) return null;
+      {selectedCard &&
+        (() => {
+          // Trouver le set contenant la carte sélectionnée
+          const currentSet = filteredAndSortedSets.find((s) =>
+            s.cards.some((c) => c.itemId === selectedCard.card.itemId)
+          );
+          if (!currentSet) return null;
 
-        const cardsInSet = currentSet.cards;
-        const currentIndex = cardsInSet.findIndex((c) => c.itemId === selectedCard.card.itemId);
-        const hasPrevious = currentIndex > 0;
-        const hasNext = currentIndex < cardsInSet.length - 1;
+          const cardsInSet = currentSet.cards;
+          const currentIndex = cardsInSet.findIndex((c) => c.itemId === selectedCard.card.itemId);
+          const hasPrevious = currentIndex > 0;
+          const hasNext = currentIndex < cardsInSet.length - 1;
 
-        const handleNavigatePrevious = () => {
-          if (hasPrevious) {
-            setSelectedCard({
-              card: cardsInSet[currentIndex - 1],
-              setName: currentSet.setName || 'Set inconnu',
-            });
-          }
-        };
+          const handleNavigatePrevious = () => {
+            if (hasPrevious) {
+              const prevCard = cardsInSet[currentIndex - 1];
+              if (prevCard) {
+                setSelectedCard({
+                  card: { ...prevCard, owned: true } as CompleteSetCard,
+                  setName: currentSet.setName || 'Set inconnu',
+                });
+              }
+            }
+          };
 
-        const handleNavigateNext = () => {
-          if (hasNext) {
-            setSelectedCard({
-              card: cardsInSet[currentIndex + 1],
-              setName: currentSet.setName || 'Set inconnu',
-            });
-          }
-        };
+          const handleNavigateNext = () => {
+            if (hasNext) {
+              const nextCard = cardsInSet[currentIndex + 1];
+              if (nextCard) {
+                setSelectedCard({
+                  card: { ...nextCard, owned: true } as CompleteSetCard,
+                  setName: currentSet.setName || 'Set inconnu',
+                });
+              }
+            }
+          };
 
-        return (
-          <SetCardDetailsModal
-            card={selectedCard.card as Record<string, unknown>}
-            setName={selectedCard.setName}
-            onClose={() => setSelectedCard(null)}
-            onNavigatePrevious={handleNavigatePrevious}
-            onNavigateNext={handleNavigateNext}
-            hasPrevious={hasPrevious}
-            hasNext={hasNext}
-          />
-        );
-      })()}
+          return (
+            <SetCardDetailsModal
+              card={selectedCard.card}
+              setName={selectedCard.setName}
+              onClose={() => setSelectedCard(null)}
+              onNavigatePrevious={handleNavigatePrevious}
+              onNavigateNext={handleNavigateNext}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+            />
+          );
+        })()}
     </div>
   );
 }

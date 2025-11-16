@@ -2,6 +2,7 @@ import { useState, useMemo, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wishlistService, type WishlistItem } from '../../services/wishlist.service';
 import { portfolioService } from '../../services/portfolio.service';
+import { type CompleteSetCard } from '../../services/sets.service';
 import SearchBar from '../ui/Search';
 import { FilterButton, type SortOption as FilterSortOption } from '../ui/FilterButton';
 import { QuickAddModal } from '../cards/QuickAddModal';
@@ -102,17 +103,9 @@ export function WishlistView() {
         case 'name':
           return multiplier * (a.name || '').localeCompare(b.name || '');
         case 'date':
-          return (
-            multiplier *
-            (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          );
-        case 'rarity':
-          return multiplier * (a.rarity || '').localeCompare(b.rarity || '');
+          return multiplier * (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         default:
-          return (
-            multiplier *
-            (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          );
+          return multiplier * (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       }
     });
   }, [data?.items, searchQuery, sortOption]);
@@ -146,11 +139,9 @@ export function WishlistView() {
         large: selectedItemForQuickAdd.imageUrlHiRes,
       },
       set: {
-        id: selectedItemForQuickAdd.setId,
+        id: selectedItemForQuickAdd.setId || '',
         name: selectedItemForQuickAdd.setName,
         logo: selectedItemForQuickAdd.setLogo,
-        symbol: selectedItemForQuickAdd.setSymbol,
-        releaseDate: selectedItemForQuickAdd.releaseDate,
       },
       rarity: selectedItemForQuickAdd.rarity,
       types: selectedItemForQuickAdd.types,
@@ -207,11 +198,7 @@ export function WishlistView() {
           ariaLabel="Rechercher dans votre wishlist"
           className={styles.searchBar}
         />
-        <FilterButton
-          onSortChange={setSortOption}
-          currentSort={sortOption}
-          context="discover"
-        />
+        <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="discover" />
       </div>
 
       {/* Liste */}
@@ -225,76 +212,76 @@ export function WishlistView() {
       ) : (
         <div className={styles.grid}>
           {filteredAndSortedItems.map((item) => (
-              <article key={item.id} className={styles.card}>
-                <div
-                  className={styles.cardImageWrap}
-                  onClick={() => setSelectedCardForDetails(item)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedCardForDetails(item);
-                    }
+            <article key={item.id} className={styles.card}>
+              <div
+                className={styles.cardImageWrap}
+                onClick={() => setSelectedCardForDetails(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedCardForDetails(item);
+                  }
+                }}
+                aria-label={`Voir les détails de ${item.name}`}
+                title={`Voir les détails de ${item.name}`}
+              >
+                <img
+                  src={resolveImageUrl(item.imageUrl)}
+                  alt={item.name || item.cardId}
+                  className={styles.cardImage}
+                  loading="lazy"
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
                   }}
-                  aria-label={`Voir les détails de ${item.name}`}
-                  title={`Voir les détails de ${item.name}`}
-                >
-                  <img
-                    src={resolveImageUrl(item.imageUrl)}
-                    alt={item.name || item.cardId}
-                    className={styles.cardImage}
-                    loading="lazy"
-                    onError={(e) => {
-                      const t = e.currentTarget as HTMLImageElement;
-                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className={styles.removeBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const cardName = item.name || item.cardId;
-                      removeMutation.mutate(item.cardId);
-                      setToast({
-                        message: (
-                          <>
-                            <strong>{cardName}</strong> a été retiré de la wishlist
-                          </>
-                        ),
-                        type: 'info',
-                      });
-                    }}
-                    aria-label="Retirer de la wishlist"
-                    title="Retirer de la wishlist"
-                  >
-                    <Heart size={18} fill="currentColor" />
-                  </button>
-                </div>
-
-                <div className={styles.cardInfo}>
-                  <h3 className={styles.cardName}>{item.name}</h3>
-                  <p className={styles.cardSet}>
-                    {item.setName || item.setId?.toUpperCase() || 'Set inconnu'}
-                    {item.number && ` · #${item.number}`}
-                  </p>
-                  {item.rarity && <p className={styles.cardRarity}>{item.rarity}</p>}
-                </div>
-
+                />
                 <button
                   type="button"
-                  className={styles.addBtn}
-                  onClick={() => {
-                    setSelectedItemForQuickAdd(item);
-                    setShowQuickAdd(true);
+                  className={styles.removeBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const cardName = item.name || item.cardId;
+                    removeMutation.mutate(item.cardId);
+                    setToast({
+                      message: (
+                        <>
+                          <strong>{cardName}</strong> a été retiré de la wishlist
+                        </>
+                      ),
+                      type: 'info',
+                    });
                   }}
-                  aria-label={`Ajouter ${item.name} au portfolio`}
+                  aria-label="Retirer de la wishlist"
+                  title="Retirer de la wishlist"
                 >
-                  <PlusCircle size={16} />
-                  Ajouter
+                  <Heart size={18} fill="currentColor" />
                 </button>
-              </article>
+              </div>
+
+              <div className={styles.cardInfo}>
+                <h3 className={styles.cardName}>{item.name}</h3>
+                <p className={styles.cardSet}>
+                  {item.setName || item.setId?.toUpperCase() || 'Set inconnu'}
+                  {item.number && ` · #${item.number}`}
+                </p>
+                {item.rarity && <p className={styles.cardRarity}>{item.rarity}</p>}
+              </div>
+
+              <button
+                type="button"
+                className={styles.addBtn}
+                onClick={() => {
+                  setSelectedItemForQuickAdd(item);
+                  setShowQuickAdd(true);
+                }}
+                aria-label={`Ajouter ${item.name} au portfolio`}
+              >
+                <PlusCircle size={16} />
+                Ajouter
+              </button>
+            </article>
           ))}
         </div>
       )}
@@ -325,45 +312,51 @@ export function WishlistView() {
         />
       )}
 
-      {selectedCardForDetails && (() => {
-        const currentIndex = filteredAndSortedItems.findIndex(
-          (item) => item.id === selectedCardForDetails.id
-        );
-        const hasPrevious = currentIndex > 0;
-        const hasNext = currentIndex < filteredAndSortedItems.length - 1;
+      {selectedCardForDetails &&
+        (() => {
+          const currentIndex = filteredAndSortedItems.findIndex(
+            (item) => item.id === selectedCardForDetails.id
+          );
+          const hasPrevious = currentIndex > 0;
+          const hasNext = currentIndex < filteredAndSortedItems.length - 1;
 
-        const handleNavigatePrevious = () => {
-          if (hasPrevious) {
-            setSelectedCardForDetails(filteredAndSortedItems[currentIndex - 1]);
-          }
-        };
+          const handleNavigatePrevious = () => {
+            const prevCard = filteredAndSortedItems[currentIndex - 1];
+            if (hasPrevious && prevCard) {
+              setSelectedCardForDetails(prevCard);
+            }
+          };
 
-        const handleNavigateNext = () => {
-          if (hasNext) {
-            setSelectedCardForDetails(filteredAndSortedItems[currentIndex + 1]);
-          }
-        };
+          const handleNavigateNext = () => {
+            const nextCard = filteredAndSortedItems[currentIndex + 1];
+            if (hasNext && nextCard) {
+              setSelectedCardForDetails(nextCard);
+            }
+          };
 
-        return (
-          <SetCardDetailsModal
-            card={{
-              itemId: selectedCardForDetails.id,
-              cardId: selectedCardForDetails.cardId,
-              name: selectedCardForDetails.name,
-              number: selectedCardForDetails.number,
-              rarity: selectedCardForDetails.rarity,
-              imageUrl: selectedCardForDetails.imageUrl,
-              owned: false,
-            }}
-            setName={selectedCardForDetails.setName || 'Set inconnu'}
-            onClose={() => setSelectedCardForDetails(null)}
-            onNavigatePrevious={handleNavigatePrevious}
-            onNavigateNext={handleNavigateNext}
-            hasPrevious={hasPrevious}
-            hasNext={hasNext}
-          />
-        );
-      })()}
+          const completeSetCard: CompleteSetCard = {
+            itemId: selectedCardForDetails.id,
+            cardId: selectedCardForDetails.cardId,
+            name: selectedCardForDetails.name,
+            number: selectedCardForDetails.number,
+            rarity: selectedCardForDetails.rarity,
+            imageUrl: selectedCardForDetails.imageUrl,
+            owned: false,
+            quantity: 0,
+          };
+
+          return (
+            <SetCardDetailsModal
+              card={completeSetCard}
+              setName={selectedCardForDetails.setName || 'Set inconnu'}
+              onClose={() => setSelectedCardForDetails(null)}
+              onNavigatePrevious={handleNavigatePrevious}
+              onNavigateNext={handleNavigateNext}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+            />
+          );
+        })()}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>

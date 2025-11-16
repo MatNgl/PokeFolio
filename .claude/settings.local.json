@@ -39,7 +39,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(cmd /c \"taskkill //PID 15972 //F\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
