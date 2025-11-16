@@ -1,4 +1,3 @@
-// apps/web/src/hooks/useCardOCR.ts
 import { useState, useCallback, useRef } from 'react';
 import { createWorker, PSM } from 'tesseract.js';
 import type { Worker } from 'tesseract.js';
@@ -39,7 +38,7 @@ export function useCardOCR(): UseCardOCRReturn {
 
     try {
       const worker = await createWorker('fra', 1, {
-        logger: info => {
+        logger: (info) => {
           if (info.status === 'recognizing text') {
             console.log(`OCR Progress: ${Math.round(info.progress * 100)}%`);
           }
@@ -56,8 +55,8 @@ export function useCardOCR(): UseCardOCRReturn {
       workerRef.current = worker;
       return worker;
     } catch (err) {
-      console.error('Erreur lors de l\'initialisation du worker OCR:', err);
-      throw new Error('Impossible d\'initialiser le moteur de reconnaissance');
+      console.error("Erreur lors de l'initialisation du worker OCR:", err);
+      throw new Error("Impossible d'initialiser le moteur de reconnaissance");
     }
   }, []);
 
@@ -70,13 +69,13 @@ export function useCardOCR(): UseCardOCRReturn {
       setError(null);
 
       try {
-        console.log('🎯 [useCardOCR] Début du prétraitement de l\'image');
+        console.log("🎯 [useCardOCR] Début du prétraitement de l'image");
 
         // Étape 1: Prétraiter l'image pour extraire les régions d'intérêt
         const regions = await preprocessCardImage(imageSource);
 
         if (!regions) {
-          console.warn('⚠️ [useCardOCR] Échec du prétraitement, utilisation de l\'image complète');
+          console.warn("⚠️ [useCardOCR] Échec du prétraitement, utilisation de l'image complète");
           // Fallback sur l'ancienne méthode
           return await recognizeFullImage(imageSource);
         }
@@ -86,12 +85,15 @@ export function useCardOCR(): UseCardOCRReturn {
         // Configurer Tesseract pour le texte du nom (sparse text, pas single line)
         await worker.setParameters({
           tessedit_pageseg_mode: PSM.SPARSE_TEXT, // Sparse text - détecte le texte éparpillé
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzàâäéèêëïîôùûüÿçœæÀÂÄÉÈÊËÏÎÔÙÛÜŸÇŒÆ ♂♀-\'',
+          tessedit_char_whitelist:
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzàâäéèêëïîôùûüÿçœæÀÂÄÉÈÊËÏÎÔÙÛÜŸÇŒÆ ♂♀-'",
         });
 
         // Étape 2: Reconnaître le nom
         console.log('📝 [useCardOCR] Reconnaissance du nom...');
-        const { data: { text: nameText } } = await worker.recognize(regions.nameRegion);
+        const {
+          data: { text: nameText },
+        } = await worker.recognize(regions.nameRegion);
         console.log('📄 [useCardOCR] Texte brut du nom:', nameText);
         console.log('📏 [useCardOCR] Longueur du texte:', nameText.length);
 
@@ -106,7 +108,9 @@ export function useCardOCR(): UseCardOCRReturn {
 
         // Étape 3: Reconnaître le numéro
         console.log('🔢 [useCardOCR] Reconnaissance du numéro...');
-        const { data: { text: numberText } } = await worker.recognize(regions.numberRegion);
+        const {
+          data: { text: numberText },
+        } = await worker.recognize(regions.numberRegion);
         console.log('📄 [useCardOCR] Texte brut du numéro:', numberText);
         console.log('📏 [useCardOCR] Longueur du texte:', numberText.length);
 
@@ -166,10 +170,13 @@ export function useCardOCR(): UseCardOCRReturn {
 
         await worker.setParameters({
           tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0-9éèêëàâäôöûüçÉÈÊËÀÂÄÔÖÛÜÇ/- ♂♀',
+          tessedit_char_whitelist:
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0-9éèêëàâäôöûüçÉÈÊËÀÂÄÔÖÛÜÇ/- ♂♀',
         });
 
-        const { data: { text } } = await worker.recognize(imageSource);
+        const {
+          data: { text },
+        } = await worker.recognize(imageSource);
         const cleanedText = cleanOCRText(text);
         const parsedInfo = parseCardText(cleanedText);
         const confidence = calculateConfidence(parsedInfo);

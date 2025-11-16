@@ -230,13 +230,48 @@ export function SetsView() {
       )}
 
       {/* Modal de détails de carte */}
-      {selectedCard && (
-        <SetCardDetailsModal
-          card={selectedCard.card as any}
-          setName={selectedCard.setName}
-          onClose={() => setSelectedCard(null)}
-        />
-      )}
+      {selectedCard && (() => {
+        // Trouver le set contenant la carte sélectionnée
+        const currentSet = filteredAndSortedSets.find((s) =>
+          s.cards.some((c) => c.itemId === selectedCard.card.itemId)
+        );
+        if (!currentSet) return null;
+
+        const cardsInSet = currentSet.cards;
+        const currentIndex = cardsInSet.findIndex((c) => c.itemId === selectedCard.card.itemId);
+        const hasPrevious = currentIndex > 0;
+        const hasNext = currentIndex < cardsInSet.length - 1;
+
+        const handleNavigatePrevious = () => {
+          if (hasPrevious) {
+            setSelectedCard({
+              card: cardsInSet[currentIndex - 1],
+              setName: currentSet.setName || 'Set inconnu',
+            });
+          }
+        };
+
+        const handleNavigateNext = () => {
+          if (hasNext) {
+            setSelectedCard({
+              card: cardsInSet[currentIndex + 1],
+              setName: currentSet.setName || 'Set inconnu',
+            });
+          }
+        };
+
+        return (
+          <SetCardDetailsModal
+            card={selectedCard.card as Record<string, unknown>}
+            setName={selectedCard.setName}
+            onClose={() => setSelectedCard(null)}
+            onNavigatePrevious={handleNavigatePrevious}
+            onNavigateNext={handleNavigateNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        );
+      })()}
     </div>
   );
 }

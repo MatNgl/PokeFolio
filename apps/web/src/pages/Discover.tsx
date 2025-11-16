@@ -644,17 +644,39 @@ export default function Discover() {
         />
       )}
 
-      {detailsCard && (
-        <CardDetailsModal
-          card={detailsCard}
-          onClose={() => setDetailsCard(null)}
-          onAdd={(card) => {
-            setSelectedCard(card);
-            setShowQuickAdd(true);
-            setDetailsCard(null);
-          }}
-        />
-      )}
+      {detailsCard && (() => {
+        const currentIndex = displayedCards.findIndex((c) => c.id === detailsCard.id);
+        const hasPrevious = currentIndex > 0;
+        const hasNext = currentIndex < displayedCards.length - 1;
+
+        const handleNavigatePrevious = () => {
+          if (hasPrevious) {
+            setDetailsCard(displayedCards[currentIndex - 1]);
+          }
+        };
+
+        const handleNavigateNext = () => {
+          if (hasNext) {
+            setDetailsCard(displayedCards[currentIndex + 1]);
+          }
+        };
+
+        return (
+          <CardDetailsModal
+            card={detailsCard}
+            onClose={() => setDetailsCard(null)}
+            onAdd={(card) => {
+              setSelectedCard(card);
+              setShowQuickAdd(true);
+              setDetailsCard(null);
+            }}
+            onNavigatePrevious={handleNavigatePrevious}
+            onNavigateNext={handleNavigateNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        );
+      })()}
 
       {showRecognition && (
         <CardRecognition

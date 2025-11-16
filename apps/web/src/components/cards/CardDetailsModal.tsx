@@ -1,15 +1,28 @@
 import { useEffect, useRef } from 'react';
 import type { Card } from '@pokefolio/types';
 import { Button } from '../ui/Button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './CardDetailsModal.module.css';
 
 interface CardDetailsModalProps {
   card: Card;
   onClose: () => void;
   onAdd: (card: Card) => void;
+  onNavigatePrevious?: () => void;
+  onNavigateNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 }
 
-export function CardDetailsModal({ card, onClose, onAdd }: CardDetailsModalProps) {
+export function CardDetailsModal({
+  card,
+  onClose,
+  onAdd,
+  onNavigatePrevious,
+  onNavigateNext,
+  hasPrevious,
+  hasNext,
+}: CardDetailsModalProps) {
   const dialogRef = useRef<HTMLElement>(null);
 
   // Focus auto dans le modal
@@ -17,17 +30,23 @@ export function CardDetailsModal({ card, onClose, onAdd }: CardDetailsModalProps
     dialogRef.current?.focus();
   }, []);
 
-  // Fermer avec ESC
+  // Fermer avec ESC + navigation au clavier
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'ArrowLeft' && hasPrevious && onNavigatePrevious) {
+        e.preventDefault();
+        onNavigatePrevious();
+      } else if (e.key === 'ArrowRight' && hasNext && onNavigateNext) {
+        e.preventDefault();
+        onNavigateNext();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  }, [onClose, onNavigatePrevious, onNavigateNext, hasPrevious, hasNext]);
 
   const getCardImageUrl = (cardData: Card): string => {
     let img = cardData.image || cardData.images?.large || cardData.images?.small || '';
@@ -49,16 +68,19 @@ export function CardDetailsModal({ card, onClose, onAdd }: CardDetailsModalProps
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={handleOverlayKeyDown}
-      role="button"
-      aria-label="Fermer la fenêtre modale"
-      tabIndex={0}
-    >
+    <div className={styles.overlay}>
+      {/* Flèche gauche */}
+      {hasPrevious && onNavigatePrevious && (
+        <button
+          className={styles.navBtnLeft}
+          onClick={onNavigatePrevious}
+          aria-label="Carte précédente"
+          title="Carte précédente (←)"
+        >
+          <ChevronLeft size={28} />
+        </button>
+      )}
+
       <section
         ref={dialogRef}
         className={styles.modal}
@@ -170,6 +192,18 @@ export function CardDetailsModal({ card, onClose, onAdd }: CardDetailsModalProps
           </div>
         </div>
       </section>
+
+      {/* Flèche droite */}
+      {hasNext && onNavigateNext && (
+        <button
+          className={styles.navBtnRight}
+          onClick={onNavigateNext}
+          aria-label="Carte suivante"
+          title="Carte suivante (→)"
+        >
+          <ChevronRight size={28} />
+        </button>
+      )}
     </div>
   );
 }

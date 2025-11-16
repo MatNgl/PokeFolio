@@ -325,21 +325,45 @@ export function WishlistView() {
         />
       )}
 
-      {selectedCardForDetails && (
-        <SetCardDetailsModal
-          card={{
-            itemId: selectedCardForDetails.id,
-            cardId: selectedCardForDetails.cardId,
-            name: selectedCardForDetails.name,
-            number: selectedCardForDetails.number,
-            rarity: selectedCardForDetails.rarity,
-            imageUrl: selectedCardForDetails.imageUrl,
-            owned: false,
-          }}
-          setName={selectedCardForDetails.setName || 'Set inconnu'}
-          onClose={() => setSelectedCardForDetails(null)}
-        />
-      )}
+      {selectedCardForDetails && (() => {
+        const currentIndex = filteredAndSortedItems.findIndex(
+          (item) => item.id === selectedCardForDetails.id
+        );
+        const hasPrevious = currentIndex > 0;
+        const hasNext = currentIndex < filteredAndSortedItems.length - 1;
+
+        const handleNavigatePrevious = () => {
+          if (hasPrevious) {
+            setSelectedCardForDetails(filteredAndSortedItems[currentIndex - 1]);
+          }
+        };
+
+        const handleNavigateNext = () => {
+          if (hasNext) {
+            setSelectedCardForDetails(filteredAndSortedItems[currentIndex + 1]);
+          }
+        };
+
+        return (
+          <SetCardDetailsModal
+            card={{
+              itemId: selectedCardForDetails.id,
+              cardId: selectedCardForDetails.cardId,
+              name: selectedCardForDetails.name,
+              number: selectedCardForDetails.number,
+              rarity: selectedCardForDetails.rarity,
+              imageUrl: selectedCardForDetails.imageUrl,
+              owned: false,
+            }}
+            setName={selectedCardForDetails.setName || 'Set inconnu'}
+            onClose={() => setSelectedCardForDetails(null)}
+            onNavigatePrevious={handleNavigatePrevious}
+            onNavigateNext={handleNavigateNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        );
+      })()}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>

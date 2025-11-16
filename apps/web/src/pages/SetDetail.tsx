@@ -411,13 +411,35 @@ export function SetDetail() {
       )}
 
       {/* Modal de détails de carte */}
-      {selectedCard && (
-        <SetCardDetailsModal
-          card={selectedCard}
-          setName={currentSet.setName || 'Set inconnu'}
-          onClose={() => setSelectedCard(null)}
-        />
-      )}
+      {selectedCard && (() => {
+        const currentIndex = filteredCards.findIndex((c) => c.itemId === selectedCard.itemId);
+        const hasPrevious = currentIndex > 0;
+        const hasNext = currentIndex < filteredCards.length - 1;
+
+        const handleNavigatePrevious = () => {
+          if (hasPrevious) {
+            setSelectedCard(filteredCards[currentIndex - 1]);
+          }
+        };
+
+        const handleNavigateNext = () => {
+          if (hasNext) {
+            setSelectedCard(filteredCards[currentIndex + 1]);
+          }
+        };
+
+        return (
+          <SetCardDetailsModal
+            card={selectedCard}
+            setName={currentSet.setName || 'Set inconnu'}
+            onClose={() => setSelectedCard(null)}
+            onNavigatePrevious={handleNavigatePrevious}
+            onNavigateNext={handleNavigateNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        );
+      })()}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>

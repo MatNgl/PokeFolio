@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CompleteSetCard } from '../../services/sets.service';
 import styles from './SetCardDetailsModal.module.css';
 
@@ -7,6 +7,10 @@ type Props = {
   card: CompleteSetCard;
   setName: string;
   onClose: () => void;
+  onNavigatePrevious?: () => void;
+  onNavigateNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 };
 
 function resolveImageUrl(url?: string): string {
@@ -17,7 +21,15 @@ function resolveImageUrl(url?: string): string {
   return url;
 }
 
-export default function SetCardDetailsModal({ card, setName, onClose }: Props) {
+export default function SetCardDetailsModal({
+  card,
+  setName,
+  onClose,
+  onNavigatePrevious,
+  onNavigateNext,
+  hasPrevious,
+  hasNext,
+}: Props) {
   const dialogRef = useRef<HTMLElement>(null);
 
   // Bloquer le scroll du body quand le modal est ouvert
@@ -33,31 +45,40 @@ export default function SetCardDetailsModal({ card, setName, onClose }: Props) {
     dialogRef.current?.focus();
   }, []);
 
-  // ESC pour fermer
+  // ESC pour fermer + navigation au clavier
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'ArrowLeft' && hasPrevious && onNavigatePrevious) {
+        e.preventDefault();
+        onNavigatePrevious();
+      } else if (e.key === 'ArrowRight' && hasNext && onNavigateNext) {
+        e.preventDefault();
+        onNavigateNext();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, onNavigatePrevious, onNavigateNext, hasPrevious, hasNext]);
 
   const imageUrl = resolveImageUrl(card.imageUrl);
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
-      role="button"
-      tabIndex={-1}
-      aria-label="Fermer le modal"
-    >
+    <div className={styles.overlay}>
+      {/* Flèche gauche */}
+      {hasPrevious && onNavigatePrevious && (
+        <button
+          className={styles.navBtnLeft}
+          onClick={onNavigatePrevious}
+          aria-label="Carte précédente"
+          title="Carte précédente (←)"
+        >
+          <ChevronLeft size={28} />
+        </button>
+      )}
+
       <section
         ref={dialogRef}
         className={styles.modal}
@@ -65,8 +86,6 @@ export default function SetCardDetailsModal({ card, setName, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="setCardDetailsTitle"
         tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
         <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">
           <X size={24} />
@@ -109,6 +128,18 @@ export default function SetCardDetailsModal({ card, setName, onClose }: Props) {
           </div>
         </div>
       </section>
+
+      {/* Flèche droite */}
+      {hasNext && onNavigateNext && (
+        <button
+          className={styles.navBtnRight}
+          onClick={onNavigateNext}
+          aria-label="Carte suivante"
+          title="Carte suivante (→)"
+        >
+          <ChevronRight size={28} />
+        </button>
+      )}
     </div>
   );
 }

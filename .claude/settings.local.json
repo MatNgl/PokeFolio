@@ -38,7 +38,8 @@
       "Bash(ping:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(cmd /c \"taskkill //PID 15972 //F\")"
+      "Bash(cmd /c \"taskkill //PID 15972 //F\")",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
