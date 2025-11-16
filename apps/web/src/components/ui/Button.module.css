@@ -202,14 +202,24 @@
   box-shadow: none;
 }
 .danger .buttonInner {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
-  color: #ef4444;
-  border: 1px solid #ef4444;
-  transition: all 0.25s ease;
+  background: rgba(220, 38, 38, 0.9);
+  color: #ffffff;
+  border: 2px solid #dc2626;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.danger:hover:not(:disabled) {
+  box-shadow: none;
 }
 .danger:hover:not(:disabled) .buttonInner {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
-  border-color: #f87171;
+  background: rgba(185, 28, 28, 1);
+  border-color: #b91c1c;
+}
+.danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.danger:active:not(:disabled) .buttonInner {
+  background: #991b1b;
 }
 
 /* ========= Sizes ========= */

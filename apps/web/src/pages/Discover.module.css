@@ -38,9 +38,56 @@
   min-width: 280px;
 }
 
+.scanButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  height: 45px;
+  background: #16171d;
+  border: 1.5px solid #2b2c37;
+  border-radius: 12px;
+  color: #bdbecb;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 0 25px -17px #000;
+}
+
+.scanButton:hover {
+  border-color: #2f303d;
+  box-shadow: 0 0 25px -15px #000;
+  transform: translateY(-1px);
+}
+
+.scanButton:active {
+  transform: scale(0.98);
+}
+
 .addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   width: 100%;
-  margin-top: auto;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 0.5rem;
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.addBtn:active {
+  transform: translateY(0);
 }
 
 /* Style des boutons dans les cartes */

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { Card } from '@pokefolio/types';
 import type { PortfolioCard } from '../../services/portfolio.service';
 import { cardsService } from '../../services/cards.service';
+import { portfolioService } from '../../services/portfolio.service';
 import { Button } from '../ui/Button';
 import { Loader } from '../ui/FullScreenLoader';
+import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PortfolioCardDetailsModal.module.css';
 import GradedCardFrame from '../grading/GradedCardFrame';
 
@@ -25,6 +27,12 @@ type Props = {
   onClose: () => void;
   onEdit: (entry: PortfolioCard) => void;
   onDelete: (entry: PortfolioCard) => void;
+  onRefresh?: () => void;
+  onToast?: (message: string, type: 'success' | 'error' | 'info') => void;
+  onNavigatePrevious?: () => void;
+  onNavigateNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 };
 
 function euro(n?: number | null) {
@@ -40,10 +48,53 @@ function withHiRes(url?: string | null): string | undefined {
   return url;
 }
 
-export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDelete }: Props) {
+export default function PortfolioCardDetailsModal({
+  entry,
+  onClose,
+  onEdit,
+  onDelete,
+  onRefresh,
+  onToast,
+  onNavigatePrevious,
+  onNavigateNext,
+  hasPrevious = false,
+  hasNext = false,
+}: Props) {
   const [card, setCard] = useState<Card | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingVariant, setDeletingVariant] = useState<number | null>(null);
   const dialogRef = useRef<HTMLElement>(null);
+
+  const handleDeleteVariant = async (variantIndex: number) => {
+    if (!entry._id && !entry.id) return;
+    const itemId = (entry._id || entry.id) as string;
+
+    try {
+      setDeletingVariant(variantIndex);
+      const result = await portfolioService.deleteVariant(itemId, variantIndex);
+
+      // Si result est null, la carte a été complètement supprimée
+      if (result === null || (result as any).deleted) {
+        if (onToast) onToast('Variante supprimée avec succès (dernière variante)', 'success');
+      } else {
+        // Sinon, variante supprimée avec succès
+        if (onToast) onToast('Variante supprimée avec succès', 'success');
+      }
+
+      // Toujours fermer le modal et rafraîchir pour voir les changements
+      onClose();
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la variante:', error);
+      if (onToast) {
+        onToast('Erreur lors de la suppression de la variante', 'error');
+      } else {
+        alert('Erreur lors de la suppression de la variante');
+      }
+    } finally {
+      setDeletingVariant(null);
+    }
+  };
 
   // Bloquer le scroll du body quand le modal est ouvert
   useEffect(() => {
@@ -58,17 +109,23 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
     dialogRef.current?.focus();
   }, []);
 
-  // ESC pour fermer
+  // ESC pour fermer, flèches pour naviguer
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'ArrowLeft' && hasPrevious && onNavigatePrevious) {
+        e.preventDefault();
+        onNavigatePrevious();
+      } else if (e.key === 'ArrowRight' && hasNext && onNavigateNext) {
+        e.preventDefault();
+        onNavigateNext();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, onNavigatePrevious, onNavigateNext, hasPrevious, hasNext]);
 
   // Fetch des métadonnées TCG
   useEffect(() => {
@@ -129,6 +186,18 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
 
   return (
     <div className={styles.overlay}>
+      {/* Flèche gauche */}
+      {hasPrevious && onNavigatePrevious && (
+        <button
+          className={styles.navBtnLeft}
+          onClick={onNavigatePrevious}
+          aria-label="Carte précédente"
+          title="Carte précédente (←)"
+        >
+          <ChevronLeft size={28} />
+        </button>
+      )}
+
       <section
         ref={dialogRef}
         className={styles.modal}
@@ -259,6 +328,16 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
                           <div className={styles.variantHeader}>
                             <span className={styles.variantTitle}>Variante #{i + 1}</span>
                           </div>
+                          <button
+                            type="button"
+                            className={styles.deleteVariantBtn}
+                            onClick={() => handleDeleteVariant(i)}
+                            disabled={deletingVariant === i}
+                            aria-label={`Supprimer la variante #${i + 1}`}
+                            title={`Supprimer la variante #${i + 1}`}
+                          >
+                            <Trash2 size={18} />
+                          </button>
                           <div className={styles.grid}>
                             {v.purchaseDate && (
                               <div className={styles.item}>
@@ -353,8 +432,7 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
                   Modifier
                 </Button>
                 <Button
-                  variant="secondary"
-                  className={styles.dangerBtn}
+                  variant="danger"
                   onClick={() => onDelete(entry)}
                 >
                   Supprimer
@@ -365,6 +443,18 @@ export default function PortfolioCardDetailsModal({ entry, onClose, onEdit, onDe
           </div>
         )}
       </section>
+
+      {/* Flèche droite */}
+      {hasNext && onNavigateNext && (
+        <button
+          className={styles.navBtnRight}
+          onClick={onNavigateNext}
+          aria-label="Carte suivante"
+          title="Carte suivante (→)"
+        >
+          <ChevronRight size={28} />
+        </button>
+      )}
     </div>
   );
 }

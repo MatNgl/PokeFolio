@@ -75,7 +75,7 @@ export function DeleteConfirmModal({
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Annuler
           </Button>
-          <Button type="button" onClick={onConfirm} loading={loading} className={styles.deleteBtn}>
+          <Button type="button" variant="danger" onClick={onConfirm} loading={loading}>
             Supprimer
           </Button>
         </div>

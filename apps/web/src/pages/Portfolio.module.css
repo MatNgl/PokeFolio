@@ -35,6 +35,55 @@
   font-size: 16px;
 }
 
+/* Portfolio Navigation Sub-menu */
+.portfolioNav {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(11, 15, 26, 0.95) 0%,
+    rgba(15, 30, 50, 0.9) 50%,
+    rgba(11, 15, 26, 0.95) 100%
+  );
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: var(--radii);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(12px);
+}
+
+.navButton:hover:not(:disabled) {
+  border-color: rgba(124, 243, 255, 0.4);
+  color: var(--fg);
+  transform: translateY(-2px);
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navButtonActive {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15), rgba(167, 139, 250, 0.15));
+  border-color: rgba(124, 243, 255, 0.5);
+  color: #7cf3ff;
+  box-shadow:
+    0 4px 6px -1px rgba(124, 243, 255, 0.2),
+    inset 0 0 0 1px rgba(124, 243, 255, 0.1);
+}
+
 /* Stats */
 .stats {
   display: grid;
@@ -111,6 +160,31 @@
   min-width: 280px;
 }
 
+.scanButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  height: 45px;
+  background: #16171d;
+  border: 1.5px solid #2b2c37;
+  border-radius: 12px;
+  color: #bdbecb;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 0 25px -17px #000;
+}
+
+.scanButton:hover {
+  border-color: #2f303d;
+  box-shadow: 0 0 25px -15px #000;
+  transform: translateY(-1px);
+}
+
+.scanButton:active {
+  transform: scale(0.98);
+}
+
 /* Empty state */
 .empty {
   display: flex;
@@ -122,9 +196,11 @@
   color: var(--muted);
 }
 
-.empty svg {
+.empty svg,
+.emptyIcon {
   margin-bottom: 24px;
   opacity: 0.5;
+  color: var(--muted);
 }
 
 .empty h2 {
@@ -147,6 +223,8 @@
 
 .card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(
     135deg,
     rgba(15, 20, 36, 0.95) 0%,
@@ -259,6 +337,7 @@
   display: flex;
   gap: 8px;
   padding-top: 8px;
+  margin-top: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -604,6 +683,16 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .portfolioNav {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .navButton {
+    width: 100%;
+    padding: 10px 16px;
+  }
+
   .compactInfo {
     flex-direction: column;
     align-items: flex-start;

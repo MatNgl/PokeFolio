@@ -5,10 +5,14 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Toast } from '../components/ui/Toast';
 import { userService } from '../services/user.service';
+import { portfolioService } from '../services/portfolio.service';
+import { wishlistService } from '../services/wishlist.service';
+import { exportToExcel } from '../utils/excelExport';
+import type { UserCard } from '@pokefolio/types';
 import styles from './Profile.module.css';
 
 // Icônes pro
-import { UserRoundPen, KeyRound, LogOut, Trash2, XCircle, CheckCircle } from 'lucide-react';
+import { UserRoundPen, KeyRound, LogOut, Trash2, XCircle, CheckCircle, Download } from 'lucide-react';
 
 export function Profile() {
   // Définir le titre de la page
@@ -31,6 +35,7 @@ export function Profile() {
 
   // États de chargement et toast
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -39,6 +44,31 @@ export function Profile() {
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Récupérer les données du portfolio et de la wishlist
+      const [portfolioCards, wishlistData] = await Promise.all([
+        portfolioService.getCards(),
+        wishlistService.getWishlist(),
+      ]);
+
+      // Exporter vers Excel
+      await exportToExcel(
+        portfolioCards as UserCard[],
+        wishlistData.items,
+        user?.pseudo || user?.email || 'user'
+      );
+
+      showToast('Export Excel réussi !', 'success');
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      showToast('Erreur lors de l\'export Excel', 'error');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleChangePseudo = async (e: React.FormEvent) => {
@@ -197,6 +227,18 @@ export function Profile() {
               Changer le mot de passe
             </Button>
           </form>
+        </section>
+
+        {/* Section Export Excel */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Export de données</h2>
+          <p className={styles.description}>
+            Téléchargez vos données (portfolio + wishlist) au format Excel
+          </p>
+          <Button onClick={handleExport} variant="success" type="button" disabled={exporting || loading}>
+            <Download size={18} aria-hidden />
+            {exporting ? 'Export en cours...' : 'Exporter en Excel'}
+          </Button>
         </section>
 
         {/* === Bloc côte à côte (desktop) : Déconnexion + Suppression === */}

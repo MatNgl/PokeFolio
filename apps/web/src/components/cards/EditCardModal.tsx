@@ -7,6 +7,8 @@ import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { Toast } from '../ui/Toast';
+import { FullScreenLoader } from '../ui/FullScreenLoader';
+import { Trash2, PlusCircle } from 'lucide-react';
 import styles from './AddCardModal.module.css';
 
 interface EditCardModalProps {
@@ -106,7 +108,18 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
             notes: v.notes,
           })
         )
-      : [];
+      : [
+          {
+            isGraded: card.isGraded,
+            gradeCompany: card.gradeCompany,
+            gradeScore: card.gradeScore,
+            purchasePrice: card.purchasePrice,
+            purchaseDate: card.purchaseDate
+              ? new Date(card.purchaseDate).toISOString().split('T')[0]
+              : undefined,
+            notes: card.notes,
+          },
+        ];
 
   const { register, handleSubmit, watch, setValue } = useForm<FormData>({
     defaultValues: {
@@ -126,31 +139,31 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
   const quantity = watch('quantity');
   const isGraded = watch('isGraded');
   const selectedCompany = watch('gradeCompany');
+  const variants = watch('variants') ?? [];
 
-  // Initialiser automatiquement les variantes quand quantity >= 2
-  useEffect(() => {
-    const currentQuantity = quantity ?? 1;
+  // Fonction pour ajouter une nouvelle variante
+  const handleAddVariant = () => {
     const currentVariants = watch('variants') ?? [];
+    setValue('variants', [...currentVariants, {}], { shouldDirty: true });
+  };
 
-    // Si quantity >= 2, s'assurer qu'on a le bon nombre de variantes
-    if (currentQuantity >= 2) {
-      if (currentVariants.length !== currentQuantity) {
-        setValue(
-          'variants',
-          Array.from(
-            { length: currentQuantity },
-            (_, i) => currentVariants[i] || ({} as VariantForm)
-          ),
-          { shouldDirty: true }
-        );
-      }
-    } else {
-      // Si quantity === 1, vider les variantes
-      if (currentVariants.length > 0) {
-        setValue('variants', [], { shouldDirty: true });
-      }
+  // Fonction pour supprimer une variante
+  const handleRemoveVariant = (index: number) => {
+    const currentVariants = watch('variants') ?? [];
+    if (currentVariants.length > 1) {
+      const newVariants = currentVariants.filter((_, i) => i !== index);
+      setValue('variants', newVariants, { shouldDirty: true });
     }
-  }, [quantity, setValue, watch]);
+  };
+
+  // Mettre à jour la quantité en fonction du nombre de variantes
+  useEffect(() => {
+    const currentVariants = watch('variants') ?? [];
+    const variantCount = currentVariants.length;
+    if (variantCount > 0) {
+      setValue('quantity', variantCount, { shouldDirty: false });
+    }
+  }, [variants.length, setValue, watch]);
 
   // Bloquer le scroll du body quand le modal est ouvert
   useEffect(() => {
@@ -206,8 +219,8 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
       // Construire les données de mise à jour
       const updateData: Record<string, unknown> = {};
 
-      // Mode variantes si quantity >= 2
-      if (data.quantity >= 2 && data.variants && data.variants.length > 0) {
+      // Toujours utiliser le système de variantes
+      if (data.variants && data.variants.length > 0) {
         updateData.variants = data.variants.map((v) => ({
           purchasePrice: v.purchasePrice,
           purchaseDate: v.purchaseDate,
@@ -221,21 +234,6 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
               : undefined,
           notes: v.notes,
         }));
-      } else {
-        // Mode simple (quantité = 1)
-        updateData.quantity = data.quantity || 1;
-        updateData.graded = data.isGraded;
-        updateData.grading =
-          data.isGraded && (data.gradeCompany || data.gradeScore)
-            ? {
-                company: data.gradeCompany,
-                grade: data.gradeScore?.toString(),
-              }
-            : undefined;
-        // Send null explicitly to remove the value if empty
-        updateData.purchasePrice = data.purchasePrice ?? null;
-        updateData.purchaseDate = data.purchaseDate ?? null;
-        updateData.notes = data.notes ?? null;
       }
 
       await portfolioService.updateCard(card._id, updateData);
@@ -291,245 +289,192 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
               </div>
             </div>
 
+            {/* Quantité (lecture seule - calculée automatiquement) */}
             <Input
               label="Quantité"
               type="number"
-              min="1"
-              {...register('quantity', { valueAsNumber: true })}
+              value={variants.length}
+              readOnly
+              disabled
+              style={{ opacity: 0.7, cursor: 'not-allowed' }}
             />
 
-            {/* Champs simples si quantity === 1 */}
-            {quantity === 1 && (
-              <>
-                <Checkbox label="Carte gradée" {...register('isGraded')} />
+            {/* Formulaire de variantes */}
+            <div className={styles.variants}>
+              <div className={styles.variantsHeader}>
+                <h4>
+                  {variants.length === 1
+                    ? 'Informations de la carte'
+                    : `Variantes (${variants.length})`}
+                </h4>
+                <div className={styles.variantsHeaderActions}>
+                  {variants.length > 1 && (
+                    <button
+                      type="button"
+                      className={styles.copyFirstBtn}
+                      onClick={() => {
+                        const list = watch('variants') ?? [];
+                        if (list.length > 1) {
+                          const first = list[0] ?? {};
+                          setValue(
+                            'variants',
+                            list.map(() => ({ ...first })),
+                            { shouldDirty: true }
+                          );
+                        }
+                      }}
+                    >
+                      Copier la 1ʳᵉ sur toutes
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.addVariantBtn}
+                    onClick={handleAddVariant}
+                  >
+                    <PlusCircle size={16} />
+                    Ajouter une variante
+                  </button>
+                </div>
+              </div>
 
-                {isGraded && (
-                  <>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="gradeCompany" className={styles.label}>
-                        Société de gradation
-                      </label>
-                      <select
-                        id="gradeCompany"
-                        className={styles.select}
-                        {...register('gradeCompany', {
-                          onChange: () => setValue('gradeScore', undefined),
-                        })}
+              {variants.map((v, i) => (
+                <fieldset key={i} className={styles.variantRow}>
+                  <div className={styles.variantRowHeader}>
+                    <legend>{variants.length === 1 ? 'Carte' : `Carte #${i + 1}`}</legend>
+                    {variants.length > 1 && (
+                      <button
+                        type="button"
+                        className={styles.deleteVariantBtn}
+                        onClick={() => handleRemoveVariant(i)}
+                        aria-label={`Supprimer la variante #${i + 1}`}
+                        title={`Supprimer la variante #${i + 1}`}
                       >
-                        <option value="">Sélectionner une société</option>
-                        {GRADING_COMPANIES.map((company) => (
-                          <option key={company.id} value={company.id}>
-                            {company.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
 
-                    {selectedCompany && availableGrades.length > 0 && (
+                  <Checkbox
+                    label="Carte gradée"
+                    checked={Boolean(v?.isGraded)}
+                    onChange={(e) => {
+                      const list = [...(watch('variants') ?? [])];
+                      list[i] = {
+                        ...(list[i] || {}),
+                        isGraded: e.target.checked,
+                        gradeCompany: e.target.checked ? list[i]?.gradeCompany : undefined,
+                        gradeScore: e.target.checked ? list[i]?.gradeScore : undefined,
+                      };
+                      setValue('variants', list, { shouldDirty: true });
+                    }}
+                  />
+
+                  {/* Société + note (affichés seulement si gradée) */}
+                  {v?.isGraded && (
+                    <>
                       <div className={styles.formGroup}>
-                        <label htmlFor="gradeScore" className={styles.label}>
-                          Note
-                        </label>
+                        <span className={styles.label}>Société</span>
                         <select
-                          id="gradeScore"
                           className={styles.select}
-                          {...register('gradeScore')}
+                          value={v?.gradeCompany ?? ''}
+                          onChange={(e) => {
+                            const list = [...(watch('variants') ?? [])];
+                            list[i] = {
+                              ...(list[i] || {}),
+                              gradeCompany: e.target.value || undefined,
+                              gradeScore: undefined,
+                            };
+                            setValue('variants', list, { shouldDirty: true });
+                          }}
                         >
-                          <option value="">Sélectionner une note</option>
-                          {availableGrades.map((grade) => (
-                            <option key={grade} value={grade}>
-                              {grade}
+                          <option value="">—</option>
+                          {GRADING_COMPANIES.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
                             </option>
                           ))}
                         </select>
                       </div>
-                    )}
-                  </>
-                )}
 
-                <Input
-                  label="Prix d'achat (€)"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Optionnel"
-                  {...register('purchasePrice', {
-                    setValueAs: (v) => (v === '' || v === null ? undefined : parseFloat(v)),
-                  })}
-                />
-
-                <DatePicker
-                  label="Date d'achat"
-                  placeholder="Sélectionnez une date"
-                  value={watch('purchaseDate') || ''}
-                  onChange={(value: string) =>
-                    setValue('purchaseDate', value, { shouldValidate: true, shouldDirty: true })
-                  }
-                />
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="notes" className={styles.label}>
-                    Notes
-                  </label>
-                  <textarea
-                    id="notes"
-                    className={styles.textarea}
-                    placeholder="Notes personnelles..."
-                    rows={3}
-                    {...register('notes')}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Form variantes si quantity >= 2 */}
-            {quantity >= 2 && (
-              <div className={styles.variants}>
-                <div className={styles.variantsHeader}>
-                  <h4>Données par carte ({quantity})</h4>
-                  <button
-                    type="button"
-                    className={styles.copyFirstBtn}
-                    onClick={() => {
-                      const list = watch('variants') ?? [];
-                      if (list.length > 1) {
-                        const first = list[0] ?? {};
-                        setValue(
-                          'variants',
-                          list.map(() => ({ ...first })),
-                          { shouldDirty: true }
-                        );
-                      }
-                    }}
-                  >
-                    Copier la 1ʳᵉ sur toutes
-                  </button>
-                </div>
-
-                {(watch('variants') ?? []).map((v, i) => (
-                  <fieldset key={i} className={styles.variantRow}>
-                    <legend>Carte #{i + 1}</legend>
-
-                    <Checkbox
-                      label="Carte gradée"
-                      checked={Boolean(v?.isGraded)}
-                      onChange={(e) => {
-                        const list = [...(watch('variants') ?? [])];
-                        list[i] = {
-                          ...(list[i] || {}),
-                          isGraded: e.target.checked,
-                          gradeCompany: e.target.checked ? list[i]?.gradeCompany : undefined,
-                          gradeScore: e.target.checked ? list[i]?.gradeScore : undefined,
-                        };
-                        setValue('variants', list, { shouldDirty: true });
-                      }}
-                    />
-
-                    {v?.isGraded && (
-                      <>
+                      {v?.gradeCompany && (
                         <div className={styles.formGroup}>
-                          <span className={styles.label}>Société</span>
+                          <span className={styles.label}>Note</span>
                           <select
                             className={styles.select}
-                            value={v?.gradeCompany ?? ''}
+                            value={v?.gradeScore ?? ''}
                             onChange={(e) => {
                               const list = [...(watch('variants') ?? [])];
                               list[i] = {
                                 ...(list[i] || {}),
-                                gradeCompany: e.target.value || undefined,
-                                gradeScore: undefined,
+                                gradeScore: e.target.value || undefined,
                               };
                               setValue('variants', list, { shouldDirty: true });
                             }}
                           >
                             <option value="">—</option>
-                            {GRADING_COMPANIES.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
+                            {(
+                              GRADING_COMPANIES.find((c) => c.id === v.gradeCompany)?.grades ?? []
+                            ).map((g) => (
+                              <option key={g} value={g}>
+                                {g}
                               </option>
                             ))}
                           </select>
                         </div>
+                      )}
+                    </>
+                  )}
 
-                        {v?.gradeCompany && (
-                          <div className={styles.formGroup}>
-                            <span className={styles.label}>Note</span>
-                            <select
-                              className={styles.select}
-                              value={v?.gradeScore ?? ''}
-                              onChange={(e) => {
-                                const list = [...(watch('variants') ?? [])];
-                                list[i] = {
-                                  ...(list[i] || {}),
-                                  gradeScore: e.target.value || undefined,
-                                };
-                                setValue('variants', list, { shouldDirty: true });
-                              }}
-                            >
-                              <option value="">—</option>
-                              {(
-                                GRADING_COMPANIES.find((c) => c.id === v.gradeCompany)?.grades ?? []
-                              ).map((g) => (
-                                <option key={g} value={g}>
-                                  {g}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </>
-                    )}
+                  <Input
+                    label="Prix d'achat (€)"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={v?.purchasePrice ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const list = [...(watch('variants') ?? [])];
+                      list[i] = {
+                        ...(list[i] || {}),
+                        purchasePrice: val === '' ? undefined : Number(val),
+                      };
+                      setValue('variants', list, { shouldDirty: true });
+                    }}
+                  />
 
-                    <Input
-                      label="Prix d'achat (€)"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={v?.purchasePrice ?? ''}
+                  <DatePicker
+                    label="Date d'achat"
+                    value={v?.purchaseDate ?? ''}
+                    onChange={(val) => {
+                      const list = [...(watch('variants') ?? [])];
+                      list[i] = { ...(list[i] || {}), purchaseDate: val || undefined };
+                      setValue('variants', list, { shouldDirty: true });
+                    }}
+                  />
+
+                  <div className={styles.formGroup}>
+                    <span className={styles.label}>Notes</span>
+                    <textarea
+                      className={styles.textarea}
+                      rows={2}
+                      value={v?.notes ?? ''}
                       onChange={(e) => {
-                        const val = e.target.value;
                         const list = [...(watch('variants') ?? [])];
-                        list[i] = {
-                          ...(list[i] || {}),
-                          purchasePrice: val === '' ? undefined : Number(val),
-                        };
+                        list[i] = { ...(list[i] || {}), notes: e.target.value || undefined };
                         setValue('variants', list, { shouldDirty: true });
                       }}
                     />
-
-                    <DatePicker
-                      label="Date d'achat"
-                      value={v?.purchaseDate ?? ''}
-                      onChange={(val) => {
-                        const list = [...(watch('variants') ?? [])];
-                        list[i] = { ...(list[i] || {}), purchaseDate: val || undefined };
-                        setValue('variants', list, { shouldDirty: true });
-                      }}
-                    />
-
-                    <div className={styles.formGroup}>
-                      <span className={styles.label}>Notes</span>
-                      <textarea
-                        className={styles.textarea}
-                        rows={2}
-                        value={v?.notes ?? ''}
-                        onChange={(e) => {
-                          const list = [...(watch('variants') ?? [])];
-                          list[i] = { ...(list[i] || {}), notes: e.target.value || undefined };
-                          setValue('variants', list, { shouldDirty: true });
-                        }}
-                      />
-                    </div>
-                  </fieldset>
-                ))}
-              </div>
-            )}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
 
             <div className={styles.actions}>
               <Button type="button" variant="secondary" onClick={onClose}>
                 Annuler
               </Button>
-              <Button type="submit" loading={saving}>
+              <Button type="submit">
                 Enregistrer les modifications
               </Button>
             </div>
@@ -539,6 +484,9 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
 
       {/* Toast de notification */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* FullScreenLoader pendant la sauvegarde */}
+      {saving && <FullScreenLoader message="Modification en cours..." />}
     </div>
   );
 }

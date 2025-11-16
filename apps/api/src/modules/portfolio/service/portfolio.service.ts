@@ -25,6 +25,9 @@ interface CardSnapshot {
   set?: {
     id?: string;
     name?: string;
+    logo?: string;
+    symbol?: string;
+    releaseDate?: string;
     cardCount?: { total?: number };
   };
   number?: string;
@@ -86,6 +89,9 @@ export class PortfolioService {
       name?: string;
       setId?: string;
       setName?: string;
+      setLogo?: string;
+      setSymbol?: string;
+      setReleaseDate?: string;
       number?: string;
       setCardCount?: number;
       rarity?: string;
@@ -198,6 +204,9 @@ export class PortfolioService {
       cardSnapshot.set = {
         id: dto.setId,
         name: dto.setName,
+        logo: dto.setLogo,
+        symbol: dto.setSymbol,
+        releaseDate: dto.setReleaseDate,
         cardCount: dto.setCardCount ? { total: dto.setCardCount } : undefined,
       };
     }
@@ -328,6 +337,9 @@ export class PortfolioService {
         name: snapshot?.name,
         setId: snapshot?.set?.id,
         setName: snapshot?.set?.name,
+        setLogo: snapshot?.set?.logo,
+        setSymbol: snapshot?.set?.symbol,
+        setReleaseDate: snapshot?.set?.releaseDate,
         setCardCount: snapshot?.set?.cardCount?.total,
         number: snapshot?.number,
         rarity: snapshot?.rarity,
@@ -371,6 +383,9 @@ export class PortfolioService {
       name: snapshot?.name,
       setId: snapshot?.set?.id,
       setName: snapshot?.set?.name,
+      setLogo: snapshot?.set?.logo,
+      setSymbol: snapshot?.set?.symbol,
+      setReleaseDate: snapshot?.set?.releaseDate,
       setCardCount: snapshot?.set?.cardCount?.total,
       number: snapshot?.number,
       rarity: snapshot?.rarity,
@@ -538,5 +553,280 @@ export class PortfolioService {
   async clearPortfolio(ownerId: string): Promise<{ deletedCount: number }> {
     const result = await this.model.deleteMany({ ownerId }).exec();
     return { deletedCount: result.deletedCount || 0 };
+  }
+
+  /**
+   * Récupère toutes les cartes du portfolio agrégées par set
+   */
+  async getSetsByUser(ownerId: string): Promise<{
+    sets: Array<{
+      setId: string;
+      setName?: string;
+      setLogo?: string;
+      setSymbol?: string;
+      releaseDate?: string;
+      cards: Array<{
+        itemId: string;
+        cardId: string;
+        name?: string;
+        number?: string;
+        imageUrl?: string;
+        rarity?: string;
+        quantity: number;
+        isGraded?: boolean;
+        purchasePrice?: number;
+      }>;
+      completion: {
+        owned: number;
+        total?: number;
+        percentage?: number;
+      };
+      totalValue: number;
+      totalQuantity: number;
+    }>;
+    totalSets: number;
+  }> {
+    const items = await this.model.find({ ownerId }).lean();
+
+    // Grouper par setId
+    const setMap = new Map<
+      string,
+      {
+        setName?: string;
+        setLogo?: string;
+        setSymbol?: string;
+        releaseDate?: string;
+        setTotal?: number;
+        cardMap: Map<string, {
+          itemId: string;
+          cardId: string;
+          name?: string;
+          number?: string;
+          imageUrl?: string;
+          rarity?: string;
+          quantity: number;
+          isGraded?: boolean;
+          purchasePrice?: number;
+        }>;
+      }
+    >();
+
+    for (const item of items) {
+      const snapshot = item.cardSnapshot as CardSnapshot | undefined;
+      const setId = snapshot?.set?.id || 'unknown';
+      const setName = snapshot?.set?.name || 'Set inconnu';
+      const setTotal = snapshot?.set?.cardCount?.total;
+
+      // Extraire les infos supplémentaires du set si disponibles
+      const setInfo = snapshot?.set as
+        | { logo?: string; symbol?: string; releaseDate?: string }
+        | undefined;
+
+      if (!setMap.has(setId)) {
+        setMap.set(setId, {
+          setName,
+          setLogo: setInfo?.logo,
+          setSymbol: setInfo?.symbol,
+          releaseDate: setInfo?.releaseDate,
+          setTotal,
+          cardMap: new Map(),
+        });
+      }
+
+      const setData = setMap.get(setId);
+      if (!setData) continue;
+
+      // Calculer isGraded et prix
+      let isGraded = false;
+      let totalPrice = 0;
+
+      if (Array.isArray(item.variants) && item.variants.length > 0) {
+        isGraded = item.variants.some((v) => v.graded === true);
+        totalPrice = item.variants.reduce((sum, v) => sum + (v.purchasePrice || 0), 0);
+      } else {
+        isGraded = item.graded === true;
+        totalPrice = (item.purchasePrice || 0) * (item.quantity || 1);
+      }
+
+      // Grouper par cardId pour éviter les doublons
+      const cardId = item.cardId;
+      const existingCard = setData.cardMap.get(cardId);
+
+      if (existingCard) {
+        // Agréger les quantités et prix si la carte existe déjà
+        existingCard.quantity += item.quantity || 1;
+        existingCard.purchasePrice = (existingCard.purchasePrice || 0) + totalPrice;
+        existingCard.isGraded = existingCard.isGraded || isGraded;
+      } else {
+        // Ajouter une nouvelle carte
+        setData.cardMap.set(cardId, {
+          itemId: String(item._id),
+          cardId: item.cardId,
+          name: snapshot?.name,
+          number: snapshot?.number,
+          imageUrl: snapshot?.imageUrl,
+          rarity: snapshot?.rarity,
+          quantity: item.quantity || 1,
+          isGraded,
+          purchasePrice: totalPrice,
+        });
+      }
+    }
+
+    // Transformer en array et calculer les statistiques
+    const sets = Array.from(setMap.entries()).map(([setId, data]) => {
+      // Convertir cardMap en array
+      const cards = Array.from(data.cardMap.values());
+
+      const totalQuantity = cards.reduce((sum, card) => sum + card.quantity, 0);
+      const totalValue = cards.reduce((sum, card) => sum + (card.purchasePrice || 0), 0);
+      const owned = cards.length; // Nombre de cartes distinctes possédées
+      const total = data.setTotal;
+      const percentage = total && total > 0 ? Math.round((owned / total) * 100) : undefined;
+
+      return {
+        setId,
+        setName: data.setName,
+        setLogo: data.setLogo,
+        setSymbol: data.setSymbol,
+        releaseDate: data.releaseDate,
+        cards: cards.sort((a, b) => {
+          // Tri par numéro de carte si disponible
+          if (a.number && b.number) {
+            const numA = parseInt(a.number.split('/')[0] || '0');
+            const numB = parseInt(b.number.split('/')[0] || '0');
+            return numA - numB;
+          }
+          return 0;
+        }),
+        completion: {
+          owned,
+          total,
+          percentage,
+        },
+        totalValue: Math.round(totalValue * 100) / 100,
+        totalQuantity,
+      };
+    });
+
+    // Trier les sets par nombre de cartes possédées (décroissant)
+    sets.sort((a, b) => b.cards.length - a.cards.length);
+
+    return {
+      sets,
+      totalSets: sets.length,
+    };
+  }
+
+  /**
+   * Vérifie quelles cartes l'utilisateur possède parmi une liste d'IDs
+   */
+  async checkOwnership(
+    ownerId: string,
+    cardIds: string[]
+  ): Promise<Record<string, boolean>> {
+    if (cardIds.length === 0) {
+      return {};
+    }
+
+    // Rechercher tous les cardIds en une seule requête
+    const items = await this.model
+      .find({
+        ownerId,
+        cardId: { $in: cardIds },
+      })
+      .select('cardId')
+      .lean();
+
+    // Créer le map de résultats
+    const ownership: Record<string, boolean> = {};
+    const ownedSet = new Set(items.map((item) => item.cardId));
+
+    for (const cardId of cardIds) {
+      ownership[cardId] = ownedSet.has(cardId);
+    }
+
+    return ownership;
+  }
+
+  /**
+   * Supprime une variante spécifique d'une carte du portfolio
+   * @param ownerId ID du propriétaire
+   * @param itemId ID de l'item portfolio
+   * @param variantIndex Index de la variante à supprimer
+   * @returns L'item mis à jour ou null si l'item a été supprimé
+   */
+  async deleteVariant(
+    ownerId: string,
+    itemId: string,
+    variantIndex: number
+  ): Promise<any> {
+    const item = await this.model.findOne({ _id: itemId, ownerId });
+
+    if (!item) {
+      throw new NotFoundException('Item non trouvé');
+    }
+
+    // Vérifier si l'item est en Mode B (avec variantes)
+    if (!item.variants || item.variants.length === 0) {
+      throw new BadRequestException('Cet item n\'a pas de variantes');
+    }
+
+    // Vérifier que l'index est valide
+    if (variantIndex < 0 || variantIndex >= item.variants.length) {
+      throw new BadRequestException('Index de variante invalide');
+    }
+
+    // Supprimer la variante
+    item.variants.splice(variantIndex, 1);
+
+    // Si c'était la dernière variante, supprimer l'item entier
+    if (item.variants.length === 0) {
+      await item.deleteOne();
+      return null;
+    }
+
+    // Sinon, si il reste qu'une seule variante, reconvertir en Mode A
+    if (item.variants.length === 1) {
+      const lastVariant = item.variants[0];
+      if (!lastVariant) {
+        throw new BadRequestException('Variante manquante');
+      }
+      item.quantity = 1;
+      item.purchasePrice = lastVariant.purchasePrice;
+      item.purchaseDate = lastVariant.purchaseDate;
+      item.booster = lastVariant.booster;
+      item.graded = lastVariant.graded;
+      item.grading = lastVariant.grading;
+      item.notes = lastVariant.notes;
+      item.variants = [];
+    } else {
+      // Mettre à jour la quantité
+      item.quantity = item.variants.length;
+    }
+
+    await item.save();
+
+    // Retourner la réponse formatée
+    const obj = item.toObject();
+    const snapshot = obj.cardSnapshot as CardSnapshot;
+    const mappedVariants = obj.variants?.map((v: StoredVariant) => ({
+      purchasePrice: v.purchasePrice,
+      purchaseDate: v.purchaseDate,
+      isGraded: v.graded,
+      gradeCompany: v.grading?.company,
+      gradeScore: v.grading?.grade,
+      notes: v.notes,
+    }));
+
+    return {
+      ...obj,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      variants: mappedVariants,
+    };
   }
 }

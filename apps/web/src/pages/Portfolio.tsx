@@ -1,25 +1,31 @@
 import { useState, useEffect } from 'react';
-import type { UserCard, PortfolioViewMode } from '@pokefolio/types';
+import { useLocation } from 'react-router-dom';
+import type { UserCard, PortfolioViewMode, Card } from '@pokefolio/types';
 import {
   portfolioService,
   type PortfolioCard,
   type PortfolioStats,
 } from '../services/portfolio.service';
+import { wishlistService } from '../services/wishlist.service';
+import { exportToExcel } from '../utils/excelExport';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { EditCardModal } from '../components/cards/EditCardModal';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
 import PortfolioCardDetailsModal from '../components/cards/PortfolioCardDetailsModal';
+import { CardRecognition } from '../components/CardRecognition/CardRecognition';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
-import { FilterButton, type SortOption, type SortField } from '../components/ui/FilterButton';
-import { StatCard } from '../components/ui/StatCard';
-import { Layers, Award, Euro, TrendingUp } from 'lucide-react';
+import { FilterButton, type SortOption } from '../components/ui/FilterButton';
+import { Layers, Camera, Package, Heart, Download } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 import GradedCardFrame from '../components/grading/GradedCardFrame';
 import GradingBadge from '../components/grading/GradingBadge';
+import { SetsView } from '../components/portfolio/SetsView';
+import { WishlistView } from '../components/portfolio/WishlistView';
+import { useAuth } from '../contexts/AuthContext';
 
 /** ---- Types côté UI ---- */
 type PortfolioVariant = {
@@ -183,19 +189,36 @@ function toUserCardView(entry: PortfolioCard): UserCardView {
 }
 
 export default function Portfolio() {
+  const location = useLocation();
+  const { user } = useAuth();
+
   // Définir le titre de la page
   useEffect(() => {
     document.title = 'PokéFolio - Portfolio';
   }, []);
 
   const [cards, setCards] = useState<UserCardView[]>([]);
-  const [stats, setStats] = useState<PortfolioStats | null>(null);
+  const [setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showRecognition, setShowRecognition] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [editingCard, setEditingCard] = useState<UserCardView | null>(null);
   const [deletingCard, setDeletingCard] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [portfolioSection, setPortfolioSection] = useState<'cards' | 'sets' | 'wishlist'>('cards');
   const [viewMode, setViewMode] = useState<PortfolioViewMode>('grid');
+
+  // Détecter si on revient depuis SetDetail et ouvrir la vue Sets
+  useEffect(() => {
+    const state = location.state as { section?: string };
+    if (state?.section === 'sets') {
+      setPortfolioSection('sets');
+      // Nettoyer l'état pour éviter de le réouvrir à chaque rendu
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // ➕ Nouveau : entrée sélectionnée pour détails
   const [detailsEntry, setDetailsEntry] = useState<PortfolioCard | null>(null);
@@ -260,6 +283,31 @@ export default function Portfolio() {
       setToast({ message: 'Erreur lors de la suppression de la carte', type: 'error' });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Récupérer les données du portfolio et de la wishlist
+      const [portfolioCards, wishlistData] = await Promise.all([
+        portfolioService.getCards(),
+        wishlistService.getWishlist(),
+      ]);
+
+      // Exporter vers Excel
+      await exportToExcel(
+        portfolioCards as UserCard[],
+        wishlistData.items,
+        user?.pseudo || user?.email || 'user'
+      );
+
+      setToast({ message: 'Export Excel réussi !', type: 'success' });
+    } catch (error) {
+      console.error("Erreur lors de l'export:", error);
+      setToast({ message: "Erreur lors de l'export Excel", type: 'error' });
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -443,43 +491,54 @@ export default function Portfolio() {
       <main className={styles.page}>
         <header className={styles.header}>
           <div>
-            <h1 className={styles.title}>Mon Portfolio</h1>
+            <h1 className={styles.title}>
+              {portfolioSection === 'wishlist'
+                ? 'Ma Wishlist'
+                : portfolioSection === 'sets'
+                  ? 'Mes Sets'
+                  : 'Mon Portfolio'}
+            </h1>
           </div>
-          <Button onClick={() => setShowAddModal(true)} variant="primary">
-            + Ajouter une carte
-          </Button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button onClick={handleExport} variant="secondary" disabled={exporting || loading}>
+              <Download size={18} />
+              {exporting ? 'Export en cours...' : 'Exporter Excel'}
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} variant="primary">
+              + Ajouter une carte
+            </Button>
+          </div>
         </header>
 
-        {stats && (
-          <section className={styles.stats} aria-label="Statistiques du portfolio">
-            <StatCard
-              title="cartes totales"
-              icon={<Layers size={20} />}
-              value={String(stats.totalCards ?? 0)}
-              loading={loading}
-            />
-            <StatCard
-              title="cartes uniques"
-              icon={<Award size={20} />}
-              value={String(stats.uniqueCards ?? 0)}
-              loading={loading}
-            />
-            <StatCard
-              title="cartes gradées"
-              icon={<TrendingUp size={20} />}
-              value={String(stats.gradedCards ?? 0)}
-              loading={loading}
-            />
-            <StatCard
-              title="valeur totale"
-              icon={<Euro size={20} />}
-              value={euro(stats.totalCost)}
-              loading={loading}
-            />
-          </section>
-        )}
+        {/* Sous-menu de navigation Portfolio */}
+        <div className={styles.portfolioNav}>
+          <button
+            type="button"
+            className={`${styles.navButton} ${portfolioSection === 'cards' ? styles.navButtonActive : ''}`}
+            onClick={() => setPortfolioSection('cards')}
+          >
+            <Layers size={18} />
+            <span>Cartes</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.navButton} ${portfolioSection === 'sets' ? styles.navButtonActive : ''}`}
+            onClick={() => setPortfolioSection('sets')}
+          >
+            <Package size={18} />
+            <span>Sets</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.navButton} ${portfolioSection === 'wishlist' ? styles.navButtonActive : ''}`}
+            onClick={() => setPortfolioSection('wishlist')}
+          >
+            <Heart size={18} />
+            <span>Wishlist</span>
+          </button>
+        </div>
 
-        {cards.length > 0 && (
+        {portfolioSection === 'cards' && cards.length > 0 && (
           <div className={styles.searchFilterContainer}>
             <SearchBar
               value={searchQuery}
@@ -488,11 +547,19 @@ export default function Portfolio() {
               ariaLabel="Rechercher dans votre portfolio"
               className={styles.searchBar}
             />
+            <button
+              type="button"
+              onClick={() => setShowRecognition(true)}
+              className={styles.scanButton}
+              aria-label="Scanner une carte avec la caméra"
+            >
+              <Camera size={18} aria-hidden />
+            </button>
             <FilterButton onSortChange={setSortOption} currentSort={sortOption} />
           </div>
         )}
 
-        {cards.length > 0 && (
+        {portfolioSection === 'cards' && cards.length > 0 && (
           <div className={styles.glassGroup}>
             <input
               type="radio"
@@ -525,7 +592,12 @@ export default function Portfolio() {
           </div>
         )}
 
-        {cards.length === 0 ? (
+        {/* Section Sets */}
+        {portfolioSection === 'sets' ? (
+          <SetsView />
+        ) : portfolioSection === 'wishlist' ? (
+          <WishlistView />
+        ) : cards.length === 0 ? (
           <div className={styles.empty}>
             <svg
               width="64"
@@ -773,7 +845,9 @@ export default function Portfolio() {
                   >
                     {card.isGraded && card.gradeCompany && card.gradeScore ? (
                       <GradedCardFrame
-                        company={card.gradeCompany as any}
+                        company={
+                          card.gradeCompany as 'PSA' | 'BGS' | 'CGC' | 'PCA' | 'Collect Aura'
+                        }
                         grade={card.gradeScore}
                         size="medium"
                       >
@@ -839,8 +913,25 @@ export default function Portfolio() {
           </section>
         )}
 
-        {showAddModal && (
-          <AddCardModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} />
+        {(showAddModal || selectedCard) && (
+          <AddCardModal
+            card={selectedCard || undefined}
+            onClose={() => {
+              setShowAddModal(false);
+              setSelectedCard(null);
+            }}
+            onSuccess={handleAddSuccess}
+          />
+        )}
+
+        {showRecognition && (
+          <CardRecognition
+            onCardSelected={(card) => {
+              setShowRecognition(false);
+              setSelectedCard(card);
+            }}
+            onClose={() => setShowRecognition(false)}
+          />
         )}
 
         {editingCard && (
@@ -851,31 +942,61 @@ export default function Portfolio() {
           />
         )}
 
-        {deletingCard && (
+        {deletingCard && !deleting && (
           <DeleteConfirmModal
             title="Supprimer la carte"
             message={`Êtes-vous sûr de vouloir supprimer "${deletingCard.name}" de votre portfolio ? Cette action est irréversible.`}
             onConfirm={handleDeleteCard}
             onCancel={() => setDeletingCard(null)}
-            loading={deleting}
           />
         )}
 
+        {deleting && <FullScreenLoader message="Suppression en cours..." />}
+
         {/* 🔍 Modal de détails du portfolio */}
-        {detailsEntry && (
-          <PortfolioCardDetailsModal
-            entry={detailsEntry}
-            onClose={() => setDetailsEntry(null)}
-            onEdit={(entry) => {
-              setDetailsEntry(null);
-              setEditingCard(toUserCardView(entry));
-            }}
-            onDelete={(entry) => {
-              setDetailsEntry(null);
-              setDeletingCard({ id: entry._id || '', name: entry.name || 'Carte sans nom' });
-            }}
-          />
-        )}
+        {detailsEntry &&
+          (() => {
+            const currentIndex = displayedCards.findIndex(
+              (c) => resolveId(c) === (detailsEntry._id || detailsEntry.id)
+            );
+            const hasPrevious = currentIndex > 0;
+            const hasNext = currentIndex < displayedCards.length - 1;
+
+            const handleNavigatePrevious = () => {
+              if (hasPrevious) {
+                const prevCard = displayedCards[currentIndex - 1];
+                setDetailsEntry(createEntryLike(prevCard) as PortfolioCard);
+              }
+            };
+
+            const handleNavigateNext = () => {
+              if (hasNext) {
+                const nextCard = displayedCards[currentIndex + 1];
+                setDetailsEntry(createEntryLike(nextCard) as PortfolioCard);
+              }
+            };
+
+            return (
+              <PortfolioCardDetailsModal
+                entry={detailsEntry}
+                onClose={() => setDetailsEntry(null)}
+                onEdit={(entry) => {
+                  setDetailsEntry(null);
+                  setEditingCard(toUserCardView(entry));
+                }}
+                onDelete={(entry) => {
+                  setDetailsEntry(null);
+                  setDeletingCard({ id: entry._id || '', name: entry.name || 'Carte sans nom' });
+                }}
+                onRefresh={() => void loadData()}
+                onToast={(message, type) => setToast({ message, type })}
+                onNavigatePrevious={handleNavigatePrevious}
+                onNavigateNext={handleNavigateNext}
+                hasPrevious={hasPrevious}
+                hasNext={hasNext}
+              />
+            );
+          })()}
 
         {/* ✅ Toast */}
         {toast && (

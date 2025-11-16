@@ -107,4 +107,12 @@ export const portfolioService = {
     const response = await api.get<PortfolioStats>('/portfolio/stats');
     return response.data;
   },
+
+  /**
+   * Supprimer une variante spécifique d'une carte
+   */
+  async deleteVariant(itemId: string, variantIndex: number): Promise<PortfolioCard | null> {
+    const response = await api.delete<PortfolioCard>(`/portfolio/cards/${itemId}/variants/${variantIndex}`);
+    return response.data;
+  },
 };

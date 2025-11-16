@@ -22,12 +22,32 @@
   color: var(--icon-color, #ffffff);
 }
 
+/* Style spécifique pour les boutons delete */
+.iconButton[aria-label*="Supprimer"],
+.iconButton[title*="Supprimer"],
+.iconButton[aria-label*="Delete"],
+.iconButton[title*="Delete"] {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #ffffff;
+}
+
 .iconButton:hover:not(:disabled) {
   /* Légère surbrillance au hover */
   background: #1a1f2e;
   border-color: var(--icon-color, rgba(255, 255, 255, 0.3));
   transform: scale(1.05);
   box-shadow: 0 0 12px var(--icon-color);
+}
+
+/* Hover spécifique pour les boutons delete */
+.iconButton[aria-label*="Supprimer"]:hover:not(:disabled),
+.iconButton[title*="Supprimer"]:hover:not(:disabled),
+.iconButton[aria-label*="Delete"]:hover:not(:disabled),
+.iconButton[title*="Delete"]:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.9);
+  border-color: #dc2626;
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.5);
 }
 
 .iconButton:active:not(:disabled) {

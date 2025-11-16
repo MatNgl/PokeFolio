@@ -102,6 +102,21 @@ export class CreatePortfolioItemApiDto {
   @IsOptional()
   setName?: string;
 
+  @ApiPropertyOptional({ description: 'Logo du set', example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  setLogo?: string;
+
+  @ApiPropertyOptional({ description: 'Symbole du set', example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  setSymbol?: string;
+
+  @ApiPropertyOptional({ description: 'Date de sortie du set', example: '2023-08-11' })
+  @IsString()
+  @IsOptional()
+  setReleaseDate?: string;
+
   @ApiPropertyOptional({ description: 'Numéro de la carte', example: '189' })
   @IsString()
   @IsOptional()

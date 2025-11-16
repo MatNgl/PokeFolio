@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -56,6 +57,9 @@ export class PortfolioController {
       name: dto.name,
       setId: dto.setId,
       setName: dto.setName,
+      setLogo: dto.setLogo,
+      setSymbol: dto.setSymbol,
+      setReleaseDate: dto.setReleaseDate,
       number: dto.number,
       setCardCount: dto.setCardCount,
       rarity: dto.rarity,
@@ -109,5 +113,51 @@ export class PortfolioController {
   stats(@Req() req: AuthenticatedRequest) {
     const ownerId = getOwnerId(req);
     return this.service.stats(ownerId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sets')
+  @ApiOperation({ summary: 'Récupérer les cartes groupées par set' })
+  @ApiResponse({ status: 200, description: 'Sets récupérés avec succès' })
+  getSets(@Req() req: AuthenticatedRequest) {
+    const ownerId = getOwnerId(req);
+    return this.service.getSetsByUser(ownerId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('check-ownership')
+  @ApiOperation({ summary: 'Vérifier la possession de cartes' })
+  @ApiResponse({ status: 200, description: 'Vérification effectuée' })
+  checkOwnership(@Req() req: AuthenticatedRequest, @Body() body: { cardIds: string[] }) {
+    const ownerId = getOwnerId(req);
+    return this.service.checkOwnership(ownerId, body.cardIds);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('cards/:id/variants/:variantIndex')
+  @ApiOperation({ summary: 'Supprimer une variante spécifique' })
+  @ApiResponse({ status: 200, description: 'Variante supprimée avec succès' })
+  @ApiResponse({ status: 204, description: 'Item supprimé (c\'était la dernière variante)' })
+  @ApiResponse({ status: 404, description: 'Item non trouvé' })
+  async deleteVariant(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('variantIndex') variantIndexStr: string
+  ) {
+    const ownerId = getOwnerId(req);
+    const variantIndex = parseInt(variantIndexStr, 10);
+
+    if (isNaN(variantIndex)) {
+      throw new BadRequestException('Index de variante invalide');
+    }
+
+    const result = await this.service.deleteVariant(ownerId, id, variantIndex);
+
+    // Si result est null, l'item a été supprimé (c'était la dernière variante)
+    if (result === null) {
+      return { deleted: true, message: 'Item supprimé (dernière variante)' };
+    }
+
+    return result;
   }
 }

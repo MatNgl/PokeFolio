@@ -129,11 +129,7 @@ export class DashboardService {
           totalValue: { $sum: '$effectivePrice' },
           gradedCount: {
             $sum: {
-              $cond: [
-                '$effectiveGraded',
-                { $cond: [{ $isArray: '$variants' }, { $size: '$variants' }, 1] },
-                0,
-              ],
+              $cond: ['$effectiveGraded', '$quantity', 0],
             },
           },
         },
@@ -173,20 +169,19 @@ export class DashboardService {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bucketFormat = this.getBucketFormat(query, query.bucket!);
 
-    // Créer le match filter en fonction de la période
+    // Pour les séries temporelles, on veut TOUJOURS voir l'évolution depuis le début
+    // jusqu'à la fin de la période demandée
     const matchFilter: {
       ownerId: string;
-      createdAt?: { $gte: Date; $lte?: Date };
+      createdAt?: { $lte: Date };
     } = {
       ownerId: userId,
     };
 
-    // Si on a une période spécifique (pas "all"), filtrer par date
-    if (startDate) {
-      matchFilter.createdAt = { $gte: startDate };
-      if (endDate) {
-        matchFilter.createdAt.$lte = endDate;
-      }
+    // Filtrer jusqu'à la date de fin de la période (si spécifiée)
+    // Cela permet de voir l'évolution cumulative jusqu'à ce point
+    if (endDate) {
+      matchFilter.createdAt = { $lte: endDate };
     }
 
     const matchStage = { $match: matchFilter };
@@ -240,10 +235,15 @@ export class DashboardService {
       value: number;
     }>([matchStage, addFieldsStage, groupStage, sortStage]);
 
-    const dataPoints: TimeSeriesDataPoint[] = data.map((item) => ({
-      date: item._id, // MongoDB $dateToString retourne déjà une string formatée
-      value: Math.round(item.value * 100) / 100,
-    }));
+    // Calculer les valeurs cumulatives
+    let cumulative = 0;
+    const dataPoints: TimeSeriesDataPoint[] = data.map((item) => {
+      cumulative += item.value;
+      return {
+        date: item._id,
+        value: Math.round(cumulative * 100) / 100,
+      };
+    });
 
     return {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

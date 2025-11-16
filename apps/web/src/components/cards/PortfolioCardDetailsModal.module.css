@@ -34,6 +34,7 @@
   justify-content: space-between;
   padding: 16px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
 }
 
 .header h2 {
@@ -41,6 +42,96 @@
   font-size: 16px;
   letter-spacing: 0.2px;
   color: var(--text);
+  flex: 1;
+  text-align: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navBtn {
+  appearance: none;
+  border: 1px solid rgba(124, 243, 255, 0.3);
+  background: rgba(124, 243, 255, 0.08);
+  color: var(--primary);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.navBtn:hover,
+.navBtn:focus-visible {
+  outline: none;
+  background: rgba(124, 243, 255, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 18px rgba(124, 243, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.navBtn:active {
+  transform: scale(0.95);
+}
+
+.navBtnPlaceholder {
+  width: 38px;
+  height: 38px;
+}
+
+/* === Boutons de navigation latéraux === */
+.navBtnLeft,
+.navBtnRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(124, 243, 255, 0.1);
+  border: 2px solid rgba(124, 243, 255, 0.3);
+  color: var(--primary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+  z-index: 1001;
+}
+
+.navBtnLeft {
+  left: 80px;
+}
+
+.navBtnRight {
+  right: 80px;
+}
+
+.navBtnLeft:hover,
+.navBtnRight:hover {
+  background: rgba(124, 243, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.4);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.navBtnLeft:active,
+.navBtnRight:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.navBtnLeft:focus-visible,
+.navBtnRight:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .closeBtn {
@@ -88,8 +179,8 @@
 .left {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radii);
-  padding: 12px;
+  border-radius: 16px;
+  padding: 0;
   display: grid;
   align-content: start;
   overflow: hidden;
@@ -97,7 +188,7 @@
 
 .image {
   width: 100%;
-  border-radius: var(--radii-sm);
+  border-radius: 16px;
   display: block;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
@@ -198,32 +289,31 @@
   gap: 10px;
 }
 
-/* Si tu as appliqué la “quick fix” (variant=secondary + .dangerBtn) */
+/* Bouton Supprimer en rouge */
 .dangerBtn {
-  /* fond rouge verre + halo */
-  background: linear-gradient(
-    135deg,
-    rgba(248, 113, 113, 0.14),
-    rgba(248, 113, 113, 0.08)
-  ) !important;
-  border: 1px solid rgba(248, 113, 113, 0.35) !important;
-  color: #fecaca !important;
-  box-shadow:
-    0 0 0 0 rgba(248, 113, 113, 0),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: rgba(220, 38, 38, 0.9) !important;
+  border: 2px solid #dc2626 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
   transition:
     box-shadow 0.2s ease,
     transform 0.15s ease,
-    border-color 0.2s ease,
     background 0.2s ease;
 }
 
 .dangerBtn:hover,
 .dangerBtn:focus-visible {
   outline: none;
-  border-color: #f87171 !important;
-  box-shadow: 0 0 22px rgba(248, 113, 113, 0.22);
-  transform: translateY(-1px);
+  background: rgba(185, 28, 28, 1) !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+  transform: translateY(-2px);
+}
+
+.dangerBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
 }
 
 /* === Responsive === */
@@ -296,6 +386,7 @@
 
 /* === Cartes de variantes === */
 .variantCard {
+  position: relative;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(124, 243, 255, 0.15);
   border-radius: var(--radii-sm);
@@ -317,6 +408,40 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--primary);
+}
+
+/* === Bouton de suppression de variante === */
+.deleteVariantBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteVariantBtn:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+.deleteVariantBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.deleteVariantBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* === Animations === */

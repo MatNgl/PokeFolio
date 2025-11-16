@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import styles from './Toast.module.css';
 
 interface ToastProps {
-  message: string;
+  message: string | ReactNode;
   type: 'success' | 'error' | 'info';
   onClose: () => void;
   duration?: number;

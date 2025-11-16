@@ -65,11 +65,42 @@
   background: var(--glass);
   backdrop-filter: blur(var(--blur));
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: var(--border);
+}
+
+.searchForm > :first-child {
+  flex: 1;
+}
+
+.scanButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  height: 45px;
+  background: #16171d;
+  border: 1.5px solid #2b2c37;
+  border-radius: 12px;
+  color: #bdbecb;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 0 25px -17px #000;
+  flex-shrink: 0;
+}
+
+.scanButton:hover {
+  border-color: #2f303d;
+  box-shadow: 0 0 25px -15px #000;
+  transform: translateY(-1px);
+}
+
+.scanButton:active {
+  transform: scale(0.98);
 }
 
 .searching {
@@ -307,13 +338,19 @@
   color: var(--text);
 }
 
+.variantsHeaderActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .copyFirstBtn {
   background: #0f1419;
   border: 1px solid rgba(124, 243, 255, 0.3);
   border-radius: var(--radii-sm);
   padding: 8px 16px;
   color: var(--primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -333,7 +370,34 @@
   transform: scale(0.98);
 }
 
+.addVariantBtn {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15), rgba(96, 165, 250, 0.15));
+  border: 1px solid rgba(124, 243, 255, 0.4);
+  border-radius: var(--radii-sm);
+  padding: 8px 16px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.addVariantBtn:hover {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.25), rgba(96, 165, 250, 0.25));
+  border-color: var(--primary);
+  box-shadow: 0 0 16px rgba(124, 243, 255, 0.4);
+  transform: scale(1.02);
+}
+
+.addVariantBtn:active {
+  transform: scale(0.98);
+}
+
 .variantRow {
+  position: relative;
   border: 1px solid rgba(124, 243, 255, 0.2);
   border-radius: var(--radii-sm);
   padding: 16px;
@@ -343,9 +407,41 @@
   gap: 12px;
 }
 
+.variantRowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .variantRow legend {
   color: var(--primary);
   font-weight: 600;
   font-size: 14px;
   padding: 0 8px;
+  margin: 0;
+}
+
+.deleteVariantBtn {
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 6px;
+  padding: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteVariantBtn:hover {
+  background: rgba(220, 38, 38, 0.9);
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+  transform: scale(1.05);
+}
+
+.deleteVariantBtn:active {
+  transform: scale(0.95);
 }

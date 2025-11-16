@@ -10,6 +10,7 @@ import { Register } from './pages/Register';
 import Dashboard from './pages/DashboardNew';
 import { Header } from './components/layout/Header';
 import Portfolio from './pages/Portfolio';
+import { SetDetail } from './pages/SetDetail';
 import Discover from './pages/Discover';
 import { Profile } from './pages/Profile';
 import { ScrollToTop } from './components/ui/ScrollToTop';
@@ -80,6 +81,16 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <Portfolio />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Set Detail (protégée) */}
+        <Route
+          path="/portfolio/set/:setId"
+          element={
+            <ProtectedRoute>
+              <SetDetail />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,114 @@
+import { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+import type { CompleteSetCard } from '../../services/sets.service';
+import styles from './SetCardDetailsModal.module.css';
+
+type Props = {
+  card: CompleteSetCard;
+  setName: string;
+  onClose: () => void;
+};
+
+function resolveImageUrl(url?: string): string {
+  if (!url) return 'https://images.pokemontcg.io/swsh1/back.png';
+  if (url.includes('assets.tcgdex.net') && !url.match(/\.(webp|png|jpg|jpeg)$/i)) {
+    return `${url}/high.webp`;
+  }
+  return url;
+}
+
+export default function SetCardDetailsModal({ card, setName, onClose }: Props) {
+  const dialogRef = useRef<HTMLElement>(null);
+
+  // Bloquer le scroll du body quand le modal est ouvert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  // Focus auto
+  useEffect(() => {
+    dialogRef.current?.focus();
+  }, []);
+
+  // ESC pour fermer
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const imageUrl = resolveImageUrl(card.imageUrl);
+
+  return (
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      role="button"
+      tabIndex={-1}
+      aria-label="Fermer le modal"
+    >
+      <section
+        ref={dialogRef}
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="setCardDetailsTitle"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">
+          <X size={24} />
+        </button>
+
+        <div className={styles.content}>
+          <div className={styles.imageContainer}>
+            <img
+              className={styles.image}
+              src={imageUrl}
+              alt={card.name || card.cardId}
+              onError={(e) => {
+                const t = e.currentTarget as HTMLImageElement;
+                t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+              }}
+            />
+          </div>
+
+          <div className={styles.info}>
+            <h2 id="setCardDetailsTitle" className={styles.name}>
+              {card.name}
+            </h2>
+            <div className={styles.tags}>
+              <span className={styles.tag}>{setName}</span>
+              {card.number && <span className={styles.tag}>#{card.number}</span>}
+              {card.rarity && <span className={styles.tag}>{card.rarity}</span>}
+            </div>
+
+            {card.owned ? (
+              <div className={styles.statusOwned}>
+                <span className={styles.statusIcon}>✓</span>
+                <span>Vous possédez cette carte</span>
+                {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
+              </div>
+            ) : (
+              <div className={styles.statusNotOwned}>
+                <span>Carte non possédée</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

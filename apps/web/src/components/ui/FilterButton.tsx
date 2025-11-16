@@ -13,17 +13,20 @@ export interface SortOption {
 interface FilterButtonProps {
   onSortChange: (sort: SortOption) => void;
   currentSort?: SortOption;
-  context?: 'portfolio' | 'discover';
+  context?: 'portfolio' | 'discover' | 'sets';
 }
 
-const getSortFields = (context: 'portfolio' | 'discover'): SortField[] => {
+const getSortFields = (context: 'portfolio' | 'discover' | 'sets'): SortField[] => {
   if (context === 'portfolio') {
     return ['default', 'name', 'quantity', 'price', 'date', 'graded'];
+  }
+  if (context === 'sets') {
+    return ['date', 'quantity', 'name'];
   }
   return ['default', 'name'];
 };
 
-const getFieldLabel = (field: SortField): string => {
+const getFieldLabel = (field: SortField, context?: 'portfolio' | 'discover' | 'sets'): string => {
   switch (field) {
     case 'default':
       return "Par défaut (ordre d'ajout)";
@@ -34,7 +37,7 @@ const getFieldLabel = (field: SortField): string => {
     case 'price':
       return 'Prix';
     case 'date':
-      return "Date d'achat";
+      return context === 'sets' ? 'Date de sortie' : "Date d'achat";
     case 'graded':
       return 'Gradées';
     default:
@@ -112,7 +115,7 @@ export function FilterButton({
                     className={`${styles.option} ${isSelected ? styles.selected : ''}`}
                     onClick={() => handleSelect(field)}
                   >
-                    <span>{getFieldLabel(field)}</span>
+                    <span>{getFieldLabel(field, context)}</span>
                     <div className={styles.iconGroup}>
                       {showDirection && (
                         <>

@@ -28,7 +28,17 @@
       "Bash(if [ -f tag.png ])",
       "Bash(then cp tag.png other.png)",
       "Bash(else cp psa.png other.png)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(pnpm add:*)",
+      "Bash(timeout 10 pnpm run dev:*)",
+      "Bash(pnpm run start:dev:*)",
+      "Bash(pnpm run dev:api:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd /c \"taskkill //PID 15972 //F\")"
     ],
     "deny": [],
     "ask": []

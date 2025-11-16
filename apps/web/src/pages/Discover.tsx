@@ -1,15 +1,21 @@
-import { useEffect, useState, useRef } from 'react';
-import type { Card, CardSearchResult } from '@pokefolio/types';
+import { useEffect, useState, useRef, type ReactNode } from 'react';
+import type { Card } from '@pokefolio/types';
+import { useQuery } from '@tanstack/react-query';
 import { cardsService } from '../services/cards.service';
+import { wishlistService } from '../services/wishlist.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { CardDetailsModal } from '../components/cards/CardDetailsModal';
-import { Button } from '../components/ui/Button';
+import { QuickAddModal } from '../components/cards/QuickAddModal';
+import { CardRecognition } from '../components/CardRecognition/CardRecognition';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import { Toast } from '../components/ui/Toast';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
+import { WishlistHeart } from '../components/ui/WishlistHeart';
 import styles from './Discover.module.css';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Camera } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { portfolioService } from '../services/portfolio.service';
 
 export default function Discover() {
   // Définir le titre de la page
@@ -27,14 +33,27 @@ export default function Discover() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [detailsCard, setDetailsCard] = useState<Card | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>({ field: 'default', direction: 'asc' });
+  const [showRecognition, setShowRecognition] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showDetailedAdd, setShowDetailedAdd] = useState(false);
   const isInitialLoadRef = useRef(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [toast, setToast] = useState<{
-    message: string;
+    message: ReactNode;
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
+  const queryClient = useQueryClient();
+
   const CARDS_PER_PAGE = 15;
+
+  // Récupérer les statuts wishlist pour les cartes affichées
+  const displayedCardIds = displayedCards.map((card) => card.id);
+  const { data: wishlistStatuses } = useQuery({
+    queryKey: ['wishlist-check', displayedCardIds],
+    queryFn: () => wishlistService.checkMultiple(displayedCardIds),
+    enabled: displayedCardIds.length > 0,
+  });
 
   // Charger des cartes aléatoires au montage
   useEffect(() => {
@@ -309,16 +328,77 @@ export default function Discover() {
     }
   };
 
+  const addToPortfolioMutation = useMutation({
+    mutationFn: (card: Card) =>
+      portfolioService.addCard({
+        cardId: card.id,
+        language: 'fr',
+        quantity: 1,
+        // Métadonnées de la carte
+        name: card.name,
+        setId: card.set?.id,
+        setName: card.set?.name,
+        setLogo: card.set?.logo,
+        setSymbol: card.set?.symbol,
+        setReleaseDate: card.set?.releaseDate,
+        number: card.localId,
+        setCardCount: card.set?.cardCount?.total,
+        rarity: card.rarity,
+        imageUrl: card.image || card.images?.small,
+        imageUrlHiRes: card.images?.large,
+        types: card.types,
+        supertype: card.category,
+        subtypes: card.subtypes,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+    },
+  });
+
   const handleAddCard = (card: Card) => {
     setSelectedCard(card);
+    setShowQuickAdd(true);
+  };
+
+  const handleAddDirect = () => {
+    if (!selectedCard) return;
+    const cardName = selectedCard.name || selectedCard.id;
+    addToPortfolioMutation.mutate(selectedCard);
+    setShowQuickAdd(false);
+    setSelectedCard(null);
+    setToast({
+      message: (
+        <>
+          <strong>{cardName}</strong> a été ajouté au portfolio
+        </>
+      ),
+      type: 'success',
+    });
+  };
+
+  const handleAddWithDetails = () => {
+    setShowQuickAdd(false);
+    setShowDetailedAdd(true);
   };
 
   const handleAddSuccess = () => {
+    if (!selectedCard) return;
+    const cardName = selectedCard.name || selectedCard.id;
+    setShowDetailedAdd(false);
     setSelectedCard(null);
     setToast({
-      message: 'Carte ajoutée avec succès à votre portfolio',
+      message: (
+        <>
+          <strong>{cardName}</strong> a été ajouté au portfolio
+        </>
+      ),
       type: 'success',
     });
+    queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+  };
+
+  const showToast = (message: React.ReactNode, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type });
   };
 
   const getCardImageUrl = (card: Card): string => {
@@ -401,6 +481,14 @@ export default function Discover() {
           ariaLabel="Rechercher une carte Pokémon ou un set"
           className={styles.searchBar}
         />
+        <button
+          type="button"
+          onClick={() => setShowRecognition(true)}
+          className={styles.scanButton}
+          aria-label="Scanner une carte avec la caméra"
+        >
+          <Camera size={18} aria-hidden />
+        </button>
         <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="discover" />
       </div>
 
@@ -442,6 +530,25 @@ export default function Discover() {
                       }
                     }}
                   />
+                  <WishlistHeart
+                    cardId={card.id}
+                    isInWishlist={wishlistStatuses?.[card.id] || false}
+                    cardData={{
+                      name: card.name,
+                      setId: card.set?.id,
+                      setName: card.set?.name,
+                      setLogo: card.set?.logo,
+                      setSymbol: card.set?.symbol,
+                      setReleaseDate: card.set?.releaseDate,
+                      number: card.localId,
+                      rarity: card.rarity,
+                      imageUrl: card.image || card.images?.small,
+                      imageUrlHiRes: card.images?.large,
+                      types: card.types,
+                      category: card.category,
+                    }}
+                    onToast={showToast}
+                  />
                 </button>
 
                 <div className={styles.cardInfo}>
@@ -455,16 +562,15 @@ export default function Discover() {
                   {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
                 </div>
 
-                <Button
+                <button
+                  type="button"
                   onClick={() => handleAddCard(card)}
                   className={styles.addBtn}
                   aria-label={`Ajouter ${card.name} au portfolio`}
-                  variant="success"
-                  size="sm"
                 >
-                  <PlusCircle size={18} aria-hidden />
+                  <PlusCircle size={16} />
                   Ajouter
-                </Button>
+                </button>
               </article>
             ))}
           </section>
@@ -514,10 +620,26 @@ export default function Discover() {
         </div>
       ) : null}
 
-      {selectedCard && (
+      {showQuickAdd && selectedCard && (
+        <QuickAddModal
+          cardName={selectedCard.name || selectedCard.id}
+          setName={selectedCard.set?.name}
+          onClose={() => {
+            setShowQuickAdd(false);
+            setSelectedCard(null);
+          }}
+          onAddDirect={handleAddDirect}
+          onAddWithDetails={handleAddWithDetails}
+        />
+      )}
+
+      {showDetailedAdd && selectedCard && (
         <AddCardModal
           card={selectedCard}
-          onClose={() => setSelectedCard(null)}
+          onClose={() => {
+            setShowDetailedAdd(false);
+            setSelectedCard(null);
+          }}
           onSuccess={handleAddSuccess}
         />
       )}
@@ -528,8 +650,19 @@ export default function Discover() {
           onClose={() => setDetailsCard(null)}
           onAdd={(card) => {
             setSelectedCard(card);
+            setShowQuickAdd(true);
             setDetailsCard(null);
           }}
+        />
+      )}
+
+      {showRecognition && (
+        <CardRecognition
+          onCardSelected={(card) => {
+            setShowRecognition(false);
+            setSelectedCard(card);
+          }}
+          onClose={() => setShowRecognition(false)}
         />
       )}
 
