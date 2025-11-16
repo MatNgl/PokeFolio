@@ -8,6 +8,7 @@ import { Loader } from '../ui/FullScreenLoader';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PortfolioCardDetailsModal.module.css';
 import GradedCardFrame from '../grading/GradedCardFrame';
+import CardPriceChart from '../pricing/CardPriceChart';
 
 type PortfolioVariant = {
   purchasePrice?: number;
@@ -425,6 +426,9 @@ export default function PortfolioCardDetailsModal({
                   )}
                 </>
               )}
+
+              {/* --- Évolution des prix --- */}
+              {entry.cardId && <CardPriceChart cardId={entry.cardId} />}
 
               {/* --- Actions --- */}
               <div className={styles.actions}>
