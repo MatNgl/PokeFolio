@@ -137,20 +137,14 @@ export function SetsView() {
                 </div>
               )}
               <div className={styles.setInfo}>
-                <h3
+                <button
                   className={styles.setName}
                   onClick={() => navigate(`/portfolio/set/${set.setId}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      navigate(`/portfolio/set/${set.setId}`);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                 >
                   {set.setName || 'Set inconnu'}
                   <ChevronRight size={20} className={styles.setNameArrow} />
-                </h3>
+                </button>
                 <div className={styles.setMeta}>
                   <span className={styles.setStats}>
                     {set.completion.owned}
