@@ -37,35 +37,149 @@ interface PokemonTCGSearchResponse {
 /**
  * Mapping entre les codes de set TCGdex et Pokemon TCG API
  * TCGdex utilise des codes différents de l'API officielle Pokemon TCG
+ * Format général: TCGdex ajoute souvent des 0 (ex: sv01, swsh01) que Pokemon TCG API n'utilise pas
  */
 const SET_CODE_MAPPING: Record<string, string> = {
-  // Scarlet & Violet
-  sv01: 'sv1',
-  sv02: 'sv2',
-  sv03: 'sv3',
-  sv04: 'sv4',
-  sv05: 'sv5',
-  sv06: 'sv6',
-  sv07: 'sv7',
-  sv08: 'sv8',
-  sv09: 'sv9',
-  sv10: 'sv10',
+  // ===== Scarlet & Violet (2023+) =====
+  sv01: 'sv1', // Scarlet & Violet Base
+  sv02: 'sv2', // Paldea Evolved
+  sv03: 'sv3', // Obsidian Flames
+  sv04: 'sv4', // Paradox Rift
+  sv05: 'sv5', // Temporal Forces
+  sv06: 'sv6', // Twilight Masquerade
+  sv07: 'sv7', // Stellar Crown
+  sv08: 'sv8', // Surging Sparks
+  sv09: 'sv9', // (Future set)
+  sv10: 'sv10', // (Future set)
   svp: 'svp', // Scarlet & Violet Promos
-  // Sword & Shield
-  swsh01: 'swsh1',
-  swsh02: 'swsh2',
-  swsh03: 'swsh3',
-  swsh04: 'swsh4',
-  swsh05: 'swsh5',
-  swsh06: 'swsh6',
-  swsh07: 'swsh7',
-  swsh08: 'swsh8',
-  swsh09: 'swsh9',
-  swsh10: 'swsh10',
-  swsh11: 'swsh11',
-  swsh12: 'swsh12',
-  // Autres sets populaires
-  me01: 'cel25', // Celebrations
+  sve: 'sve', // Scarlet & Violet Energies
+
+  // ===== Sword & Shield (2020-2023) =====
+  swsh01: 'swsh1', // Sword & Shield Base
+  swsh02: 'swsh2', // Rebel Clash
+  swsh03: 'swsh3', // Darkness Ablaze
+  swsh04: 'swsh4', // Vivid Voltage
+  swsh045: 'swsh45', // Shining Fates
+  swsh05: 'swsh5', // Battle Styles
+  swsh06: 'swsh6', // Chilling Reign
+  swsh07: 'swsh7', // Evolving Skies
+  swsh08: 'swsh8', // Fusion Strike
+  swsh09: 'swsh9', // Brilliant Stars
+  swsh10: 'swsh10', // Astral Radiance
+  swsh11: 'swsh11', // Lost Origin
+  swsh12: 'swsh12', // Silver Tempest
+  swsh125: 'swsh12pt5', // Crown Zenith
+  swshp: 'swshp', // Sword & Shield Promos
+  ssp: 'ssp', // Special Delivery Promos
+
+  // ===== Sets spéciaux Sword & Shield =====
+  me01: 'cel25', // Celebrations (25th Anniversary)
+  go: 'pgo', // Pokemon GO
+
+  // ===== Sun & Moon (2017-2020) =====
+  sm01: 'sm1', // Sun & Moon Base
+  sm02: 'sm2', // Guardians Rising
+  sm03: 'sm3', // Burning Shadows
+  sm035: 'sm35', // Shining Legends
+  sm04: 'sm4', // Crimson Invasion
+  sm05: 'sm5', // Ultra Prism
+  sm06: 'sm6', // Forbidden Light
+  sm07: 'sm7', // Celestial Storm
+  sm075: 'sm75', // Dragon Majesty
+  sm08: 'sm8', // Lost Thunder
+  sm09: 'sm9', // Team Up
+  sm10: 'sm10', // Unbroken Bonds
+  sm11: 'sm11', // Unified Minds
+  sm115: 'sm115', // Hidden Fates
+  sm12: 'sm12', // Cosmic Eclipse
+  smp: 'smp', // Sun & Moon Promos
+
+  // ===== XY (2014-2017) =====
+  xy01: 'xy1', // XY Base
+  xy02: 'xy2', // Flashfire
+  xy03: 'xy3', // Furious Fists
+  xy04: 'xy4', // Phantom Forces
+  xy05: 'xy5', // Primal Clash
+  xy06: 'xy6', // Roaring Skies
+  xy07: 'xy7', // Ancient Origins
+  xy08: 'xy8', // BREAKthrough
+  xy09: 'xy9', // BREAKpoint
+  xy10: 'xy10', // Fates Collide
+  xy11: 'xy11', // Steam Siege
+  xy12: 'xy12', // Evolutions
+  xyp: 'xyp', // XY Promos
+  g1: 'g1', // Generations
+  g2: 'g2', // Generations Radiant Collection
+
+  // ===== Black & White (2011-2014) =====
+  bw01: 'bw1', // Black & White Base
+  bw02: 'bw2', // Emerging Powers
+  bw03: 'bw3', // Noble Victories
+  bw04: 'bw4', // Next Destinies
+  bw05: 'bw5', // Dark Explorers
+  bw06: 'bw6', // Dragons Exalted
+  bw07: 'bw7', // Boundaries Crossed
+  bw08: 'bw8', // Plasma Storm
+  bw09: 'bw9', // Plasma Freeze
+  bw10: 'bw10', // Plasma Blast
+  bw11: 'bw11', // Legendary Treasures
+  bwp: 'bwp', // Black & White Promos
+
+  // ===== HeartGold & SoulSilver (2010-2011) =====
+  hgss1: 'hgss1', // HGSS Base
+  hgss2: 'hgss2', // Unleashed
+  hgss3: 'hgss3', // Undaunted
+  hgss4: 'hgss4', // Triumphant
+  col1: 'col1', // Call of Legends
+
+  // ===== Platinum (2009-2010) =====
+  pl1: 'pl1', // Platinum Base
+  pl2: 'pl2', // Rising Rivals
+  pl3: 'pl3', // Supreme Victors
+  pl4: 'pl4', // Arceus
+
+  // ===== Diamond & Pearl (2007-2009) =====
+  dp1: 'dp1', // Diamond & Pearl Base
+  dp2: 'dp2', // Mysterious Treasures
+  dp3: 'dp3', // Secret Wonders
+  dp4: 'dp4', // Great Encounters
+  dp5: 'dp5', // Majestic Dawn
+  dp6: 'dp6', // Legends Awakened
+  dp7: 'dp7', // Stormfront
+
+  // ===== EX Era (2003-2007) =====
+  ex1: 'ex1', // EX Ruby & Sapphire
+  ex2: 'ex2', // EX Sandstorm
+  ex3: 'ex3', // EX Dragon
+  ex4: 'ex4', // EX Team Magma vs Team Aqua
+  ex5: 'ex5', // EX Hidden Legends
+  ex6: 'ex6', // EX FireRed & LeafGreen
+  ex7: 'ex7', // EX Team Rocket Returns
+  ex8: 'ex8', // EX Deoxys
+  ex9: 'ex9', // EX Emerald
+  ex10: 'ex10', // EX Unseen Forces
+  ex11: 'ex11', // EX Delta Species
+  ex12: 'ex12', // EX Legend Maker
+  ex13: 'ex13', // EX Holon Phantoms
+  ex14: 'ex14', // EX Crystal Guardians
+  ex15: 'ex15', // EX Dragon Frontiers
+  ex16: 'ex16', // EX Power Keepers
+
+  // ===== Classic Era (1999-2003) =====
+  base1: 'base1', // Base Set
+  base2: 'base2', // Jungle
+  base3: 'base3', // Fossil
+  base4: 'base4', // Base Set 2
+  base5: 'base5', // Team Rocket
+  gym1: 'gym1', // Gym Heroes
+  gym2: 'gym2', // Gym Challenge
+  neo1: 'neo1', // Neo Genesis
+  neo2: 'neo2', // Neo Discovery
+  neo3: 'neo3', // Neo Revelation
+  neo4: 'neo4', // Neo Destiny
+  ecard1: 'ecard1', // Expedition
+  ecard2: 'ecard2', // Aquapolis
+  ecard3: 'ecard3', // Skyridge
 };
 
 @Injectable()
