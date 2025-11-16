@@ -97,8 +97,14 @@ export default function CardPriceChart({ cardId, variant = 'normal' }: Props) {
   if (error || !history) {
     return (
       <div className={styles.container}>
+        <div className={styles.header}>
+          <h4 className={styles.title}>Évolution du prix TCGPlayer</h4>
+        </div>
         <div className={styles.error}>
-          <p>{error || 'Aucune donnée de prix disponible'}</p>
+          <p>
+            {error ||
+              "Les données de prix ne sont pas disponibles pour cette carte. Cela peut être dû à : une carte exclusive à certaines régions, un problème temporaire de l'API Pokemon TCG, ou une carte trop récente."}
+          </p>
         </div>
       </div>
     );

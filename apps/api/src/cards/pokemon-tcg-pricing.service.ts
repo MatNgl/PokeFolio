@@ -39,6 +39,8 @@ export class PokemonTCGPricingService {
   // Cache simple pour éviter de surcharger l'API
   private priceCache: Map<string, { data: CardPricing; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+  private readonly REQUEST_TIMEOUT = 10000; // 10 secondes
+  private readonly MAX_RETRIES = 2;
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('POKEMON_TCG_API_KEY');
@@ -49,6 +51,47 @@ export class PokemonTCGPricingService {
     } else {
       this.logger.log('✓ Pokemon TCG API Key configurée');
     }
+  }
+
+  /**
+   * Fetch avec timeout et retry
+   */
+  private async fetchWithTimeout(
+    url: string,
+    options: RequestInit,
+    retries = this.MAX_RETRIES
+  ): Promise<Response> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT);
+
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        const isLastAttempt = attempt === retries;
+        const isTimeout = (error as Error).name === 'AbortError';
+
+        if (isTimeout) {
+          this.logger.warn(`Timeout sur ${url} (tentative ${attempt + 1}/${retries + 1})`);
+        }
+
+        if (isLastAttempt) {
+          throw error;
+        }
+
+        // Backoff exponentiel: 1s, 2s
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error('Max retries reached');
   }
 
   /**
@@ -71,16 +114,17 @@ export class PokemonTCGPricingService {
       const url = `${this.baseUrl}/cards/${encodeURIComponent(cardId)}`;
       this.logger.log(`Fetching pricing from Pokemon TCG: ${url}`);
 
-      const response = await fetch(url, { headers });
+      const response = await this.fetchWithTimeout(url, { headers });
 
       if (!response.ok) {
         if (response.status === 404) {
+          this.logger.log(`Carte ${cardId} non trouvée sur Pokemon TCG API`);
           return null;
         }
-        throw new HttpException(
-          `Pokemon TCG API error: ${response.status} ${response.statusText}`,
-          response.status
+        this.logger.warn(
+          `Pokemon TCG API error pour ${cardId}: ${response.status} ${response.statusText}`
         );
+        return null;
       }
 
       const data = (await response.json()) as PokemonTCGResponse;
@@ -104,16 +148,24 @@ export class PokemonTCGPricingService {
 
       return pricing;
     } catch (err) {
-      if (err instanceof HttpException && err.getStatus() === 404) {
+      const error = err as Error;
+
+      // Timeout ou erreur réseau : retourner null au lieu de throw
+      if (error.name === 'AbortError') {
+        this.logger.error(`Timeout lors de la récupération des prix pour ${cardId}`);
         return null;
       }
+
+      // Autres erreurs réseau
+      if (error.message?.includes('fetch')) {
+        this.logger.error(`Erreur réseau pour ${cardId}: ${error.message}`);
+        return null;
+      }
+
       this.logger.error(
-        `Erreur lors de la récupération des prix pour ${cardId}: ${String((err as Error)?.message ?? err)}`
+        `Erreur inattendue lors de la récupération des prix pour ${cardId}: ${error.message}`
       );
-      throw new HttpException(
-        'Erreur lors de la récupération des prix de la carte',
-        HttpStatus.BAD_GATEWAY
-      );
+      return null;
     }
   }
 
