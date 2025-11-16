@@ -47,6 +47,7 @@ const SET_CODE_MAPPING: Record<string, string> = {
   sv05: 'sv5',
   sv06: 'sv6',
   sv07: 'sv7',
+  sv08: 'sv8',
   // Sword & Shield
   swsh01: 'swsh1',
   swsh02: 'swsh2',
@@ -73,8 +74,8 @@ export class PokemonTCGPricingService {
   // Cache simple pour éviter de surcharger l'API
   private priceCache: Map<string, { data: CardPricing; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 1000 * 60 * 30; // 30 minutes
-  private readonly REQUEST_TIMEOUT = 10000; // 10 secondes
-  private readonly MAX_RETRIES = 2;
+  private readonly REQUEST_TIMEOUT = 5000; // 5 secondes (réduit pour éviter l'attente infinie)
+  private readonly MAX_RETRIES = 1; // 1 seul retry pour ne pas bloquer trop longtemps
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('POKEMON_TCG_API_KEY');
@@ -167,14 +168,19 @@ export class PokemonTCGPricingService {
 
         if (isTimeout) {
           this.logger.warn(`Timeout sur ${url} (tentative ${attempt + 1}/${retries + 1})`);
+        } else {
+          this.logger.warn(
+            `Erreur réseau sur ${url} (tentative ${attempt + 1}/${retries + 1}): ${error.message}`
+          );
         }
 
         if (isLastAttempt) {
           throw error;
         }
 
-        // Backoff exponentiel: 1s, 2s
+        // Backoff exponentiel: 1s pour le premier retry
         const delay = Math.pow(2, attempt) * 1000;
+        this.logger.log(`Attente de ${delay}ms avant retry...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -223,6 +229,12 @@ export class PokemonTCGPricingService {
 
           cardData = await this.searchCardBySetAndNumber(setCode, number);
         }
+      } else {
+        // 5xx errors (504 Gateway Timeout, 502, 503, etc.)
+        this.logger.warn(
+          `Pokemon TCG API error ${response.status} for ${cardId}, skipping pricing`
+        );
+        return null;
       }
 
       if (!cardData) {
