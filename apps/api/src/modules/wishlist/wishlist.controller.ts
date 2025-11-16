@@ -23,7 +23,7 @@ export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Récupérer la wishlist de l\'utilisateur' })
+  @ApiOperation({ summary: "Récupérer la wishlist de l'utilisateur" })
   async getWishlist(@Request() req: Express.Request & { user: { sub: string } }) {
     return this.wishlistService.getWishlist(req.user.sub);
   }
@@ -32,9 +32,10 @@ export class WishlistController {
   @ApiOperation({ summary: 'Ajouter une carte à la wishlist' })
   async addToWishlist(
     @Request() req: Express.Request & { user: { sub: string } },
-    @Body() body: Record<string, unknown>,
+    @Body() body: Record<string, unknown>
   ) {
-    return this.wishlistService.addToWishlist(req.user.sub, body);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.wishlistService.addToWishlist(req.user.sub, body as any);
   }
 
   @Delete(':cardId')
@@ -42,7 +43,7 @@ export class WishlistController {
   @ApiOperation({ summary: 'Retirer une carte de la wishlist' })
   async removeFromWishlist(
     @Request() req: Express.Request & { user: { sub: string } },
-    @Param('cardId') cardId: string,
+    @Param('cardId') cardId: string
   ) {
     await this.wishlistService.removeFromWishlist(req.user.sub, cardId);
   }
@@ -51,7 +52,7 @@ export class WishlistController {
   @ApiOperation({ summary: 'Vérifier si une carte est dans la wishlist' })
   async isInWishlist(
     @Request() req: Express.Request & { user: { sub: string } },
-    @Param('cardId') cardId: string,
+    @Param('cardId') cardId: string
   ) {
     const inWishlist = await this.wishlistService.isInWishlist(req.user.sub, cardId);
     return { inWishlist };
@@ -61,7 +62,7 @@ export class WishlistController {
   @ApiOperation({ summary: 'Vérifier plusieurs cartes en une fois' })
   async checkMultiple(
     @Request() req: Express.Request & { user: { sub: string } },
-    @Body() body: { cardIds: string[] },
+    @Body() body: { cardIds: string[] }
   ) {
     return this.wishlistService.checkMultiple(req.user.sub, body.cardIds);
   }
@@ -71,8 +72,9 @@ export class WishlistController {
   async updateItem(
     @Request() req: Express.Request & { user: { sub: string } },
     @Param('cardId') cardId: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: Record<string, unknown>
   ) {
-    return this.wishlistService.updateItem(req.user.sub, cardId, body);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.wishlistService.updateItem(req.user.sub, cardId, body as any);
   }
 }
