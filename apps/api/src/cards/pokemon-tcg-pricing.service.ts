@@ -48,6 +48,9 @@ const SET_CODE_MAPPING: Record<string, string> = {
   sv06: 'sv6',
   sv07: 'sv7',
   sv08: 'sv8',
+  sv09: 'sv9',
+  sv10: 'sv10',
+  svp: 'svp', // Scarlet & Violet Promos
   // Sword & Shield
   swsh01: 'swsh1',
   swsh02: 'swsh2',
