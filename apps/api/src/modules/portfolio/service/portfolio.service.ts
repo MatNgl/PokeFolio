@@ -361,7 +361,7 @@ export class PortfolioService {
 
       // Pour gradeCompany et gradeScore, prendre la variante avec la meilleure note (ou Mode A)
       let gradeCompany = item.grading?.company;
-      let gradeScore = item.grading?.grade;
+      let gradeScore: string | number | undefined = item.grading?.grade;
 
       if (mappedVariants && mappedVariants.length > 0) {
         const gradedVariants = mappedVariants.filter(
