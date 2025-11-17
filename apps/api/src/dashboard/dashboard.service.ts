@@ -227,11 +227,13 @@ export class DashboardService {
                 },
               },
             },
-            // Utiliser purchaseDate si disponible, sinon createdAt
-            effectiveDate: {
-              $ifNull: ['$purchaseDate', '$createdAt'],
+            // Utiliser purchaseDate si disponible, sinon createdAt - directement dans $dateToString
+            bucketDate: {
+              $dateToString: {
+                format: bucketFormat,
+                date: { $ifNull: ['$purchaseDate', '$createdAt'] },
+              },
             },
-            bucketDate: this.getBucketDateExpressionForDate(bucketFormat, 'effectiveDate'),
           },
         }
       : {
