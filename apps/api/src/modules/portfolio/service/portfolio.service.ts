@@ -359,6 +359,27 @@ export class PortfolioService {
           ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
           : item.graded;
 
+      // Pour gradeCompany et gradeScore, prendre la variante avec la meilleure note (ou Mode A)
+      let gradeCompany = item.grading?.company;
+      let gradeScore = item.grading?.grade;
+
+      if (mappedVariants && mappedVariants.length > 0) {
+        const gradedVariants = mappedVariants.filter(
+          (v: { isGraded?: boolean }) => v.isGraded
+        ) as Array<{ gradeScore?: string | number; gradeCompany?: string }>;
+
+        if (gradedVariants.length > 0) {
+          // Trouver la variante avec la meilleure note
+          const bestGraded = gradedVariants.reduce((best, current) => {
+            const bestScore = this.parseGradeScore(best.gradeScore);
+            const currentScore = this.parseGradeScore(current.gradeScore);
+            return currentScore > bestScore ? current : best;
+          });
+          gradeCompany = bestGraded.gradeCompany;
+          gradeScore = bestGraded.gradeScore;
+        }
+      }
+
       return {
         ...item,
         // Ajouter les métadonnées au niveau racine
@@ -378,8 +399,8 @@ export class PortfolioService {
         subtypes: snapshot?.subtypes,
         // Ajouter isGraded (alias de graded) et les infos de gradation
         isGraded,
-        gradeCompany: item.grading?.company,
-        gradeScore: item.grading?.grade,
+        gradeCompany,
+        gradeScore,
         // S'assurer que purchasePrice et variants sont bien inclus
         purchasePrice: item.purchasePrice,
         purchaseDate: item.purchaseDate,
