@@ -349,6 +349,7 @@ export function WishlistView() {
             <SetCardDetailsModal
               card={completeSetCard}
               setName={selectedCardForDetails.setName || 'Set inconnu'}
+              setId={selectedCardForDetails.setId}
               onClose={() => setSelectedCardForDetails(null)}
               onNavigatePrevious={handleNavigatePrevious}
               onNavigateNext={handleNavigateNext}

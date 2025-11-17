@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { setsService, type CompleteSetCard } from '../services/sets.service';
 import { wishlistService } from '../services/wishlist.service';
+import { useSetLogos, resolveLogoUrl } from '../hooks/useSetLogos';
 import { Checkbox } from '../components/ui/Checkbox';
 import SearchBar from '../components/ui/Search';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
@@ -153,6 +154,11 @@ export function SetDetail() {
     return data?.sets.find((s) => s.setId === setId);
   }, [data?.sets, setId]);
 
+  // Récupérer le logo depuis TCGDex
+  const setIdsForLogo = useMemo(() => (setId ? [setId] : []), [setId]);
+  const logos = useSetLogos(setIdsForLogo);
+  const logoUrl = setId ? resolveLogoUrl(logos[setId] || currentSet?.setLogo) : null;
+
   // Récupérer le set complet depuis TCGdex si nécessaire
   const { data: completeSetData } = useQuery({
     queryKey: ['complete-set', setId],
@@ -290,11 +296,14 @@ export function SetDetail() {
         </button>
 
         <div className={styles.setInfo}>
-          {currentSet.setLogo && (
+          {logoUrl && (
             <img
-              src={currentSet.setLogo}
+              src={logoUrl}
               alt={currentSet.setName || 'Set'}
               className={styles.setLogo}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
           )}
           <div>
@@ -435,6 +444,7 @@ export function SetDetail() {
             <SetCardDetailsModal
               card={selectedCard}
               setName={currentSet.setName || 'Set inconnu'}
+              setId={currentSet.setId}
               onClose={() => setSelectedCard(null)}
               onNavigatePrevious={handleNavigatePrevious}
               onNavigateNext={handleNavigateNext}

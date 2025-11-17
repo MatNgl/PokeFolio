@@ -686,6 +686,7 @@ export default function Discover() {
                 detailsCard.id?.split('-')[0]?.toUpperCase() ||
                 'Set inconnu'
               }
+              setId={detailsCard.set?.id}
               onClose={() => setDetailsCard(null)}
               onNavigatePrevious={handleNavigatePrevious}
               onNavigateNext={handleNavigateNext}

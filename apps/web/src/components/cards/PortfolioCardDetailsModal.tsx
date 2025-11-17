@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Card } from '@pokefolio/types';
 import type { PortfolioCard } from '../../services/portfolio.service';
 import { cardsService } from '../../services/cards.service';
 import { portfolioService } from '../../services/portfolio.service';
+import { useSetLogos, resolveLogoUrl } from '../../hooks/useSetLogos';
 import { Button } from '../ui/Button';
 import { Loader } from '../ui/FullScreenLoader';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -61,10 +63,24 @@ export default function PortfolioCardDetailsModal({
   hasPrevious = false,
   hasNext = false,
 }: Props) {
+  const navigate = useNavigate();
   const [card, setCard] = useState<Card | null>(null);
   const [loading, setLoading] = useState(true);
   const [deletingVariant, setDeletingVariant] = useState<number | null>(null);
   const dialogRef = useRef<HTMLElement>(null);
+
+  // Extraire le setId du cardId ou de entry.setId
+  const effectiveSetId = useMemo(() => {
+    if (entry.setId) return entry.setId;
+    // Format cardId: setId-localId (ex: sm2-76)
+    const parts = entry.cardId.split('-');
+    return parts.length > 1 ? parts.slice(0, -1).join('-') : undefined;
+  }, [entry.setId, entry.cardId]);
+
+  // Récupérer le logo du set depuis TCGDex
+  const setIdsForLogo = useMemo(() => (effectiveSetId ? [effectiveSetId] : []), [effectiveSetId]);
+  const logos = useSetLogos(setIdsForLogo);
+  const logoUrl = effectiveSetId ? resolveLogoUrl(logos[effectiveSetId]) : null;
 
   const handleDeleteVariant = async (variantIndex: number) => {
     if (!entry._id && !entry.id) return;
@@ -221,7 +237,11 @@ export default function PortfolioCardDetailsModal({
         ) : (
           <div className={styles.content}>
             <div className={styles.left}>
-              {entry.isGraded && entry.gradeCompany && entry.gradeScore !== undefined && entry.gradeScore !== null && entry.gradeScore !== '' ? (
+              {entry.isGraded &&
+              entry.gradeCompany &&
+              entry.gradeScore !== undefined &&
+              entry.gradeScore !== null &&
+              entry.gradeScore !== '' ? (
                 <GradedCardFrame
                   company={entry.gradeCompany as GradingCompany}
                   grade={entry.gradeScore}
@@ -253,10 +273,44 @@ export default function PortfolioCardDetailsModal({
             <div className={styles.right}>
               {/* --- En-tête : nom et série --- */}
               <h3 className={styles.name}>{title}</h3>
-              <div className={styles.tags}>
-                <span className={styles.tag}>{setLabel}</span>
-                <span className={styles.tag}>#{number}</span>
-                {rarity && <span className={styles.tag}>{rarity}</span>}
+
+              {/* Logo du set cliquable + tags sur la même ligne */}
+              <div className={styles.setInfoRow}>
+                {effectiveSetId ? (
+                  <button
+                    className={styles.setLogoButton}
+                    onClick={() => {
+                      onClose();
+                      navigate(`/portfolio/set/${effectiveSetId}`);
+                    }}
+                    title={`Voir le set ${setLabel}`}
+                  >
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt={setLabel}
+                        className={styles.setLogoSmall}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                          if (fallback) fallback.style.display = 'inline';
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      className={styles.setNameFallback}
+                      style={{ display: logoUrl ? 'none' : 'inline' }}
+                    >
+                      {setLabel}
+                    </span>
+                  </button>
+                ) : (
+                  <span className={styles.setNameText}>{setLabel}</span>
+                )}
+                <div className={styles.tags}>
+                  <span className={styles.tag}>#{number}</span>
+                  {rarity && <span className={styles.tag}>{rarity}</span>}
+                </div>
               </div>
 
               {/* --- Carte unique (quantité = 1) --- */}
@@ -435,10 +489,7 @@ export default function PortfolioCardDetailsModal({
                 <Button variant="secondary" onClick={() => onEdit(entry)}>
                   Modifier
                 </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => onDelete(entry)}
-                >
+                <Button variant="danger" onClick={() => onDelete(entry)}>
                   Supprimer
                 </Button>
                 <Button onClick={onClose}>Fermer</Button>

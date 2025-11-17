@@ -206,12 +206,61 @@
   line-height: 1.25;
 }
 
+/* Set info row - logo + tags sur la même ligne */
+.setInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.setLogoButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(124, 243, 255, 0.08);
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.setLogoButton:hover {
+  background: rgba(124, 243, 255, 0.15);
+  border-color: rgba(124, 243, 255, 0.4);
+  box-shadow: 0 0 12px rgba(124, 243, 255, 0.2);
+}
+
+.setLogoSmall {
+  height: 24px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+}
+
+.setNameFallback {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.setNameText {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
 /* Tags (set, #, rareté) */
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
 }
 
 .tag {
