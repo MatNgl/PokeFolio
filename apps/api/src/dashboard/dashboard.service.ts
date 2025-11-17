@@ -171,11 +171,19 @@ export class DashboardService {
    */
   async getTimeSeries(userId: string, query: TimeSeriesQueryDto): Promise<TimeSeriesResponseDto> {
     const { startDate, endDate } = this.getPeriodDates(query);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const bucketFormat = this.getBucketFormat(query, query.bucket!);
 
     // Déterminer si on utilise purchaseDate ou createdAt
     const usePurchaseDate = query.type === PeriodType.ALL;
+
+    // Déterminer automatiquement le bucket en fonction de la plage de dates du portfolio
+    let bucket = query.bucket || TimeSeriesBucket.MONTHLY;
+    if (!query.bucket && usePurchaseDate) {
+      bucket = await this.determineOptimalBucket(userId);
+    } else if (!query.bucket) {
+      bucket = TimeSeriesBucket.MONTHLY;
+    }
+
+    const bucketFormat = this.getBucketFormat(query, bucket);
 
     // Pour les séries temporelles, on veut TOUJOURS voir l'évolution depuis le début
     // jusqu'à la fin de la période demandée
@@ -657,6 +665,39 @@ export class DashboardService {
   // ────────────────────────────────────────────────────────────
   // Méthodes utilitaires
   // ────────────────────────────────────────────────────────────
+
+  /**
+   * Détermine automatiquement le bucket optimal en fonction de la plage de dates du portfolio
+   * - < 31 jours : DAILY
+   * - 31 à 90 jours : WEEKLY
+   * - > 90 jours : MONTHLY
+   */
+  private async determineOptimalBucket(userId: string): Promise<TimeSeriesBucket> {
+    // Trouver la date la plus ancienne (purchaseDate ou createdAt)
+    const oldestItem = await this.portfolioModel
+      .findOne({ ownerId: userId })
+      .sort({ createdAt: 1 })
+      .lean()
+      .exec();
+
+    if (!oldestItem) {
+      return TimeSeriesBucket.MONTHLY; // Défaut si pas de données
+    }
+
+    // Utiliser purchaseDate si disponible, sinon createdAt
+    const oldestDate = oldestItem.purchaseDate || oldestItem.createdAt;
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(oldestDate).getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 31) {
+      return TimeSeriesBucket.DAILY;
+    } else if (diffDays <= 90) {
+      return TimeSeriesBucket.WEEKLY;
+    } else {
+      return TimeSeriesBucket.MONTHLY;
+    }
+  }
 
   /**
    * Calcule les dates de début et fin en fonction du filtre de période

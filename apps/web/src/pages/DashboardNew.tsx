@@ -26,8 +26,8 @@ export function DashboardNew(): JSX.Element {
     type: PeriodType.ALL,
   };
 
-  // Pour 'all', utiliser mensuel pour avoir une vue d'ensemble
-  const bucket = TimeSeriesBucket.MONTHLY;
+  // Le bucket est déterminé automatiquement par le backend en fonction de la plage de dates
+  const bucket = undefined;
 
   // Queries React Query
   const {
