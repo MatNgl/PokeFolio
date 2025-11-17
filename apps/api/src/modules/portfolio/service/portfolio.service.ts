@@ -788,7 +788,7 @@ export class PortfolioService {
     ownerId: string,
     itemId: string,
     variantIndex: number
-  ): Promise<any> {
+  ): Promise<Record<string, unknown> | null> {
     const item = await this.model.findOne({ _id: itemId, ownerId });
 
     if (!item) {

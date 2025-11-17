@@ -21,7 +21,7 @@ import { Layers, Camera, Package, Heart } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 import GradedCardFrame from '../components/grading/GradedCardFrame';
-import GradingBadge from '../components/grading/GradingBadge';
+import GradingBadge, { type GradingCompany } from '../components/grading/GradingBadge';
 import { SetsView } from '../components/portfolio/SetsView';
 import { WishlistView } from '../components/portfolio/WishlistView';
 import { useAuth } from '../contexts/AuthContext';
@@ -780,7 +780,7 @@ export default function Portfolio() {
                           <span className={styles.detailedLabel}>Gradée</span>
                           <span className={styles.detailedValue}>
                             <GradingBadge
-                              company={card.gradeCompany as any}
+                              company={card.gradeCompany as GradingCompany}
                               grade={card.gradeScore}
                             />
                           </span>

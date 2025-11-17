@@ -13,7 +13,7 @@ import sgcLogo from '../../assets/grading/logos/sgc.png';
 import tagLogo from '../../assets/grading/logos/tag.png';
 import otherLogo from '../../assets/grading/logos/other.png';
 
-type GradingCompany =
+export type GradingCompany =
   | 'PSA'
   | 'CollectAura'
   | 'BGS'

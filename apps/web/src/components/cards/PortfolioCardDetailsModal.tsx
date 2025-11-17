@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Loader } from '../ui/FullScreenLoader';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PortfolioCardDetailsModal.module.css';
-import GradedCardFrame from '../grading/GradedCardFrame';
+import GradedCardFrame, { type GradingCompany } from '../grading/GradedCardFrame';
 import CardPriceChart from '../pricing/CardPriceChart';
 
 type PortfolioVariant = {
@@ -75,7 +75,7 @@ export default function PortfolioCardDetailsModal({
       const result = await portfolioService.deleteVariant(itemId, variantIndex);
 
       // Si result est null, la carte a été complètement supprimée
-      if (result === null || (result as any).deleted) {
+      if (result === null) {
         if (onToast) onToast('Variante supprimée avec succès (dernière variante)', 'success');
       } else {
         // Sinon, variante supprimée avec succès
@@ -223,7 +223,7 @@ export default function PortfolioCardDetailsModal({
             <div className={styles.left}>
               {entry.isGraded && entry.gradeCompany && entry.gradeScore !== undefined && entry.gradeScore !== null && entry.gradeScore !== '' ? (
                 <GradedCardFrame
-                  company={entry.gradeCompany as any}
+                  company={entry.gradeCompany as GradingCompany}
                   grade={entry.gradeScore}
                   size="large"
                 >
