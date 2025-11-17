@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Layers, TrendingUp, Award, DollarSign } from 'lucide-react';
 import { dashboardApi } from '@/features/dashboard/api/dashboard.api';
@@ -7,7 +7,7 @@ import { TimeSeriesChart } from '@/features/dashboard/components/TimeSeriesChart
 import { GradedPieChart } from '@/features/dashboard/components/GradedPieChart';
 import { TopSetsList } from '@/features/dashboard/components/TopSetsList';
 import { TopExpensiveCards } from '@/features/dashboard/components/TopExpensiveCards';
-import { PeriodSelector, type PeriodFilter } from '@/features/dashboard/components/PeriodSelector';
+import type { PeriodFilter } from '@/features/dashboard/components/PeriodSelector';
 import {
   TimeSeriesMetric,
   TimeSeriesBucket,
@@ -21,57 +21,13 @@ export function DashboardNew(): JSX.Element {
     document.title = 'PokéFolio - Dashboard';
   }, []);
 
-  // Période globale partagée par tous les composants - par défaut 'all'
-  const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>({
+  // Toujours afficher toutes les données depuis le début (pas de sélecteur de période)
+  const globalPeriod: PeriodFilter = {
     type: PeriodType.ALL,
-  });
-
-  // Déterminer le bucket automatiquement selon la période
-  const getAutoBucket = (period: PeriodFilter): TimeSeriesBucket => {
-    // Si on utilise des ISO dates, calculer le bucket selon la durée
-    if (period.startDate && period.endDate) {
-      const start = new Date(period.startDate);
-      const end = new Date(period.endDate);
-      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (diffDays <= 31) return TimeSeriesBucket.DAILY;
-      if (diffDays <= 90) return TimeSeriesBucket.WEEKLY;
-      return TimeSeriesBucket.MONTHLY;
-    }
-
-    // Sinon, utiliser la logique hiérarchique
-    if (period.type === PeriodType.WEEK) {
-      return TimeSeriesBucket.DAILY;
-    }
-    if (period.type === PeriodType.MONTH) {
-      return TimeSeriesBucket.DAILY;
-    }
-    if (period.type === PeriodType.YEAR) {
-      return TimeSeriesBucket.MONTHLY;
-    }
-    // Pour 'all', utiliser mensuel pour avoir une vue d'ensemble
-    return TimeSeriesBucket.MONTHLY;
   };
 
-  // Générer une clé de query unique basée sur le filtre de période
-  const getPeriodQueryKey = (period: PeriodFilter): string => {
-    const parts: string[] = [];
-
-    // Priorité 1: ISO dates (startDate/endDate)
-    if (period.startDate || period.endDate) {
-      parts.push('iso');
-      if (period.startDate) parts.push(`start:${period.startDate}`);
-      if (period.endDate) parts.push(`end:${period.endDate}`);
-    } else {
-      // Priorité 2: Filtres hiérarchiques (type/year/month/week)
-      parts.push(period.type || 'all');
-      if (period.year) parts.push(period.year.toString());
-      if (period.month) parts.push(period.month.toString());
-      if (period.week) parts.push(period.week.toString());
-    }
-
-    return parts.join('-');
-  };
+  // Pour 'all', utiliser mensuel pour avoir une vue d'ensemble
+  const bucket = TimeSeriesBucket.MONTHLY;
 
   // Queries React Query
   const {
@@ -79,7 +35,7 @@ export function DashboardNew(): JSX.Element {
     isLoading: summaryLoading,
     error: summaryError,
   } = useQuery({
-    queryKey: ['dashboard', 'summary', getPeriodQueryKey(globalPeriod)],
+    queryKey: ['dashboard', 'summary'],
     queryFn: () => dashboardApi.getSummary(globalPeriod),
   });
 
@@ -88,9 +44,8 @@ export function DashboardNew(): JSX.Element {
     isLoading: countLoading,
     error: countError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'count', getPeriodQueryKey(globalPeriod)],
-    queryFn: () =>
-      dashboardApi.getTimeSeries(TimeSeriesMetric.COUNT, globalPeriod, getAutoBucket(globalPeriod)),
+    queryKey: ['dashboard', 'timeseries', 'count'],
+    queryFn: () => dashboardApi.getTimeSeries(TimeSeriesMetric.COUNT, globalPeriod, bucket),
   });
 
   const {
@@ -98,9 +53,8 @@ export function DashboardNew(): JSX.Element {
     isLoading: valueLoading,
     error: valueError,
   } = useQuery({
-    queryKey: ['dashboard', 'timeseries', 'value', getPeriodQueryKey(globalPeriod)],
-    queryFn: () =>
-      dashboardApi.getTimeSeries(TimeSeriesMetric.VALUE, globalPeriod, getAutoBucket(globalPeriod)),
+    queryKey: ['dashboard', 'timeseries', 'value'],
+    queryFn: () => dashboardApi.getTimeSeries(TimeSeriesMetric.VALUE, globalPeriod, bucket),
   });
 
   const {
@@ -153,13 +107,8 @@ export function DashboardNew(): JSX.Element {
     <div className={styles.container}>
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Dashboard</h1>
-        <p className={styles.pageSubtitle}>Vue d&apos;ensemble de votre collection Pokémon</p>
+        <p className={styles.pageSubtitle}>Vue d&apos;ensemble de votre collection Pokémon depuis le début</p>
       </header>
-
-      {/* Global Period Selector - Déplacé au-dessus des KPIs */}
-      <section className={styles.periodSelector} aria-label="Period Selector">
-        <PeriodSelector currentPeriod={globalPeriod} onPeriodChange={setGlobalPeriod} />
-      </section>
 
       {/* KPIs */}
       <section className={styles.kpiGrid} aria-label="Key Performance Indicators">
