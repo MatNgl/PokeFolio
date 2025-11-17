@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { cardsService } from '../services/cards.service';
 import { wishlistService } from '../services/wishlist.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
-import { CardDetailsModal } from '../components/cards/CardDetailsModal';
+import SetCardDetailsModal from '../components/cards/SetCardDetailsModal';
 import { QuickAddModal } from '../components/cards/QuickAddModal';
 import { CardRecognition } from '../components/CardRecognition/CardRecognition';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
@@ -12,6 +12,7 @@ import { Toast } from '../components/ui/Toast';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
+import { OwnedBadge } from '../components/ui/OwnedBadge';
 import styles from './Discover.module.css';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -52,6 +53,13 @@ export default function Discover() {
   const { data: wishlistStatuses } = useQuery({
     queryKey: ['wishlist-check', displayedCardIds],
     queryFn: () => wishlistService.checkMultiple(displayedCardIds),
+    enabled: displayedCardIds.length > 0,
+  });
+
+  // Récupérer les statuts de possession pour les cartes affichées
+  const { data: ownershipStatuses } = useQuery({
+    queryKey: ['ownership-check', displayedCardIds],
+    queryFn: () => portfolioService.checkOwnership(displayedCardIds),
     enabled: displayedCardIds.length > 0,
   });
 
@@ -225,7 +233,7 @@ export default function Discover() {
 
     const timeoutId = setTimeout(() => {
       void handleSearch();
-    }, 300); // Debounce de 300ms
+    }, 150); // Debounce de 150ms (réduit pour meilleure réactivité)
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -526,6 +534,7 @@ export default function Discover() {
                       }
                     }}
                   />
+                  <OwnedBadge isOwned={ownershipStatuses?.[card.id] || false} />
                   <WishlistHeart
                     cardId={card.id}
                     isInWishlist={wishlistStatuses?.[card.id] || false}
@@ -658,15 +667,27 @@ export default function Discover() {
             }
           };
 
+          // Convertir Card en format attendu par SetCardDetailsModal
+          const completeSetCard = {
+            cardId: detailsCard.id,
+            name: detailsCard.name,
+            number: detailsCard.localId,
+            rarity: detailsCard.rarity,
+            imageUrl: detailsCard.image || detailsCard.images?.small || '',
+            owned: ownershipStatuses?.[detailsCard.id] || false,
+            quantity: 0,
+          };
+
           return (
-            <CardDetailsModal
-              card={detailsCard}
+            <SetCardDetailsModal
+              card={completeSetCard}
+              setName={
+                detailsCard.set?.name ||
+                detailsCard.id?.split('-')[0]?.toUpperCase() ||
+                'Set inconnu'
+              }
+              setId={detailsCard.set?.id}
               onClose={() => setDetailsCard(null)}
-              onAdd={(card) => {
-                setSelectedCard(card);
-                setShowQuickAdd(true);
-                setDetailsCard(null);
-              }}
               onNavigatePrevious={handleNavigatePrevious}
               onNavigateNext={handleNavigateNext}
               hasPrevious={hasPrevious}

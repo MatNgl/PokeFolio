@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { Package } from 'lucide-react';
 import type { TopSets } from '../types/dashboard.types';
+import { useSetLogos, resolveLogoUrl } from '../../../hooks/useSetLogos';
 import styles from './TopSetsList.module.css';
 
 export interface TopSetsListProps {
@@ -8,6 +10,10 @@ export interface TopSetsListProps {
 }
 
 export function TopSetsList({ data, loading = false }: TopSetsListProps): JSX.Element {
+  // Récupérer les logos depuis TCGDex
+  const setIds = useMemo(() => data?.sets.map((s) => s.setId) || [], [data?.sets]);
+  const logos = useSetLogos(setIds);
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -65,31 +71,44 @@ export function TopSetsList({ data, loading = false }: TopSetsListProps): JSX.El
       </div>
 
       <div className={styles.list} role="list">
-        {data.sets.map((set, index) => (
-          <div key={set.setId} className={styles.item} role="listitem">
-            <div className={styles.rank} aria-label={`Rank ${index + 1}`}>
-              #{index + 1}
-            </div>
-            <div className={styles.info}>
-              <div className={styles.setName} title={set.setName}>
-                {set.setName}
+        {data.sets.map((set, index) => {
+          const logoUrl = resolveLogoUrl(logos[set.setId] || set.setLogo);
+          return (
+            <div key={set.setId} className={styles.item} role="listitem">
+              <div className={styles.rank} aria-label={`Rank ${index + 1}`}>
+                #{index + 1}
               </div>
-              <div className={styles.stats}>
-                <span className={styles.count} aria-label={`${set.cardCount} cards`}>
-                  {set.cardCount} cartes
-                </span>
-                {set.totalValue > 0 && (
-                  <>
-                    <span className={styles.separator}>•</span>
-                    <span className={styles.value} aria-label={`Value: ${set.totalValue}€`}>
-                      {set.totalValue.toFixed(2)}€
-                    </span>
-                  </>
-                )}
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt={set.setName}
+                  className={styles.setLogo}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+              <div className={styles.info}>
+                <div className={styles.setName} title={set.setName}>
+                  {set.setName}
+                </div>
+                <div className={styles.stats}>
+                  <span className={styles.count} aria-label={`${set.cardCount} cards`}>
+                    {set.cardCount} cartes
+                  </span>
+                  {set.totalValue > 0 && (
+                    <>
+                      <span className={styles.separator}>•</span>
+                      <span className={styles.value} aria-label={`Value: ${set.totalValue}€`}>
+                        {set.totalValue.toFixed(2)}€
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

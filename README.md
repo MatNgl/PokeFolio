@@ -2,7 +2,7 @@
 
 > Pokémon Portfolio - Gérez votre collection de cartes Pokémon TCG
 
-Application web full-stack pour gérer un portfolio personnel de cartes Pokémon, avec recherche via TCGdex, statistiques avancées et design dark glassmorphism.
+Application web full-stack pour gérer un portfolio personnel de cartes Pokémon, avec recherche via +, statistiques avancées et design dark glassmorphism.
 
 ---
 

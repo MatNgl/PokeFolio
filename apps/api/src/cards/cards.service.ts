@@ -21,18 +21,101 @@ export class CardsService {
   }
 
   /**
-   * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+   * Calcule la similarité entre deux chaînes (0-1)
+   * Utilise la distance de Levenshtein normalisée
    */
-  private fuzzyMatch(text: string, search: string): boolean {
+  private stringSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    if (len1 === 0) return len2 === 0 ? 1 : 0;
+    if (len2 === 0) return 0;
+
+    // Matrice de distance de Levenshtein - initialisation complète
+    const matrix: number[][] = Array(len1 + 1)
+      .fill(null)
+      .map(() => Array(len2 + 1).fill(0) as number[]);
+
+    // Initialisation des bordures
+    for (let i = 0; i <= len1; i++) {
+      matrix[i]![0] = i;
+    }
+    for (let j = 0; j <= len2; j++) {
+      matrix[0]![j] = j;
+    }
+
+    // Calcul de la distance
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i]![j] = Math.min(
+          matrix[i - 1]![j]! + 1, // suppression
+          matrix[i]![j - 1]! + 1, // insertion
+          matrix[i - 1]![j - 1]! + cost // substitution
+        );
+      }
+    }
+
+    const distance = matrix[len1]![len2]!;
+    const maxLen = Math.max(len1, len2);
+    return 1 - distance / maxLen;
+  }
+
+  /**
+   * Calcule un score de pertinence pour le matching fuzzy (0-100)
+   * Plus le score est élevé, plus la correspondance est bonne
+   */
+  private fuzzyMatchScore(text: string, search: string): number {
     const normalizedText = this.normalizeString(text);
     const normalizedSearch = this.normalizeString(search);
 
-    // Correspondance exacte
-    if (normalizedText.includes(normalizedSearch)) {
-      return true;
+    // Exact match = score 100
+    if (normalizedText === normalizedSearch) {
+      return 100;
     }
 
-    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    // Contains exact = score 90
+    if (normalizedText.includes(normalizedSearch)) {
+      return 90;
+    }
+
+    // Starts with = score 85
+    if (normalizedText.startsWith(normalizedSearch)) {
+      return 85;
+    }
+
+    // Multi-word search : "arcanin de h" → ["arcanin", "de", "h"]
+    const searchWords = normalizedSearch.split(/\s+/).filter((w) => w.length > 0);
+    const textWords = normalizedText.split(/\s+/).filter((w) => w.length > 0);
+
+    // Si recherche multi-mots, vérifier que chaque mot de la recherche
+    // est présent au début d'un mot du texte
+    if (searchWords.length > 1) {
+      const allWordsMatch = searchWords.every((searchWord) =>
+        textWords.some((textWord) => textWord.startsWith(searchWord))
+      );
+      if (allWordsMatch) {
+        return 80;
+      }
+    }
+
+    // Prefix matching : "arc" trouve "arcanin"
+    // Vérifier si la recherche est un préfixe d'un des mots du texte
+    const isPrefixOfAnyWord = textWords.some((word) => word.startsWith(normalizedSearch));
+    if (isPrefixOfAnyWord) {
+      return 75;
+    }
+
+    // Pour les recherches très courtes (3 caractères), être plus permissif
+    if (normalizedSearch.length === 3) {
+      // Chercher dans les 3 premiers caractères de chaque mot
+      const matchesStart = textWords.some((word) => word.substring(0, 3) === normalizedSearch);
+      if (matchesStart) {
+        return 70;
+      }
+    }
+
+    // Tolérance aux fautes de frappe : compter les caractères correspondants
     if (normalizedSearch.length >= 3) {
       let matches = 0;
       for (let i = 0; i < normalizedSearch.length; i++) {
@@ -41,11 +124,24 @@ export class CardsService {
           matches++;
         }
       }
-      // Si au moins 66% des caractères correspondent (2/3), on considère que c'est un match
-      return matches / normalizedSearch.length >= 0.66;
+      const ratio = matches / normalizedSearch.length;
+      // Si au moins 80% des caractères correspondent
+      if (ratio >= 0.8) {
+        return Math.floor(ratio * 70); // Score entre 56-70
+      }
     }
 
-    return false;
+    return 0; // Pas de match
+  }
+
+  /**
+   * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+   */
+  private fuzzyMatch(text: string, search: string): boolean {
+    // Pour les recherches courtes (3 caractères), être plus permissif (seuil 60)
+    // Pour les recherches plus longues, seuil normal (56 = 80% de correspondance)
+    const threshold = search.length === 3 ? 60 : 56;
+    return this.fuzzyMatchScore(text, search) >= threshold;
   }
 
   async searchCards(dto: SearchCardsDto): Promise<CardSearchResult> {
@@ -62,18 +158,106 @@ export class CardsService {
       return { cards: [], total: 0, page, limit };
     }
 
+    // Normaliser : retirer les espaces entre lettres et chiffres (TG 04 → TG04, SWSH 49 → SWSH49)
+    const normalizedQuery = query.replace(/([A-Z]+)\s+(\d+)/gi, '$1$2');
+
     // Détecter si la recherche contient un numéro avec préfixe optionnel (ex: "TG30", "GG70", "SWSH001", "010")
-    const numberMatch = query.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
-    const searchPrefix = numberMatch?.[1]?.toUpperCase() || null;
+    const numberMatch = normalizedQuery.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
+    const rawPrefix = numberMatch?.[1]?.toUpperCase() || null;
     const searchNumber = numberMatch?.[2] || null;
 
+    // Corriger les fautes de frappe dans le préfixe du numéro (ex: "swsg04" → "swsh04")
+    let searchPrefix: string | null = rawPrefix;
+    if (rawPrefix) {
+      const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
+      if (!knownSetPrefixes.includes(rawPrefix)) {
+        let bestSimilarity = 0;
+        let correctedPrefix: string | null = null;
+        for (const knownPrefix of knownSetPrefixes) {
+          const similarity = this.stringSimilarity(rawPrefix, knownPrefix);
+          if (similarity >= 0.75 && similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            correctedPrefix = knownPrefix;
+          }
+        }
+        if (correctedPrefix) {
+          this.logger.log(
+            `Correction de faute de frappe dans le préfixe: "${rawPrefix}" → "${correctedPrefix}" (similarité: ${Math.round(bestSimilarity * 100)}%)`
+          );
+          searchPrefix = correctedPrefix;
+        }
+      }
+    }
+
+    // Détecter un préfixe seul (sans numéro) : TG, SWSH, GG, etc.
+    // IMPORTANT : Ne détecter que si c'est un vrai préfixe de set (liste connue)
+    // OU si c'est accompagné d'un nom de Pokémon (ex: "lugu tg")
+    // Avec tolérance aux fautes de frappe (75% de similarité minimum)
+    const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
+
+    // Extraire tous les mots de 2-5 lettres de la requête
+    const queryWords = normalizedQuery.trim().split(/\s+/).filter((w) => w.length > 0);
+    const potentialPrefixes = queryWords.filter((word) => word.length >= 2 && word.length <= 5);
+
+    // Chercher le meilleur préfixe correspondant parmi tous les mots
+    let matchedPrefix: string | null = null;
+    let bestOverallSimilarity = 0;
+    let matchedWord: string | null = null;
+
+    for (const word of potentialPrefixes) {
+      const wordUpper = word.toUpperCase();
+
+      // Correspondance exacte
+      if (knownSetPrefixes.includes(wordUpper)) {
+        matchedPrefix = wordUpper;
+        matchedWord = word;
+        break; // Correspondance exacte = meilleur match possible
+      }
+
+      // Chercher la meilleure similarité
+      for (const knownPrefix of knownSetPrefixes) {
+        const similarity = this.stringSimilarity(wordUpper, knownPrefix);
+        if (similarity >= 0.75 && similarity > bestOverallSimilarity) {
+          bestOverallSimilarity = similarity;
+          matchedPrefix = knownPrefix;
+          matchedWord = word;
+        }
+      }
+    }
+
+    if (matchedPrefix && matchedWord && bestOverallSimilarity > 0) {
+      this.logger.log(
+        `Correction de faute de frappe: "${matchedWord}" → "${matchedPrefix}" (similarité: ${Math.round(bestOverallSimilarity * 100)}%)`
+      );
+    }
+
+    // Ne considérer comme préfixe seul que si :
+    // 1. On a trouvé un préfixe correspondant (exact ou similaire) ET il y a plusieurs mots (nom + préfixe)
+    // 2. OU il n'y a qu'un seul mot et c'est un préfixe connu
+    const searchPrefixOnly =
+      !searchNumber && matchedPrefix && queryWords.length > 1
+        ? matchedPrefix
+        : !searchNumber && matchedPrefix && queryWords.length === 1
+          ? matchedPrefix
+          : null;
+
     // Extraire le nom (tout sauf le préfixe et numéro)
-    const searchName = numberMatch ? query.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim() : query;
+    let searchName = normalizedQuery;
+    if (numberMatch) {
+      // Retirer le numéro avec son préfixe
+      searchName = normalizedQuery.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim();
+    } else if (searchPrefixOnly && matchedWord) {
+      // Retirer uniquement le mot qui a été identifié comme préfixe
+      const escapedWord = matchedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      searchName = normalizedQuery.replace(new RegExp(`\\b${escapedWord}\\b`, 'gi'), '').trim();
+    }
 
     if (searchNumber) {
       this.logger.log(
         `Recherche détectée - Nom: "${searchName}", Préfixe: "${searchPrefix}", Numéro: "${searchNumber}"`
       );
+    } else if (searchPrefixOnly) {
+      this.logger.log(`Recherche détectée - Nom: "${searchName}", Préfixe seul: "${searchPrefixOnly}"`);
     }
 
     let cards: Card[] = [];
@@ -96,27 +280,63 @@ export class CardsService {
         cards = await this.tcgdexService.searchCards(searchName || query, 'en');
       }
 
-      // Filtrage fuzzy supplémentaire (ignore les accents et tolère les fautes)
+      // Filtrage fuzzy supplémentaire avec score de pertinence
       if (searchName && cards.length > 0) {
         const originalLength = cards.length;
-        cards = cards.filter((card) => {
-          const cardName = card.name || '';
-          const setName = card.set?.name || '';
 
-          return this.fuzzyMatch(cardName, searchName) || this.fuzzyMatch(setName, searchName);
-        });
+        // Calculer le score de pertinence pour chaque carte
+        const cardsWithScore = cards
+          .map((card) => {
+            const cardName = card.name || '';
+            const setName = card.set?.name || '';
+
+            const nameScore = this.fuzzyMatchScore(cardName, searchName);
+            const setScore = this.fuzzyMatchScore(setName, searchName);
+            const maxScore = Math.max(nameScore, setScore);
+
+            return { card, score: maxScore };
+          })
+          .filter((item) => item.score >= 56); // Filtrer les résultats avec score >= 56 (80% de correspondance)
+
+        // Trier par score décroissant (les meilleurs résultats en premier)
+        cardsWithScore.sort((a, b) => b.score - a.score);
+
+        // Extraire les cartes triées
+        cards = cardsWithScore.map((item) => item.card);
 
         if (cards.length < originalLength) {
           this.logger.log(
-            `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}")`
+            `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}"), triées par pertinence`
           );
         }
+      }
+
+      // Filtrer par préfixe seul (sans numéro)
+      if (searchPrefixOnly && !searchNumber) {
+        this.logger.log(`Filtrage par préfixe seul: "${searchPrefixOnly}"`);
+        cards = cards.filter((card) => {
+          const cardIdMatch = card.localId?.match(/^([A-Z]{1,5})?(\d+)$/i);
+          const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
+          const cardSetId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+          const prefixLower = searchPrefixOnly.toLowerCase();
+
+          // Le préfixe de la recherche doit matcher soit :
+          // 1. Le préfixe du numéro (TG dans TG04)
+          // 2. Le set ID (swsh11 pour SWSH11)
+          const match = cardPrefix === searchPrefixOnly || cardSetId.startsWith(prefixLower);
+
+          if (match) {
+            this.logger.log(`✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, set: ${cardSetId})`);
+          }
+
+          return match;
+        });
+        this.logger.log(`${cards.length} carte(s) trouvée(s) avec le préfixe ${searchPrefixOnly}`);
       }
 
       // Filtrer par numéro et préfixe si spécifié
       if (searchNumber) {
         this.logger.log(`Filtrage par numéro: "${searchPrefix || ''}${searchNumber}"`);
-        const searchNumInt = parseInt(searchNumber, 10);
 
         cards = cards.filter((card) => {
           if (!card.localId) return false;
@@ -124,21 +344,43 @@ export class CardsService {
           // Extraire le préfixe et numéro de la carte
           const cardIdMatch = card.localId.match(/^([A-Z]{1,5})?(\d+)$/i);
           const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
-          const cardNumInt = cardIdMatch?.[2]
-            ? parseInt(cardIdMatch[2], 10)
-            : parseInt(card.localId, 10);
+          const cardNumberStr = cardIdMatch?.[2] || card.localId;
 
-          // Vérifier correspondance préfixe (si spécifié)
-          const prefixMatch = !searchPrefix || cardPrefix === searchPrefix;
+          // Récupérer le set ID de la carte (ex: "SWSH10.5" → "swsh")
+          const cardSetId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
 
-          // Comparer les nombres sans les zéros initiaux
-          const numberMatch = cardNumInt === searchNumInt;
+          // Vérifier correspondance préfixe
+          // Le préfixe peut correspondre soit au préfixe du numéro, soit au set ID
+          let prefixMatch = true;
+          if (searchPrefix) {
+            const prefixLower = searchPrefix.toLowerCase();
+            prefixMatch =
+              cardPrefix === searchPrefix || // Préfixe exact dans le numéro (TG04)
+              cardSetId.startsWith(prefixLower); // Set ID commence par le préfixe (swsh10.5)
+          }
+
+          // Matching flexible des numéros avec gestion des zéros initiaux
+          // "11" doit matcher "011", "11", "114", "119"
+          // "04" doit matcher "04", "4", "049", "040"
+
+          // Convertir en nombres pour ignorer les zéros initiaux
+          const searchNumInt = parseInt(searchNumber, 10);
+          const cardNumInt = parseInt(cardNumberStr, 10);
+
+          // 2 types de matching :
+          // 1. Exact après suppression des zéros : parseInt("011") === parseInt("11")
+          // 2. StartsWith : "114".startsWith("11")
+
+          const exactMatch = cardNumInt === searchNumInt;
+          const startsWithMatch = cardNumberStr.startsWith(searchNumber);
+
+          const numberMatch = exactMatch || startsWithMatch;
 
           const match = prefixMatch && numberMatch;
 
           if (match) {
             this.logger.log(
-              `✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, numéro: ${cardNumInt})`
+              `✓ Match: ${card.name} #${card.localId} (set: ${cardSetId}, préfixe: ${cardPrefix}, numéro: ${cardNumberStr})`
             );
           }
 
@@ -188,8 +430,27 @@ export class CardsService {
       .filter((c): c is Card => c !== null) // on élimine les nulls
       .map((c) => {
         const id = c.id?.trim();
-        const fallback = id ? `${baseUrl}/${lang}/cards/${id}/image` : undefined;
-        const img = c.images?.small ?? c.image ?? fallback;
+
+        // Si la carte a déjà une image, l'utiliser
+        if (c.images?.small || c.image) {
+          const img = c.images?.small ?? c.image;
+          return {
+            ...c,
+            image: img,
+            images: {
+              ...(c.images || {}),
+              small: img,
+            },
+          };
+        }
+
+        // Sinon, construire les URLs de fallback
+        // Pour le français, essayer l'anglais avant d'afficher le dos de carte
+        const primaryFallback = id ? `${baseUrl}/${lang}/cards/${id}/image` : undefined;
+        const secondaryFallback = id && lang === 'fr' ? `${baseUrl}/en/cards/${id}/image` : undefined;
+
+        // Utiliser le fallback anglais en priorité si disponible pour le français
+        const img = lang === 'fr' && secondaryFallback ? secondaryFallback : primaryFallback;
 
         return {
           ...c,

@@ -97,11 +97,11 @@ export function CardDetailsModal({
         </div>
 
         <div className={styles.content}>
-          <div className={styles.imageSection}>
+          <div className={styles.left}>
             <img
               src={getCardImageUrl(card)}
               alt={card.name}
-              className={styles.cardImage}
+              className={styles.image}
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.src = 'https://images.pokemontcg.io/swsh1/back.png';
@@ -109,72 +109,64 @@ export function CardDetailsModal({
             />
           </div>
 
-          <div className={styles.infoSection}>
-            <h3 className={styles.cardName}>{card.name}</h3>
+          <div className={styles.right}>
+            <h3 className={styles.name}>{card.name}</h3>
 
-            <div className={styles.infoGrid}>
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>Série</span>
-                <span className={styles.infoValue}>
-                  {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Inconnue'}
-                </span>
-              </div>
-
+            <div className={styles.tags}>
+              <span className={styles.tag}>
+                {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Inconnue'}
+              </span>
               {card.localId && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Numéro</span>
-                  <span className={styles.infoValue}>
-                    {card.localId.padStart(3, '0')}
-                    {(card.set?.cardCount?.total || card.set?.cardCount?.official) &&
-                      `/${String(
-                        card.set?.cardCount?.total || card.set?.cardCount?.official
-                      ).padStart(2, '0')}`}
-                  </span>
-                </div>
+                <span className={styles.tag}>
+                  #{card.localId.padStart(3, '0')}
+                  {(card.set?.cardCount?.total || card.set?.cardCount?.official) &&
+                    `/${String(
+                      card.set?.cardCount?.total || card.set?.cardCount?.official
+                    ).padStart(2, '0')}`}
+                </span>
               )}
-
-              {card.rarity && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Rareté</span>
-                  <span className={styles.infoValue}>{card.rarity}</span>
-                </div>
-              )}
-
-              {card.category && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Type</span>
-                  <span className={styles.infoValue}>{card.category}</span>
-                </div>
-              )}
-
-              {card.types && card.types.length > 0 && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Éléments</span>
-                  <span className={styles.infoValue}>{card.types.join(', ')}</span>
-                </div>
-              )}
-
-              {card.hp && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>HP</span>
-                  <span className={styles.infoValue}>{card.hp}</span>
-                </div>
-              )}
-
-              {card.stage && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Stade</span>
-                  <span className={styles.infoValue}>{card.stage}</span>
-                </div>
-              )}
-
-              {card.evolveFrom && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Évolue de</span>
-                  <span className={styles.infoValue}>{card.evolveFrom}</span>
-                </div>
-              )}
+              {card.rarity && <span className={styles.tag}>{card.rarity}</span>}
             </div>
+
+            <section className={styles.block}>
+              <h4 className={styles.blockTitle}>Informations de la carte</h4>
+              <div className={styles.grid}>
+                {card.category && (
+                  <div className={styles.item}>
+                    <span className={styles.label}>Type</span>
+                    <span className={styles.value}>{card.category}</span>
+                  </div>
+                )}
+
+                {card.types && card.types.length > 0 && (
+                  <div className={styles.item}>
+                    <span className={styles.label}>Éléments</span>
+                    <span className={styles.value}>{card.types.join(', ')}</span>
+                  </div>
+                )}
+
+                {card.hp && (
+                  <div className={styles.item}>
+                    <span className={styles.label}>HP</span>
+                    <span className={styles.value}>{card.hp}</span>
+                  </div>
+                )}
+
+                {card.stage && (
+                  <div className={styles.item}>
+                    <span className={styles.label}>Stade</span>
+                    <span className={styles.value}>{card.stage}</span>
+                  </div>
+                )}
+
+                {card.evolveFrom && (
+                  <div className={styles.item}>
+                    <span className={styles.label}>Évolue de</span>
+                    <span className={styles.value}>{card.evolveFrom}</span>
+                  </div>
+                )}
+              </div>
+            </section>
 
             <div className={styles.actions}>
               <Button variant="secondary" onClick={onClose}>

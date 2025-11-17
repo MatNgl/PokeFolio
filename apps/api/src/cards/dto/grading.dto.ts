@@ -3,7 +3,18 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 import type { GradingCompany } from '@pokefolio/types';
 
-const GRADING_COMPANIES = ['PSA', 'CollectAura', 'BGS', 'CGC', 'PCA', 'Other'] as const;
+const GRADING_COMPANIES = [
+  'PSA',
+  'CollectAura',
+  'BGS',
+  'CGC',
+  'PCA',
+  'AGS',
+  'CCC',
+  'SGC',
+  'TAG',
+  'Other',
+] as const;
 
 /**
  * DTO pour les informations de gradation d'une carte

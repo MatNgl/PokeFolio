@@ -252,6 +252,26 @@ export class PortfolioService {
         notes: v.notes,
       }));
 
+      // Calculer isGraded : true si au moins une variante est gradée
+      const isGraded =
+        mappedVariants && mappedVariants.length > 0
+          ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
+          : obj.graded;
+
+      // Pour gradeCompany et gradeScore, prendre la variante avec la meilleure note
+      const gradedVariants = mappedVariants?.filter(
+        (v: { isGraded?: boolean }) => v.isGraded
+      ) as Array<{ gradeScore?: string | number; gradeCompany?: string }> | undefined;
+
+      let bestGraded: { gradeScore?: string | number; gradeCompany?: string } | undefined;
+      if (gradedVariants && gradedVariants.length > 0) {
+        bestGraded = gradedVariants.reduce((best, current) => {
+          const bestScore = this.parseGradeScore(best.gradeScore);
+          const currentScore = this.parseGradeScore(current.gradeScore);
+          return currentScore > bestScore ? current : best;
+        });
+      }
+
       return {
         ...obj,
         name: snapshot.name,
@@ -266,6 +286,10 @@ export class PortfolioService {
         supertype: snapshot.supertype,
         subtypes: snapshot.subtypes,
         variants: mappedVariants,
+        // Ajouter les champs de gradation pour le frontend
+        isGraded,
+        gradeCompany: bestGraded?.gradeCompany || obj.grading?.company,
+        gradeScore: bestGraded?.gradeScore || obj.grading?.grade,
       };
     }
 
@@ -302,6 +326,10 @@ export class PortfolioService {
       types: snapshot.types,
       supertype: snapshot.supertype,
       subtypes: snapshot.subtypes,
+      // Ajouter les champs de gradation pour le frontend
+      isGraded: obj.graded,
+      gradeCompany: obj.grading?.company,
+      gradeScore: obj.grading?.grade,
     };
   }
 
@@ -331,6 +359,27 @@ export class PortfolioService {
           ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
           : item.graded;
 
+      // Pour gradeCompany et gradeScore, prendre la variante avec la meilleure note (ou Mode A)
+      let gradeCompany = item.grading?.company;
+      let gradeScore: string | number | undefined = item.grading?.grade;
+
+      if (mappedVariants && mappedVariants.length > 0) {
+        const gradedVariants = mappedVariants.filter(
+          (v: { isGraded?: boolean }) => v.isGraded
+        ) as Array<{ gradeScore?: string | number; gradeCompany?: string }>;
+
+        if (gradedVariants.length > 0) {
+          // Trouver la variante avec la meilleure note
+          const bestGraded = gradedVariants.reduce((best, current) => {
+            const bestScore = this.parseGradeScore(best.gradeScore);
+            const currentScore = this.parseGradeScore(current.gradeScore);
+            return currentScore > bestScore ? current : best;
+          });
+          gradeCompany = bestGraded.gradeCompany;
+          gradeScore = bestGraded.gradeScore;
+        }
+      }
+
       return {
         ...item,
         // Ajouter les métadonnées au niveau racine
@@ -350,8 +399,8 @@ export class PortfolioService {
         subtypes: snapshot?.subtypes,
         // Ajouter isGraded (alias de graded) et les infos de gradation
         isGraded,
-        gradeCompany: item.grading?.company,
-        gradeScore: item.grading?.grade,
+        gradeCompany,
+        gradeScore,
         // S'assurer que purchasePrice et variants sont bien inclus
         purchasePrice: item.purchasePrice,
         purchaseDate: item.purchaseDate,
@@ -760,7 +809,7 @@ export class PortfolioService {
     ownerId: string,
     itemId: string,
     variantIndex: number
-  ): Promise<any> {
+  ): Promise<Record<string, unknown> | null> {
     const item = await this.model.findOne({ _id: itemId, ownerId });
 
     if (!item) {
@@ -828,5 +877,42 @@ export class PortfolioService {
       imageUrlHiRes: snapshot?.imageUrlHiRes,
       variants: mappedVariants,
     };
+  }
+
+  /**
+   * Parse un score de gradation pour permettre la comparaison numérique
+   * Exemples: "10" → 10, "9.5" → 9.5, "MINT" → 10, "PSA 10" → 10
+   */
+  private parseGradeScore(score: string | number | undefined): number {
+    if (score === undefined || score === null || score === '') {
+      return 0;
+    }
+
+    // Si c'est déjà un nombre
+    if (typeof score === 'number') {
+      return score;
+    }
+
+    // Convertir en string pour le traitement
+    const scoreStr = String(score).toUpperCase().trim();
+
+    // Extraire les nombres du score (ex: "PSA 10" → "10", "CGC 9.5" → "9.5")
+    const numberMatch = scoreStr.match(/(\d+(?:\.\d+)?)/);
+    if (numberMatch) {
+      return parseFloat(numberMatch[1] || '0');
+    }
+
+    // Scores textuels (pour certaines sociétés anciennes)
+    const textScores: Record<string, number> = {
+      'MINT': 10,
+      'GEM MINT': 10,
+      'NEAR MINT': 8,
+      'EXCELLENT': 6,
+      'VERY GOOD': 4,
+      'GOOD': 2,
+      'POOR': 1,
+    };
+
+    return textScores[scoreStr] || 0;
   }
 }

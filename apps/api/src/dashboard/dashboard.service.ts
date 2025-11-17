@@ -58,6 +58,7 @@ export class DashboardService {
     // Calcul des métriques pour la période
     const result = await this.portfolioModel.aggregate<{
       totalCards: number;
+      distinctCards: number;
       totalSets: number;
       totalValue: number;
       gradedCount: number;
@@ -125,6 +126,7 @@ export class DashboardService {
         $group: {
           _id: null,
           totalCards: { $sum: '$quantity' },
+          distinctCards: { $addToSet: '$cardId' },
           totalSets: { $addToSet: '$setId' },
           totalValue: { $sum: '$effectivePrice' },
           gradedCount: {
@@ -138,6 +140,7 @@ export class DashboardService {
         $project: {
           _id: 0,
           totalCards: 1,
+          distinctCards: { $size: '$distinctCards' },
           totalSets: { $size: '$totalSets' },
           totalValue: 1,
           gradedCount: 1,
@@ -147,6 +150,7 @@ export class DashboardService {
 
     const data = result[0] || {
       totalCards: 0,
+      distinctCards: 0,
       totalSets: 0,
       totalValue: 0,
       gradedCount: 0,
@@ -154,6 +158,7 @@ export class DashboardService {
 
     return {
       totalCards: data.totalCards,
+      distinctCards: data.distinctCards,
       totalSets: data.totalSets,
       totalValue: Math.round(data.totalValue * 100) / 100,
       gradedCount: data.gradedCount,
@@ -166,8 +171,19 @@ export class DashboardService {
    */
   async getTimeSeries(userId: string, query: TimeSeriesQueryDto): Promise<TimeSeriesResponseDto> {
     const { startDate, endDate } = this.getPeriodDates(query);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const bucketFormat = this.getBucketFormat(query, query.bucket!);
+
+    // Déterminer si on utilise purchaseDate ou createdAt
+    const usePurchaseDate = query.type === PeriodType.ALL;
+
+    // Déterminer automatiquement le bucket en fonction de la plage de dates du portfolio
+    let bucket = query.bucket || TimeSeriesBucket.MONTHLY;
+    if (!query.bucket && usePurchaseDate) {
+      bucket = await this.determineOptimalBucket(userId);
+    } else if (!query.bucket) {
+      bucket = TimeSeriesBucket.MONTHLY;
+    }
+
+    const bucketFormat = this.getBucketFormat(query, bucket);
 
     // Pour les séries temporelles, on veut TOUJOURS voir l'évolution depuis le début
     // jusqu'à la fin de la période demandée
@@ -186,32 +202,66 @@ export class DashboardService {
 
     const matchStage = { $match: matchFilter };
 
-    const addFieldsStage = {
-      $addFields: {
-        effectivePrice: {
-          $cond: {
-            if: { $ifNull: ['$purchasePrice', false] },
-            then: '$purchasePrice',
-            else: {
+    // Pour la période "all", utiliser purchaseDate pour montrer l'historique d'acquisition réel
+    const addFieldsStage = usePurchaseDate
+      ? {
+          $addFields: {
+            effectivePrice: {
               $cond: {
-                if: { $isArray: '$variants' },
-                then: {
-                  $sum: {
-                    $map: {
-                      input: '$variants',
-                      as: 'v',
-                      in: { $ifNull: ['$$v.purchasePrice', 0] },
+                if: { $ifNull: ['$purchasePrice', false] },
+                then: '$purchasePrice',
+                else: {
+                  $cond: {
+                    if: { $isArray: '$variants' },
+                    then: {
+                      $sum: {
+                        $map: {
+                          input: '$variants',
+                          as: 'v',
+                          in: { $ifNull: ['$$v.purchasePrice', 0] },
+                        },
+                      },
                     },
+                    else: 0,
                   },
                 },
-                else: 0,
+              },
+            },
+            // Utiliser purchaseDate si disponible, sinon createdAt - directement dans $dateToString
+            bucketDate: {
+              $dateToString: {
+                format: bucketFormat,
+                date: { $ifNull: ['$purchaseDate', '$createdAt'] },
               },
             },
           },
-        },
-        bucketDate: this.getBucketDateExpression(bucketFormat),
-      },
-    };
+        }
+      : {
+          $addFields: {
+            effectivePrice: {
+              $cond: {
+                if: { $ifNull: ['$purchasePrice', false] },
+                then: '$purchasePrice',
+                else: {
+                  $cond: {
+                    if: { $isArray: '$variants' },
+                    then: {
+                      $sum: {
+                        $map: {
+                          input: '$variants',
+                          as: 'v',
+                          in: { $ifNull: ['$$v.purchasePrice', 0] },
+                        },
+                      },
+                    },
+                    else: 0,
+                  },
+                },
+              },
+            },
+            bucketDate: this.getBucketDateExpression(bucketFormat),
+          },
+        };
 
     const groupStage =
       query.metric === TimeSeriesMetric.COUNT
@@ -414,6 +464,7 @@ export class DashboardService {
               else: 'Unknown Set',
             },
           },
+          setLogo: { $ifNull: ['$cardSnapshot.set.logo', null] },
           effectivePrice: {
             $cond: {
               if: { $ifNull: ['$purchasePrice', false] },
@@ -441,6 +492,7 @@ export class DashboardService {
         $group: {
           _id: '$setId',
           setName: { $first: '$setName' },
+          setLogo: { $first: '$setLogo' },
           cardCount: { $sum: '$quantity' },
           totalValue: { $sum: '$effectivePrice' },
         },
@@ -452,6 +504,7 @@ export class DashboardService {
           _id: 0,
           setId: '$_id',
           setName: 1,
+          setLogo: 1,
           cardCount: 1,
           totalValue: { $round: ['$totalValue', 2] },
         },
@@ -619,6 +672,39 @@ export class DashboardService {
   // ────────────────────────────────────────────────────────────
 
   /**
+   * Détermine automatiquement le bucket optimal en fonction de la plage de dates du portfolio
+   * - < 31 jours : DAILY
+   * - 31 à 90 jours : WEEKLY
+   * - > 90 jours : MONTHLY
+   */
+  private async determineOptimalBucket(userId: string): Promise<TimeSeriesBucket> {
+    // Trouver la date la plus ancienne (purchaseDate ou createdAt)
+    const oldestItem = await this.portfolioModel
+      .findOne({ ownerId: userId })
+      .sort({ createdAt: 1 })
+      .lean()
+      .exec();
+
+    if (!oldestItem) {
+      return TimeSeriesBucket.MONTHLY; // Défaut si pas de données
+    }
+
+    // Utiliser purchaseDate si disponible, sinon createdAt
+    const oldestDate = oldestItem.purchaseDate || oldestItem.createdAt;
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(oldestDate).getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 31) {
+      return TimeSeriesBucket.DAILY;
+    } else if (diffDays <= 90) {
+      return TimeSeriesBucket.WEEKLY;
+    } else {
+      return TimeSeriesBucket.MONTHLY;
+    }
+  }
+
+  /**
    * Calcule les dates de début et fin en fonction du filtre de période
    * Priorité: startDate/endDate (ISO strings) > type hiérarchique (year/month/week)
    */
@@ -709,6 +795,15 @@ export class DashboardService {
         format,
         // Toujours utiliser createdAt pour les timeseries (date d'ajout au portfolio)
         date: '$createdAt',
+      },
+    };
+  }
+
+  private getBucketDateExpressionForDate(format: string, dateField: string): Record<string, unknown> {
+    return {
+      $dateToString: {
+        format,
+        date: `$${dateField}`,
       },
     };
   }

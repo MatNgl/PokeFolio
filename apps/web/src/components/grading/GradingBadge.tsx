@@ -7,7 +7,7 @@ import collectauraLogo from '../../assets/grading/logos/collectaura.png';
 import otherLogo from '../../assets/grading/logos/other.png';
 import styles from './GradingBadge.module.css';
 
-type GradingCompany = 'PSA' | 'CollectAura' | 'BGS' | 'CGC' | 'PCA' | 'Other';
+export type GradingCompany = 'PSA' | 'CollectAura' | 'BGS' | 'CGC' | 'PCA' | 'Other';
 
 interface GradingBadgeProps {
   company: GradingCompany;

@@ -1,7 +1,17 @@
 /**
  * Grading companies
  */
-export type GradingCompany = 'PSA' | 'CollectAura' | 'BGS' | 'CGC' | 'PCA' | 'Other';
+export type GradingCompany =
+  | 'PSA'
+  | 'CollectAura'
+  | 'BGS'
+  | 'CGC'
+  | 'PCA'
+  | 'AGS'
+  | 'CCC'
+  | 'SGC'
+  | 'TAG'
+  | 'Other';
 
 /**
  * PSA grades
@@ -54,5 +64,9 @@ export const VALID_GRADES: Record<GradingCompany, readonly string[]> = {
   BGS: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
   CGC: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
   PCA: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
+  AGS: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
+  CCC: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
+  SGC: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
+  TAG: ['10', '9.5', '9', '8.5', '8', '7.5', '7'],
   Other: [],
 } as const;

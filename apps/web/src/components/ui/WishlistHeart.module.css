@@ -72,3 +72,15 @@
   opacity: 1;
   transform: scale(1);
 }
+
+/* Toujours afficher le cœur sur mobile (pas de survol) */
+@media (max-width: 768px) {
+  .heart {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .heart.active {
+    opacity: 1;
+  }
+}

@@ -101,6 +101,19 @@ export const portfolioService = {
   },
 
   /**
+   * Vérifier la possession de cartes (similaire à checkMultiple de wishlist)
+   */
+  async checkOwnership(cardIds: string[]): Promise<Record<string, boolean>> {
+    if (cardIds.length === 0) {
+      return {};
+    }
+    const response = await api.post<Record<string, boolean>>('/portfolio/check-ownership', {
+      cardIds,
+    });
+    return response.data;
+  },
+
+  /**
    * Obtenir les statistiques du portfolio
    */
   async getStats(): Promise<PortfolioStats> {

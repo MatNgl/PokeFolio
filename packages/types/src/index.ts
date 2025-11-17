@@ -1,10 +1,11 @@
 // Barrels principaux
 export * from './auth';
-// SUPPRIME l’export de './card' pour éviter les collisions de noms
+// SUPPRIME l'export de './card' pour éviter les collisions de noms
 export * from './portfolio';
 export * from './grading';
 export * from './stats';
 export * from './market';
+export * from './pricing';
 
 // Types cartes — unique source de vérité
 export type {

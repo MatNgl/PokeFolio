@@ -28,6 +28,7 @@ export interface PeriodFilter {
 
 export interface DashboardSummary {
   totalCards: number;
+  distinctCards: number;
   totalSets: number;
   totalValue: number;
   gradedCount: number;
@@ -86,6 +87,7 @@ export interface GradeDistribution {
 export interface TopSetItem {
   setId: string;
   setName: string;
+  setLogo?: string;
   cardCount: number;
   totalValue: number;
 }
