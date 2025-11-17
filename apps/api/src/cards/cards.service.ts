@@ -189,37 +189,46 @@ export class CardsService {
     // OU si c'est accompagné d'un nom de Pokémon (ex: "lugu tg")
     // Avec tolérance aux fautes de frappe (75% de similarité minimum)
     const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
-    const prefixOnlyMatch = normalizedQuery.match(/\b([A-Z]{2,5})\b/i);
-    const prefixValue = prefixOnlyMatch?.[1]?.toUpperCase();
 
-    // Trouver le préfixe le plus similaire si la similarité est >= 75%
+    // Extraire tous les mots de 2-5 lettres de la requête
+    const queryWords = normalizedQuery.trim().split(/\s+/).filter((w) => w.length > 0);
+    const potentialPrefixes = queryWords.filter((word) => word.length >= 2 && word.length <= 5);
+
+    // Chercher le meilleur préfixe correspondant parmi tous les mots
     let matchedPrefix: string | null = null;
-    if (prefixValue) {
-      // Chercher d'abord une correspondance exacte
-      if (knownSetPrefixes.includes(prefixValue)) {
-        matchedPrefix = prefixValue;
-      } else {
-        // Sinon, chercher le préfixe le plus similaire
-        let bestSimilarity = 0;
-        for (const knownPrefix of knownSetPrefixes) {
-          const similarity = this.stringSimilarity(prefixValue, knownPrefix);
-          if (similarity >= 0.75 && similarity > bestSimilarity) {
-            bestSimilarity = similarity;
-            matchedPrefix = knownPrefix;
-          }
-        }
-        if (matchedPrefix) {
-          this.logger.log(
-            `Correction de faute de frappe: "${prefixValue}" → "${matchedPrefix}" (similarité: ${Math.round(bestSimilarity * 100)}%)`
-          );
+    let bestOverallSimilarity = 0;
+    let matchedWord: string | null = null;
+
+    for (const word of potentialPrefixes) {
+      const wordUpper = word.toUpperCase();
+
+      // Correspondance exacte
+      if (knownSetPrefixes.includes(wordUpper)) {
+        matchedPrefix = wordUpper;
+        matchedWord = word;
+        break; // Correspondance exacte = meilleur match possible
+      }
+
+      // Chercher la meilleure similarité
+      for (const knownPrefix of knownSetPrefixes) {
+        const similarity = this.stringSimilarity(wordUpper, knownPrefix);
+        if (similarity >= 0.75 && similarity > bestOverallSimilarity) {
+          bestOverallSimilarity = similarity;
+          matchedPrefix = knownPrefix;
+          matchedWord = word;
         }
       }
     }
 
+    if (matchedPrefix && matchedWord && bestOverallSimilarity > 0) {
+      this.logger.log(
+        `Correction de faute de frappe: "${matchedWord}" → "${matchedPrefix}" (similarité: ${Math.round(bestOverallSimilarity * 100)}%)`
+      );
+    }
+
     // Ne considérer comme préfixe seul que si :
-    // 1. On a trouvé un préfixe correspondant (exact ou similaire) ET il n'y a pas d'autre mot
-    // 2. OU il y a un autre mot avant (ex: "lugu tg" → 2 mots, "tg" est un préfixe)
-    const queryWords = normalizedQuery.trim().split(/\s+/).filter((w) => w.length > 0);
+    // 1. On a trouvé un préfixe correspondant (exact ou similaire) ET il y a plusieurs mots (nom + préfixe)
+    // 2. OU il n'y a qu'un seul mot et c'est un préfixe connu
     const searchPrefixOnly =
       !searchNumber && matchedPrefix && queryWords.length > 1
         ? matchedPrefix
@@ -228,11 +237,15 @@ export class CardsService {
           : null;
 
     // Extraire le nom (tout sauf le préfixe et numéro)
-    const searchName = numberMatch
-      ? normalizedQuery.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim()
-      : searchPrefixOnly
-        ? normalizedQuery.replace(/\b[A-Z]{2,5}\b/gi, '').trim()
-        : normalizedQuery;
+    let searchName = normalizedQuery;
+    if (numberMatch) {
+      // Retirer le numéro avec son préfixe
+      searchName = normalizedQuery.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim();
+    } else if (searchPrefixOnly && matchedWord) {
+      // Retirer uniquement le mot qui a été identifié comme préfixe
+      const escapedWord = matchedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      searchName = normalizedQuery.replace(new RegExp(`\\b${escapedWord}\\b`, 'gi'), '').trim();
+    }
 
     if (searchNumber) {
       this.logger.log(
