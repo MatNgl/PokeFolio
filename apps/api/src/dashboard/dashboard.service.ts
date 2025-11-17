@@ -174,6 +174,9 @@ export class DashboardService {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bucketFormat = this.getBucketFormat(query, query.bucket!);
 
+    // Déterminer si on utilise purchaseDate ou createdAt
+    const usePurchaseDate = query.type === PeriodType.ALL;
+
     // Pour les séries temporelles, on veut TOUJOURS voir l'évolution depuis le début
     // jusqu'à la fin de la période demandée
     const matchFilter: {
@@ -191,32 +194,64 @@ export class DashboardService {
 
     const matchStage = { $match: matchFilter };
 
-    const addFieldsStage = {
-      $addFields: {
-        effectivePrice: {
-          $cond: {
-            if: { $ifNull: ['$purchasePrice', false] },
-            then: '$purchasePrice',
-            else: {
+    // Pour la période "all", utiliser purchaseDate pour montrer l'historique d'acquisition réel
+    const addFieldsStage = usePurchaseDate
+      ? {
+          $addFields: {
+            effectivePrice: {
               $cond: {
-                if: { $isArray: '$variants' },
-                then: {
-                  $sum: {
-                    $map: {
-                      input: '$variants',
-                      as: 'v',
-                      in: { $ifNull: ['$$v.purchasePrice', 0] },
+                if: { $ifNull: ['$purchasePrice', false] },
+                then: '$purchasePrice',
+                else: {
+                  $cond: {
+                    if: { $isArray: '$variants' },
+                    then: {
+                      $sum: {
+                        $map: {
+                          input: '$variants',
+                          as: 'v',
+                          in: { $ifNull: ['$$v.purchasePrice', 0] },
+                        },
+                      },
                     },
+                    else: 0,
                   },
                 },
-                else: 0,
               },
             },
+            // Utiliser purchaseDate si disponible, sinon createdAt
+            effectiveDate: {
+              $ifNull: ['$purchaseDate', '$createdAt'],
+            },
+            bucketDate: this.getBucketDateExpressionForDate(bucketFormat, 'effectiveDate'),
           },
-        },
-        bucketDate: this.getBucketDateExpression(bucketFormat),
-      },
-    };
+        }
+      : {
+          $addFields: {
+            effectivePrice: {
+              $cond: {
+                if: { $ifNull: ['$purchasePrice', false] },
+                then: '$purchasePrice',
+                else: {
+                  $cond: {
+                    if: { $isArray: '$variants' },
+                    then: {
+                      $sum: {
+                        $map: {
+                          input: '$variants',
+                          as: 'v',
+                          in: { $ifNull: ['$$v.purchasePrice', 0] },
+                        },
+                      },
+                    },
+                    else: 0,
+                  },
+                },
+              },
+            },
+            bucketDate: this.getBucketDateExpression(bucketFormat),
+          },
+        };
 
     const groupStage =
       query.metric === TimeSeriesMetric.COUNT
@@ -714,6 +749,15 @@ export class DashboardService {
         format,
         // Toujours utiliser createdAt pour les timeseries (date d'ajout au portfolio)
         date: '$createdAt',
+      },
+    };
+  }
+
+  private getBucketDateExpressionForDate(format: string, dateField: string): Record<string, unknown> {
+    return {
+      $dateToString: {
+        format,
+        date: `$${dateField}`,
       },
     };
   }
