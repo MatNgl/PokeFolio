@@ -130,16 +130,17 @@ export class CardsService {
     // OU si c'est accompagné d'un nom de Pokémon (ex: "lugu tg")
     const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
     const prefixOnlyMatch = normalizedQuery.match(/\b([A-Z]{2,5})\b/i);
+    const prefixValue = prefixOnlyMatch?.[1]?.toUpperCase();
 
     // Ne considérer comme préfixe seul que si :
     // 1. C'est dans la liste des préfixes connus ET il n'y a pas d'autre mot
     // 2. OU il y a un autre mot avant (ex: "lugu tg" → 2 mots, "tg" est un préfixe)
     const queryWords = normalizedQuery.trim().split(/\s+/).filter((w) => w.length > 0);
     const searchPrefixOnly =
-      !searchNumber && prefixOnlyMatch && queryWords.length > 1
-        ? prefixOnlyMatch[1]?.toUpperCase()
-        : !searchNumber && prefixOnlyMatch && knownSetPrefixes.includes(prefixOnlyMatch[1]?.toUpperCase())
-          ? prefixOnlyMatch[1]?.toUpperCase()
+      !searchNumber && prefixValue && queryWords.length > 1
+        ? prefixValue
+        : !searchNumber && prefixValue && knownSetPrefixes.includes(prefixValue)
+          ? prefixValue
           : null;
 
     // Extraire le nom (tout sauf le préfixe et numéro)
