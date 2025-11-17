@@ -33,10 +33,10 @@ export const dashboardApi = {
   async getTimeSeries(
     metric: TimeSeriesMetric,
     periodFilter: PeriodFilter,
-    bucket: TimeSeriesBucket
+    bucket?: TimeSeriesBucket
   ): Promise<TimeSeriesData> {
     const { data } = await api.get<TimeSeriesData>('/dashboard/timeseries', {
-      params: { metric, ...periodFilter, bucket },
+      params: { metric, ...periodFilter, ...(bucket && { bucket }) },
     });
     return data;
   },
