@@ -21,18 +21,51 @@ export class CardsService {
   }
 
   /**
-   * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+   * Calcule un score de pertinence pour le matching fuzzy (0-100)
+   * Plus le score est élevé, plus la correspondance est bonne
    */
-  private fuzzyMatch(text: string, search: string): boolean {
+  private fuzzyMatchScore(text: string, search: string): number {
     const normalizedText = this.normalizeString(text);
     const normalizedSearch = this.normalizeString(search);
 
-    // Correspondance exacte
-    if (normalizedText.includes(normalizedSearch)) {
-      return true;
+    // Exact match = score 100
+    if (normalizedText === normalizedSearch) {
+      return 100;
     }
 
-    // Tolérance aux fautes de frappe : vérifie si assez de caractères correspondent
+    // Contains exact = score 90
+    if (normalizedText.includes(normalizedSearch)) {
+      return 90;
+    }
+
+    // Starts with = score 85
+    if (normalizedText.startsWith(normalizedSearch)) {
+      return 85;
+    }
+
+    // Multi-word search : "arcanin de h" → ["arcanin", "de", "h"]
+    const searchWords = normalizedSearch.split(/\s+/).filter((w) => w.length > 0);
+    const textWords = normalizedText.split(/\s+/).filter((w) => w.length > 0);
+
+    // Si recherche multi-mots, vérifier que chaque mot de la recherche
+    // est présent au début d'un mot du texte
+    if (searchWords.length > 1) {
+      const allWordsMatch = searchWords.every((searchWord) =>
+        textWords.some((textWord) => textWord.startsWith(searchWord))
+      );
+      if (allWordsMatch) {
+        return 80;
+      }
+    }
+
+    // Prefix matching : "arc" trouve "arcanin"
+    // Vérifier si la recherche est un préfixe d'un des mots du texte
+    const isPrefixOfAnyWord = textWords.some((word) => word.startsWith(normalizedSearch));
+    if (isPrefixOfAnyWord) {
+      return 75;
+    }
+
+    // Tolérance aux fautes de frappe : compter les caractères correspondants
     if (normalizedSearch.length >= 3) {
       let matches = 0;
       for (let i = 0; i < normalizedSearch.length; i++) {
@@ -41,11 +74,21 @@ export class CardsService {
           matches++;
         }
       }
-      // Si au moins 66% des caractères correspondent (2/3), on considère que c'est un match
-      return matches / normalizedSearch.length >= 0.66;
+      const ratio = matches / normalizedSearch.length;
+      // Si au moins 80% des caractères correspondent
+      if (ratio >= 0.8) {
+        return Math.floor(ratio * 70); // Score entre 56-70
+      }
     }
 
-    return false;
+    return 0; // Pas de match
+  }
+
+  /**
+   * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
+   */
+  private fuzzyMatch(text: string, search: string): boolean {
+    return this.fuzzyMatchScore(text, search) >= 56; // Seuil = 80% de caractères correspondants
   }
 
   async searchCards(dto: SearchCardsDto): Promise<CardSearchResult> {
@@ -110,19 +153,33 @@ export class CardsService {
         cards = await this.tcgdexService.searchCards(searchName || query, 'en');
       }
 
-      // Filtrage fuzzy supplémentaire (ignore les accents et tolère les fautes)
+      // Filtrage fuzzy supplémentaire avec score de pertinence
       if (searchName && cards.length > 0) {
         const originalLength = cards.length;
-        cards = cards.filter((card) => {
-          const cardName = card.name || '';
-          const setName = card.set?.name || '';
 
-          return this.fuzzyMatch(cardName, searchName) || this.fuzzyMatch(setName, searchName);
-        });
+        // Calculer le score de pertinence pour chaque carte
+        const cardsWithScore = cards
+          .map((card) => {
+            const cardName = card.name || '';
+            const setName = card.set?.name || '';
+
+            const nameScore = this.fuzzyMatchScore(cardName, searchName);
+            const setScore = this.fuzzyMatchScore(setName, searchName);
+            const maxScore = Math.max(nameScore, setScore);
+
+            return { card, score: maxScore };
+          })
+          .filter((item) => item.score >= 56); // Filtrer les résultats avec score >= 56 (80% de correspondance)
+
+        // Trier par score décroissant (les meilleurs résultats en premier)
+        cardsWithScore.sort((a, b) => b.score - a.score);
+
+        // Extraire les cartes triées
+        cards = cardsWithScore.map((item) => item.card);
 
         if (cards.length < originalLength) {
           this.logger.log(
-            `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}")`
+            `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}"), triées par pertinence`
           );
         }
       }

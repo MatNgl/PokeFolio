@@ -221,7 +221,7 @@ export default function PortfolioCardDetailsModal({
         ) : (
           <div className={styles.content}>
             <div className={styles.left}>
-              {entry.isGraded && entry.gradeCompany && entry.gradeScore ? (
+              {entry.isGraded && entry.gradeCompany && entry.gradeScore !== undefined && entry.gradeScore !== null && entry.gradeScore !== '' ? (
                 <GradedCardFrame
                   company={entry.gradeCompany as any}
                   grade={entry.gradeScore}

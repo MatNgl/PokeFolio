@@ -775,7 +775,7 @@ export default function Portfolio() {
                           </span>
                         </div>
                       )}
-                      {card.isGraded && card.gradeCompany && card.gradeScore && (
+                      {card.isGraded && card.gradeCompany && card.gradeScore !== undefined && card.gradeScore !== null && card.gradeScore !== '' && (
                         <div className={styles.detailedItem}>
                           <span className={styles.detailedLabel}>Gradée</span>
                           <span className={styles.detailedValue}>
@@ -817,7 +817,7 @@ export default function Portfolio() {
                     aria-label={`Voir les détails de ${card.name}`}
                     title={`Voir les détails de ${card.name}`}
                   >
-                    {card.isGraded && card.gradeCompany && card.gradeScore ? (
+                    {card.isGraded && card.gradeCompany && card.gradeScore !== undefined && card.gradeScore !== null && card.gradeScore !== '' ? (
                       <GradedCardFrame
                         company={
                           card.gradeCompany as
