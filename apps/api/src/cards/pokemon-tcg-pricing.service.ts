@@ -281,13 +281,14 @@ export class PokemonTCGPricingService {
         return response;
       } catch (error) {
         const isLastAttempt = attempt === retries;
-        const isTimeout = (error as Error).name === 'AbortError';
+        const err = error as Error;
+        const isTimeout = err.name === 'AbortError';
 
         if (isTimeout) {
           this.logger.warn(`Timeout sur ${url} (tentative ${attempt + 1}/${retries + 1})`);
         } else {
           this.logger.warn(
-            `Erreur réseau sur ${url} (tentative ${attempt + 1}/${retries + 1}): ${error.message}`
+            `Erreur réseau sur ${url} (tentative ${attempt + 1}/${retries + 1}): ${err.message}`
           );
         }
 
