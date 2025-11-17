@@ -327,8 +327,27 @@ export class CardsService {
       .filter((c): c is Card => c !== null) // on élimine les nulls
       .map((c) => {
         const id = c.id?.trim();
-        const fallback = id ? `${baseUrl}/${lang}/cards/${id}/image` : undefined;
-        const img = c.images?.small ?? c.image ?? fallback;
+
+        // Si la carte a déjà une image, l'utiliser
+        if (c.images?.small || c.image) {
+          const img = c.images?.small ?? c.image;
+          return {
+            ...c,
+            image: img,
+            images: {
+              ...(c.images || {}),
+              small: img,
+            },
+          };
+        }
+
+        // Sinon, construire les URLs de fallback
+        // Pour le français, essayer l'anglais avant d'afficher le dos de carte
+        const primaryFallback = id ? `${baseUrl}/${lang}/cards/${id}/image` : undefined;
+        const secondaryFallback = id && lang === 'fr' ? `${baseUrl}/en/cards/${id}/image` : undefined;
+
+        // Utiliser le fallback anglais en priorité si disponible pour le français
+        const img = lang === 'fr' && secondaryFallback ? secondaryFallback : primaryFallback;
 
         return {
           ...c,
