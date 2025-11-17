@@ -669,6 +669,7 @@ export default function Discover() {
 
           // Convertir Card en format attendu par SetCardDetailsModal
           const completeSetCard = {
+            itemId: `discover-${detailsCard.id}`,
             cardId: detailsCard.id,
             name: detailsCard.name,
             number: detailsCard.localId,
