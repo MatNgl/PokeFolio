@@ -233,7 +233,7 @@ export default function Discover() {
 
     const timeoutId = setTimeout(() => {
       void handleSearch();
-    }, 300); // Debounce de 300ms
+    }, 150); // Debounce de 150ms (réduit pour meilleure réactivité)
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps

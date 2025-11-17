@@ -65,6 +65,15 @@ export class CardsService {
       return 75;
     }
 
+    // Pour les recherches très courtes (3 caractères), être plus permissif
+    if (normalizedSearch.length === 3) {
+      // Chercher dans les 3 premiers caractères de chaque mot
+      const matchesStart = textWords.some((word) => word.substring(0, 3) === normalizedSearch);
+      if (matchesStart) {
+        return 70;
+      }
+    }
+
     // Tolérance aux fautes de frappe : compter les caractères correspondants
     if (normalizedSearch.length >= 3) {
       let matches = 0;
@@ -88,7 +97,10 @@ export class CardsService {
    * Vérifie si le terme de recherche correspond au texte (tolérant aux fautes)
    */
   private fuzzyMatch(text: string, search: string): boolean {
-    return this.fuzzyMatchScore(text, search) >= 56; // Seuil = 80% de caractères correspondants
+    // Pour les recherches courtes (3 caractères), être plus permissif (seuil 60)
+    // Pour les recherches plus longues, seuil normal (56 = 80% de correspondance)
+    const threshold = search.length === 3 ? 60 : 56;
+    return this.fuzzyMatchScore(text, search) >= threshold;
   }
 
   async searchCards(dto: SearchCardsDto): Promise<CardSearchResult> {
