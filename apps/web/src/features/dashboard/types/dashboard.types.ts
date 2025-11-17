@@ -87,6 +87,7 @@ export interface GradeDistribution {
 export interface TopSetItem {
   setId: string;
   setName: string;
+  setLogo?: string;
   cardCount: number;
   totalValue: number;
 }

@@ -80,6 +80,14 @@
   flex-shrink: 0;
 }
 
+.setLogo {
+  height: 28px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .info {
   flex: 1;
   min-width: 0;

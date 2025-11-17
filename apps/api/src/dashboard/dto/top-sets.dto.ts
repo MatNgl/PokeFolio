@@ -47,6 +47,13 @@ export class TopSetItem {
     example: 1250.5,
   })
   totalValue!: number;
+
+  @ApiProperty({
+    description: 'URL du logo du set',
+    example: 'https://images.pokemontcg.io/swsh12/logo.png',
+    required: false,
+  })
+  setLogo?: string;
 }
 
 /**

@@ -464,6 +464,7 @@ export class DashboardService {
               else: 'Unknown Set',
             },
           },
+          setLogo: { $ifNull: ['$cardSnapshot.set.logo', null] },
           effectivePrice: {
             $cond: {
               if: { $ifNull: ['$purchasePrice', false] },
@@ -491,6 +492,7 @@ export class DashboardService {
         $group: {
           _id: '$setId',
           setName: { $first: '$setName' },
+          setLogo: { $first: '$setLogo' },
           cardCount: { $sum: '$quantity' },
           totalValue: { $sum: '$effectivePrice' },
         },
@@ -502,6 +504,7 @@ export class DashboardService {
           _id: 0,
           setId: '$_id',
           setName: 1,
+          setLogo: 1,
           cardCount: 1,
           totalValue: { $round: ['$totalValue', 2] },
         },

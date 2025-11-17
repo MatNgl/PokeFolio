@@ -70,6 +70,13 @@ export function TopSetsList({ data, loading = false }: TopSetsListProps): JSX.El
             <div className={styles.rank} aria-label={`Rank ${index + 1}`}>
               #{index + 1}
             </div>
+            {set.setLogo && (
+              <img
+                src={set.setLogo}
+                alt={set.setName}
+                className={styles.setLogo}
+              />
+            )}
             <div className={styles.info}>
               <div className={styles.setName} title={set.setName}>
                 {set.setName}
