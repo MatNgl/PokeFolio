@@ -1,53 +1,49 @@
+/* === Overlay plein écran === */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 20, 36, 0.9);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
-  padding: 1rem;
-  overflow-y: auto;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 20, 0.55);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 120ms ease-out;
 }
 
+/* === Fenêtre modale === */
 .modal {
-  background: var(--card-bg, #1a1f35);
-  border: 1px solid var(--border-color, #2a3350);
-  border-radius: 12px;
-  max-width: 900px;
   width: 100%;
-  max-height: 90vh;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  animation: slideIn 0.2s ease-out;
-  display: flex;
-  flex-direction: column;
+  max-width: 980px;
+  max-height: calc(100vh - 48px);
+  border-radius: var(--radii);
+  background: color-mix(in oklab, var(--glass) 94%, transparent);
+  border: var(--border);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow-y: auto;
+  outline: none;
+  animation: popIn 160ms cubic-bezier(0.37, 1.05, 0.66, 1);
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
+/* === En-tête === */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color, #2a3350);
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
 }
 
 .header h2 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  color: var(--text);
+  flex: 1;
+  text-align: center;
 }
 
 /* === Boutons de navigation latéraux === */
@@ -97,98 +93,198 @@
 }
 
 .closeBtn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary, #b0b8d4);
-  font-size: 1.5rem;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
   cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
-  transition: color 0.2s;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
-.closeBtn:hover {
-  color: var(--text-primary, #ffffff);
+.closeBtn:hover,
+.closeBtn:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 18px rgba(124, 243, 255, 0.18);
+  transform: translateY(-1px);
 }
 
+/* === Corps === */
 .content {
-  display: flex;
-  gap: 2rem;
-  padding: 1.5rem;
-  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  padding: 18px;
 }
 
-.imageSection {
-  flex-shrink: 0;
-  border-radius: 12px;
+/* === Colonne gauche (image) === */
+.left {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 0;
+  display: grid;
+  align-content: start;
   overflow: hidden;
 }
 
-.cardImage {
-  width: 300px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.image {
+  width: 100%;
+  border-radius: 16px;
+  display: block;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-.infoSection {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+/* === Colonne droite (infos) === */
+.right {
+  min-width: 0;
 }
 
-.cardName {
-  margin: 0;
-  font-size: 1.75rem;
+.name {
+  margin: 0 0 8px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text);
+  line-height: 1.25;
 }
 
-.infoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.infoItem {
+/* Tags (set, #, rareté) */
+.tags {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
-.infoLabel {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #b0b8d4);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.infoValue {
-  font-size: 1rem;
+.tag {
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
+/* Bloc section */
+.block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radii);
+  padding: 14px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(var(--blur));
+}
+
+.blockTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+
+/* Grille de métriques */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.item {
+  display: grid;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Actions */
 .actions {
+  margin-top: 16px;
   display: flex;
-  gap: 0.75rem;
-  margin-top: auto;
-  padding-top: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-@media (max-width: 768px) {
+/* === Responsive === */
+
+/* Tablettes et petits écrans */
+@media (max-width: 920px) {
   .content {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+  }
+}
+
+/* Petites tablettes et mobiles */
+@media (max-width: 768px) {
+  .overlay {
+    padding: 16px;
   }
 
-  .cardImage {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .infoGrid {
+  .content {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .left {
+    order: 0;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .right {
+    order: 1;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Très petits écrans */
+@media (max-width: 480px) {
+  .left {
+    max-width: 240px;
+  }
+}
+
+/* === Animations === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: translateY(4px) scale(0.985);
+    opacity: 0.96;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
   }
 }

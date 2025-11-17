@@ -7,7 +7,6 @@ import {
   type PortfolioStats,
 } from '../services/portfolio.service';
 import { wishlistService } from '../services/wishlist.service';
-import { exportToExcel } from '../utils/excelExport';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { EditCardModal } from '../components/cards/EditCardModal';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
@@ -18,7 +17,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
-import { Layers, Camera, Package, Heart, Download } from 'lucide-react';
+import { Layers, Camera, Package, Heart } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 import GradedCardFrame from '../components/grading/GradedCardFrame';
@@ -200,7 +199,6 @@ export default function Portfolio() {
   const [cards, setCards] = useState<UserCardView[]>([]);
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRecognition, setShowRecognition] = useState(false);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -288,30 +286,6 @@ export default function Portfolio() {
     }
   };
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      // Récupérer les données du portfolio et de la wishlist
-      const [portfolioCards, wishlistData] = await Promise.all([
-        portfolioService.getCards(),
-        wishlistService.getWishlist(),
-      ]);
-
-      // Exporter vers Excel
-      await exportToExcel(
-        portfolioCards as unknown as UserCard[],
-        wishlistData.items as unknown as Record<string, unknown>[],
-        user?.pseudo || user?.email || 'user'
-      );
-
-      setToast({ message: 'Export Excel réussi !', type: 'success' });
-    } catch (error) {
-      console.error("Erreur lors de l'export:", error);
-      setToast({ message: "Erreur lors de l'export Excel", type: 'error' });
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const resolveId = (card: UserCardView): string =>
     card._id ?? card.id ?? `${card.cardId}-${card.number ?? ''}`;
@@ -502,10 +476,6 @@ export default function Portfolio() {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <Button onClick={handleExport} variant="secondary" disabled={exporting || loading}>
-              <Download size={18} />
-              {exporting ? 'Export en cours...' : 'Exporter Excel'}
-            </Button>
             <Button onClick={() => setShowAddModal(true)} variant="primary">
               + Ajouter une carte
             </Button>

@@ -12,6 +12,7 @@ import { Toast } from '../components/ui/Toast';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
+import { OwnedBadge } from '../components/ui/OwnedBadge';
 import styles from './Discover.module.css';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -52,6 +53,13 @@ export default function Discover() {
   const { data: wishlistStatuses } = useQuery({
     queryKey: ['wishlist-check', displayedCardIds],
     queryFn: () => wishlistService.checkMultiple(displayedCardIds),
+    enabled: displayedCardIds.length > 0,
+  });
+
+  // Récupérer les statuts de possession pour les cartes affichées
+  const { data: ownershipStatuses } = useQuery({
+    queryKey: ['ownership-check', displayedCardIds],
+    queryFn: () => portfolioService.checkOwnership(displayedCardIds),
     enabled: displayedCardIds.length > 0,
   });
 
@@ -526,6 +534,7 @@ export default function Discover() {
                       }
                     }}
                   />
+                  <OwnedBadge isOwned={ownershipStatuses?.[card.id] || false} />
                   <WishlistHeart
                     cardId={card.id}
                     isInWishlist={wishlistStatuses?.[card.id] || false}
