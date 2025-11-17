@@ -31,15 +31,20 @@ export class CardsService {
     if (len1 === 0) return len2 === 0 ? 1 : 0;
     if (len2 === 0) return 0;
 
-    // Matrice de distance de Levenshtein
-    const matrix: number[][] = [];
+    // Matrice de distance de Levenshtein - initialisation complète
+    const matrix: number[][] = Array(len1 + 1)
+      .fill(null)
+      .map(() => Array(len2 + 1).fill(0));
+
+    // Initialisation des bordures
     for (let i = 0; i <= len1; i++) {
-      matrix[i] = [i];
+      matrix[i][0] = i;
     }
     for (let j = 0; j <= len2; j++) {
       matrix[0][j] = j;
     }
 
+    // Calcul de la distance
     for (let i = 1; i <= len1; i++) {
       for (let j = 1; j <= len2; j++) {
         const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
