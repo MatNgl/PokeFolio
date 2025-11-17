@@ -7,9 +7,23 @@ import bgsLogo from '../../assets/grading/logos/bgs.png';
 import cgcLogo from '../../assets/grading/logos/cgc.png';
 import pcaLogo from '../../assets/grading/logos/pca.png';
 import collectauraLogo from '../../assets/grading/logos/collectaura.png';
+import agsLogo from '../../assets/grading/logos/ags.png';
+import cccLogo from '../../assets/grading/logos/ccc.png';
+import sgcLogo from '../../assets/grading/logos/sgc.png';
+import tagLogo from '../../assets/grading/logos/tag.png';
 import otherLogo from '../../assets/grading/logos/other.png';
 
-type GradingCompany = 'PSA' | 'CollectAura' | 'BGS' | 'CGC' | 'PCA' | 'Other';
+type GradingCompany =
+  | 'PSA'
+  | 'CollectAura'
+  | 'BGS'
+  | 'CGC'
+  | 'PCA'
+  | 'AGS'
+  | 'CCC'
+  | 'SGC'
+  | 'TAG'
+  | 'Other';
 
 interface GradedCardFrameProps {
   company: GradingCompany;
@@ -25,6 +39,10 @@ const COMPANY_LOGOS: Record<GradingCompany, string> = {
   CGC: cgcLogo,
   PCA: pcaLogo,
   CollectAura: collectauraLogo,
+  AGS: agsLogo,
+  CCC: cccLogo,
+  SGC: sgcLogo,
+  TAG: tagLogo,
   Other: otherLogo,
 };
 

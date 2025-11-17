@@ -49,7 +49,7 @@ const GRADING_COMPANIES = [
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'COLLECT_AURA',
+    id: 'CollectAura',
     name: 'Collect Aura',
     grades: ['10+', '10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'],
   },
