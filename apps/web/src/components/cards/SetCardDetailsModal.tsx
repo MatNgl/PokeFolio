@@ -87,12 +87,15 @@ export default function SetCardDetailsModal({
         aria-labelledby="setCardDetailsTitle"
         tabIndex={-1}
       >
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">
-          <X size={24} />
-        </button>
+        <header className={styles.header}>
+          <h2 id="setCardDetailsTitle">Détails de la carte</h2>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">
+            ✕
+          </button>
+        </header>
 
         <div className={styles.content}>
-          <div className={styles.imageContainer}>
+          <div className={styles.left}>
             <img
               className={styles.image}
               src={imageUrl}
@@ -104,27 +107,29 @@ export default function SetCardDetailsModal({
             />
           </div>
 
-          <div className={styles.info}>
-            <h2 id="setCardDetailsTitle" className={styles.name}>
-              {card.name}
-            </h2>
+          <div className={styles.right}>
+            <h3 className={styles.name}>{card.name}</h3>
+
             <div className={styles.tags}>
               <span className={styles.tag}>{setName}</span>
               {card.number && <span className={styles.tag}>#{card.number}</span>}
               {card.rarity && <span className={styles.tag}>{card.rarity}</span>}
             </div>
 
-            {card.owned ? (
-              <div className={styles.statusOwned}>
-                <span className={styles.statusIcon}>✓</span>
-                <span>Vous possédez cette carte</span>
-                {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
-              </div>
-            ) : (
-              <div className={styles.statusNotOwned}>
-                <span>Carte non possédée</span>
-              </div>
-            )}
+            <section className={styles.block}>
+              <h4 className={styles.blockTitle}>Statut dans votre collection</h4>
+              {card.owned ? (
+                <div className={styles.statusOwned}>
+                  <span className={styles.statusIcon}>✓</span>
+                  <span>Vous possédez cette carte</span>
+                  {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
+                </div>
+              ) : (
+                <div className={styles.statusNotOwned}>
+                  <span>Carte non possédée</span>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </section>

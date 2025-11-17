@@ -170,6 +170,12 @@ export function DashboardNew(): JSX.Element {
           loading={summaryLoading}
         />
         <KpiCard
+          title="cartes distinctes"
+          icon={<Layers size={20} />}
+          value={summary ? formatNumber(summary.distinctCards) : '0'}
+          loading={summaryLoading}
+        />
+        <KpiCard
           title="total sets"
           icon={<Award size={20} />}
           value={summary ? formatNumber(summary.totalSets) : '0'}

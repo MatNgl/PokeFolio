@@ -11,10 +11,16 @@ export class SummaryQueryDto extends PeriodFilterDto {}
  */
 export class DashboardSummaryDto {
   @ApiProperty({
-    description: 'Nombre total de cartes',
+    description: 'Nombre total de cartes (avec duplicatas)',
     example: 150,
   })
   totalCards!: number;
+
+  @ApiProperty({
+    description: 'Nombre de cartes distinctes (uniques)',
+    example: 87,
+  })
+  distinctCards!: number;
 
   @ApiProperty({
     description: 'Nombre de sets distincts',

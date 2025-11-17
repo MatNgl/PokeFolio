@@ -58,6 +58,7 @@ export class DashboardService {
     // Calcul des métriques pour la période
     const result = await this.portfolioModel.aggregate<{
       totalCards: number;
+      distinctCards: number;
       totalSets: number;
       totalValue: number;
       gradedCount: number;
@@ -125,6 +126,7 @@ export class DashboardService {
         $group: {
           _id: null,
           totalCards: { $sum: '$quantity' },
+          distinctCards: { $addToSet: '$cardId' },
           totalSets: { $addToSet: '$setId' },
           totalValue: { $sum: '$effectivePrice' },
           gradedCount: {
@@ -138,6 +140,7 @@ export class DashboardService {
         $project: {
           _id: 0,
           totalCards: 1,
+          distinctCards: { $size: '$distinctCards' },
           totalSets: { $size: '$totalSets' },
           totalValue: 1,
           gradedCount: 1,
@@ -147,6 +150,7 @@ export class DashboardService {
 
     const data = result[0] || {
       totalCards: 0,
+      distinctCards: 0,
       totalSets: 0,
       totalValue: 0,
       gradedCount: 0,
@@ -154,6 +158,7 @@ export class DashboardService {
 
     return {
       totalCards: data.totalCards,
+      distinctCards: data.distinctCards,
       totalSets: data.totalSets,
       totalValue: Math.round(data.totalValue * 100) / 100,
       gradedCount: data.gradedCount,

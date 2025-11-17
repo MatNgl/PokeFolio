@@ -28,6 +28,7 @@ export interface PeriodFilter {
 
 export interface DashboardSummary {
   totalCards: number;
+  distinctCards: number;
   totalSets: number;
   totalValue: number;
   gradedCount: number;
