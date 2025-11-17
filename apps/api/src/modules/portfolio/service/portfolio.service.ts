@@ -252,6 +252,15 @@ export class PortfolioService {
         notes: v.notes,
       }));
 
+      // Calculer isGraded : true si au moins une variante est gradée
+      const isGraded =
+        mappedVariants && mappedVariants.length > 0
+          ? mappedVariants.some((v: { isGraded?: boolean }) => v.isGraded)
+          : obj.graded;
+
+      // Pour gradeCompany et gradeScore, prendre la première variante gradée
+      const firstGraded = mappedVariants?.find((v: { isGraded?: boolean }) => v.isGraded);
+
       return {
         ...obj,
         name: snapshot.name,
@@ -266,6 +275,10 @@ export class PortfolioService {
         supertype: snapshot.supertype,
         subtypes: snapshot.subtypes,
         variants: mappedVariants,
+        // Ajouter les champs de gradation pour le frontend
+        isGraded,
+        gradeCompany: firstGraded?.gradeCompany || obj.grading?.company,
+        gradeScore: firstGraded?.gradeScore || obj.grading?.grade,
       };
     }
 
@@ -302,6 +315,10 @@ export class PortfolioService {
       types: snapshot.types,
       supertype: snapshot.supertype,
       subtypes: snapshot.subtypes,
+      // Ajouter les champs de gradation pour le frontend
+      isGraded: obj.graded,
+      gradeCompany: obj.grading?.company,
+      gradeScore: obj.grading?.grade,
     };
   }
 

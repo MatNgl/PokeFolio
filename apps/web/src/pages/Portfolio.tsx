@@ -132,6 +132,8 @@ const normalizeCard = (c: ApiCard): UserCardView => {
     userId: c.userId ?? c.ownerId, // mappe ownerId -> userId si besoin
     imageUrl: resolveImg(c),
     gradeScore,
+    isGraded: c.isGraded,
+    gradeCompany: c.gradeCompany,
   };
 };
 

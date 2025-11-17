@@ -70,15 +70,24 @@ export class CardsService {
     const searchPrefix = numberMatch?.[1]?.toUpperCase() || null;
     const searchNumber = numberMatch?.[2] || null;
 
+    // Détecter un préfixe seul (sans numéro) : TG, SWSH, GG, etc.
+    const prefixOnlyMatch = normalizedQuery.match(/\b([A-Z]{2,5})\b/i);
+    const searchPrefixOnly =
+      !searchNumber && prefixOnlyMatch ? prefixOnlyMatch[1]?.toUpperCase() : null;
+
     // Extraire le nom (tout sauf le préfixe et numéro)
     const searchName = numberMatch
       ? normalizedQuery.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim()
-      : normalizedQuery;
+      : searchPrefixOnly
+        ? normalizedQuery.replace(/\b[A-Z]{2,5}\b/gi, '').trim()
+        : normalizedQuery;
 
     if (searchNumber) {
       this.logger.log(
         `Recherche détectée - Nom: "${searchName}", Préfixe: "${searchPrefix}", Numéro: "${searchNumber}"`
       );
+    } else if (searchPrefixOnly) {
+      this.logger.log(`Recherche détectée - Nom: "${searchName}", Préfixe seul: "${searchPrefixOnly}"`);
     }
 
     let cards: Card[] = [];
@@ -116,6 +125,29 @@ export class CardsService {
             `Filtrage fuzzy: ${originalLength} -> ${cards.length} cartes (recherche: "${searchName}")`
           );
         }
+      }
+
+      // Filtrer par préfixe seul (sans numéro)
+      if (searchPrefixOnly && !searchNumber) {
+        this.logger.log(`Filtrage par préfixe seul: "${searchPrefixOnly}"`);
+        cards = cards.filter((card) => {
+          const cardIdMatch = card.localId?.match(/^([A-Z]{1,5})?(\d+)$/i);
+          const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
+          const cardSetId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
+          const prefixLower = searchPrefixOnly.toLowerCase();
+
+          // Le préfixe de la recherche doit matcher soit :
+          // 1. Le préfixe du numéro (TG dans TG04)
+          // 2. Le set ID (swsh11 pour SWSH11)
+          const match = cardPrefix === searchPrefixOnly || cardSetId.startsWith(prefixLower);
+
+          if (match) {
+            this.logger.log(`✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, set: ${cardSetId})`);
+          }
+
+          return match;
+        });
+        this.logger.log(`${cards.length} carte(s) trouvée(s) avec le préfixe ${searchPrefixOnly}`);
       }
 
       // Filtrer par numéro et préfixe si spécifié
