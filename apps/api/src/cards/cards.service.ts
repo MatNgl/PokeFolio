@@ -62,13 +62,18 @@ export class CardsService {
       return { cards: [], total: 0, page, limit };
     }
 
+    // Normaliser : retirer les espaces entre lettres et chiffres (TG 04 → TG04, SWSH 49 → SWSH49)
+    const normalizedQuery = query.replace(/([A-Z]+)\s+(\d+)/gi, '$1$2');
+
     // Détecter si la recherche contient un numéro avec préfixe optionnel (ex: "TG30", "GG70", "SWSH001", "010")
-    const numberMatch = query.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
+    const numberMatch = normalizedQuery.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
     const searchPrefix = numberMatch?.[1]?.toUpperCase() || null;
     const searchNumber = numberMatch?.[2] || null;
 
     // Extraire le nom (tout sauf le préfixe et numéro)
-    const searchName = numberMatch ? query.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim() : query;
+    const searchName = numberMatch
+      ? normalizedQuery.replace(/\b[A-Z]{0,5}\d{1,3}\b/gi, '').trim()
+      : normalizedQuery;
 
     if (searchNumber) {
       this.logger.log(
@@ -125,18 +130,41 @@ export class CardsService {
           const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
           const cardNumberStr = cardIdMatch?.[2] || card.localId;
 
-          // Vérifier correspondance préfixe (si spécifié)
-          const prefixMatch = !searchPrefix || cardPrefix === searchPrefix;
+          // Récupérer le set ID de la carte (ex: "SWSH10.5" → "swsh")
+          const cardSetId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
 
-          // Matching flexible des numéros : "11" trouve "11", "114", "119", etc.
-          // Le numéro recherché doit apparaître au début du numéro de la carte
-          const numberMatch = cardNumberStr.startsWith(searchNumber);
+          // Vérifier correspondance préfixe
+          // Le préfixe peut correspondre soit au préfixe du numéro, soit au set ID
+          let prefixMatch = true;
+          if (searchPrefix) {
+            const prefixLower = searchPrefix.toLowerCase();
+            prefixMatch =
+              cardPrefix === searchPrefix || // Préfixe exact dans le numéro (TG04)
+              cardSetId.startsWith(prefixLower); // Set ID commence par le préfixe (swsh10.5)
+          }
+
+          // Matching flexible des numéros avec gestion des zéros initiaux
+          // "11" doit matcher "011", "11", "114", "119"
+          // "04" doit matcher "04", "4", "049", "040"
+
+          // Convertir en nombres pour ignorer les zéros initiaux
+          const searchNumInt = parseInt(searchNumber, 10);
+          const cardNumInt = parseInt(cardNumberStr, 10);
+
+          // 2 types de matching :
+          // 1. Exact après suppression des zéros : parseInt("011") === parseInt("11")
+          // 2. StartsWith : "114".startsWith("11")
+
+          const exactMatch = cardNumInt === searchNumInt;
+          const startsWithMatch = cardNumberStr.startsWith(searchNumber);
+
+          const numberMatch = exactMatch || startsWithMatch;
 
           const match = prefixMatch && numberMatch;
 
           if (match) {
             this.logger.log(
-              `✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, numéro: ${cardNumberStr})`
+              `✓ Match: ${card.name} #${card.localId} (set: ${cardSetId}, préfixe: ${cardPrefix}, numéro: ${cardNumberStr})`
             );
           }
 
