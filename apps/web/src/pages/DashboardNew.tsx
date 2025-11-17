@@ -164,7 +164,7 @@ export function DashboardNew(): JSX.Element {
       {/* KPIs */}
       <section className={styles.kpiGrid} aria-label="Key Performance Indicators">
         <KpiCard
-          title="total cartes"
+          title="cartes totales"
           icon={<Layers size={20} />}
           value={summary ? formatNumber(summary.totalCards) : '0'}
           loading={summaryLoading}
@@ -176,15 +176,15 @@ export function DashboardNew(): JSX.Element {
           loading={summaryLoading}
         />
         <KpiCard
-          title="total sets"
-          icon={<Award size={20} />}
-          value={summary ? formatNumber(summary.totalSets) : '0'}
-          loading={summaryLoading}
-        />
-        <KpiCard
           title="cartes gradées"
           icon={<TrendingUp size={20} />}
           value={summary ? formatNumber(summary.gradedCount) : '0'}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          title="sets différents"
+          icon={<Award size={20} />}
+          value={summary ? formatNumber(summary.totalSets) : '0'}
           loading={summaryLoading}
         />
         <KpiCard

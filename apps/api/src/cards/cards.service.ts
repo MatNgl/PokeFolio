@@ -116,7 +116,6 @@ export class CardsService {
       // Filtrer par numéro et préfixe si spécifié
       if (searchNumber) {
         this.logger.log(`Filtrage par numéro: "${searchPrefix || ''}${searchNumber}"`);
-        const searchNumInt = parseInt(searchNumber, 10);
 
         cards = cards.filter((card) => {
           if (!card.localId) return false;
@@ -124,21 +123,20 @@ export class CardsService {
           // Extraire le préfixe et numéro de la carte
           const cardIdMatch = card.localId.match(/^([A-Z]{1,5})?(\d+)$/i);
           const cardPrefix = cardIdMatch?.[1]?.toUpperCase() || null;
-          const cardNumInt = cardIdMatch?.[2]
-            ? parseInt(cardIdMatch[2], 10)
-            : parseInt(card.localId, 10);
+          const cardNumberStr = cardIdMatch?.[2] || card.localId;
 
           // Vérifier correspondance préfixe (si spécifié)
           const prefixMatch = !searchPrefix || cardPrefix === searchPrefix;
 
-          // Comparer les nombres sans les zéros initiaux
-          const numberMatch = cardNumInt === searchNumInt;
+          // Matching flexible des numéros : "11" trouve "11", "114", "119", etc.
+          // Le numéro recherché doit apparaître au début du numéro de la carte
+          const numberMatch = cardNumberStr.startsWith(searchNumber);
 
           const match = prefixMatch && numberMatch;
 
           if (match) {
             this.logger.log(
-              `✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, numéro: ${cardNumInt})`
+              `✓ Match: ${card.name} #${card.localId} (préfixe: ${cardPrefix}, numéro: ${cardNumberStr})`
             );
           }
 

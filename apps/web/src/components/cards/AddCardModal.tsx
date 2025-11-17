@@ -104,6 +104,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
 
   // Focus auto dans le modal
   const dialogRef = useRef<HTMLElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Fonction pour ajouter une nouvelle variante
   const handleAddVariant = () => {
@@ -140,6 +141,13 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
+
+  // Auto-focus sur le champ de recherche quand on est sur la vue de recherche
+  useEffect(() => {
+    if (!selectedCard && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [selectedCard]);
 
   // Fermer avec ESC (listener global)
   useEffect(() => {
@@ -350,6 +358,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
               {/* Barre de recherche sticky */}
               <form onSubmit={handleSearch} className={styles.searchForm}>
                 <Input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Tapez au moins 3 caractères..."
                   value={searchQuery}

@@ -817,7 +817,19 @@ export default function Portfolio() {
                   >
                     {card.isGraded && card.gradeCompany && card.gradeScore ? (
                       <GradedCardFrame
-                        company={card.gradeCompany as 'PSA' | 'BGS' | 'CGC' | 'PCA' | 'CollectAura'}
+                        company={
+                          card.gradeCompany as
+                            | 'PSA'
+                            | 'BGS'
+                            | 'CGC'
+                            | 'PCA'
+                            | 'CollectAura'
+                            | 'AGS'
+                            | 'CCC'
+                            | 'SGC'
+                            | 'TAG'
+                            | 'Other'
+                        }
                         grade={card.gradeScore}
                         size="medium"
                       >
