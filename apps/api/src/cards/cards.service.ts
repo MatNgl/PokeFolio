@@ -21,6 +21,42 @@ export class CardsService {
   }
 
   /**
+   * Calcule la similarité entre deux chaînes (0-1)
+   * Utilise la distance de Levenshtein normalisée
+   */
+  private stringSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    if (len1 === 0) return len2 === 0 ? 1 : 0;
+    if (len2 === 0) return 0;
+
+    // Matrice de distance de Levenshtein
+    const matrix: number[][] = [];
+    for (let i = 0; i <= len1; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= len2; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1, // suppression
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j - 1] + cost // substitution
+        );
+      }
+    }
+
+    const distance = matrix[len1][len2];
+    const maxLen = Math.max(len1, len2);
+    return 1 - distance / maxLen;
+  }
+
+  /**
    * Calcule un score de pertinence pour le matching fuzzy (0-100)
    * Plus le score est élevé, plus la correspondance est bonne
    */
@@ -122,25 +158,73 @@ export class CardsService {
 
     // Détecter si la recherche contient un numéro avec préfixe optionnel (ex: "TG30", "GG70", "SWSH001", "010")
     const numberMatch = normalizedQuery.match(/\b([A-Z]{1,5})?(\d{1,3})\b/i);
-    const searchPrefix = numberMatch?.[1]?.toUpperCase() || null;
+    const rawPrefix = numberMatch?.[1]?.toUpperCase() || null;
     const searchNumber = numberMatch?.[2] || null;
+
+    // Corriger les fautes de frappe dans le préfixe du numéro (ex: "swsg04" → "swsh04")
+    let searchPrefix: string | null = rawPrefix;
+    if (rawPrefix) {
+      const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
+      if (!knownSetPrefixes.includes(rawPrefix)) {
+        let bestSimilarity = 0;
+        let correctedPrefix: string | null = null;
+        for (const knownPrefix of knownSetPrefixes) {
+          const similarity = this.stringSimilarity(rawPrefix, knownPrefix);
+          if (similarity >= 0.75 && similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            correctedPrefix = knownPrefix;
+          }
+        }
+        if (correctedPrefix) {
+          this.logger.log(
+            `Correction de faute de frappe dans le préfixe: "${rawPrefix}" → "${correctedPrefix}" (similarité: ${Math.round(bestSimilarity * 100)}%)`
+          );
+          searchPrefix = correctedPrefix;
+        }
+      }
+    }
 
     // Détecter un préfixe seul (sans numéro) : TG, SWSH, GG, etc.
     // IMPORTANT : Ne détecter que si c'est un vrai préfixe de set (liste connue)
     // OU si c'est accompagné d'un nom de Pokémon (ex: "lugu tg")
+    // Avec tolérance aux fautes de frappe (75% de similarité minimum)
     const knownSetPrefixes = ['TG', 'GG', 'SWSH', 'SM', 'XY', 'BW', 'DP', 'EX', 'POP', 'SV'];
     const prefixOnlyMatch = normalizedQuery.match(/\b([A-Z]{2,5})\b/i);
     const prefixValue = prefixOnlyMatch?.[1]?.toUpperCase();
 
+    // Trouver le préfixe le plus similaire si la similarité est >= 75%
+    let matchedPrefix: string | null = null;
+    if (prefixValue) {
+      // Chercher d'abord une correspondance exacte
+      if (knownSetPrefixes.includes(prefixValue)) {
+        matchedPrefix = prefixValue;
+      } else {
+        // Sinon, chercher le préfixe le plus similaire
+        let bestSimilarity = 0;
+        for (const knownPrefix of knownSetPrefixes) {
+          const similarity = this.stringSimilarity(prefixValue, knownPrefix);
+          if (similarity >= 0.75 && similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            matchedPrefix = knownPrefix;
+          }
+        }
+        if (matchedPrefix) {
+          this.logger.log(
+            `Correction de faute de frappe: "${prefixValue}" → "${matchedPrefix}" (similarité: ${Math.round(bestSimilarity * 100)}%)`
+          );
+        }
+      }
+    }
+
     // Ne considérer comme préfixe seul que si :
-    // 1. C'est dans la liste des préfixes connus ET il n'y a pas d'autre mot
+    // 1. On a trouvé un préfixe correspondant (exact ou similaire) ET il n'y a pas d'autre mot
     // 2. OU il y a un autre mot avant (ex: "lugu tg" → 2 mots, "tg" est un préfixe)
     const queryWords = normalizedQuery.trim().split(/\s+/).filter((w) => w.length > 0);
     const searchPrefixOnly =
-      !searchNumber && prefixValue && queryWords.length > 1
-        ? prefixValue
-        : !searchNumber && prefixValue && knownSetPrefixes.includes(prefixValue)
-          ? prefixValue
+      !searchNumber && matchedPrefix && queryWords.length > 1
+        ? matchedPrefix
+        : !searchNumber && matchedPrefix && queryWords.length === 1
+          ? matchedPrefix
           : null;
 
     // Extraire le nom (tout sauf le préfixe et numéro)
