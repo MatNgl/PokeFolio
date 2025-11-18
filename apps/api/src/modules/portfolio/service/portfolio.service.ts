@@ -920,7 +920,7 @@ export class PortfolioService {
    * Toggle le statut favori d'une carte
    */
   async toggleFavorite(ownerId: string, id: string) {
-    const item = await this.portfolioModel.findOne({ _id: id, ownerId }).exec();
+    const item = await this.model.findOne({ _id: id, ownerId }).exec();
     if (!item) {
       throw new NotFoundException('Item non trouvé');
     }
@@ -929,6 +929,26 @@ export class PortfolioService {
     item.isFavorite = !item.isFavorite;
     await item.save();
 
-    return this.enrichPortfolioItem(item);
+    // Retourner l'item avec les métadonnées aplaties
+    const obj = item.toObject();
+    const snapshot = item.cardSnapshot as CardSnapshot;
+
+    return {
+      ...obj,
+      name: snapshot?.name,
+      setId: snapshot?.set?.id,
+      setName: snapshot?.set?.name,
+      setLogo: snapshot?.set?.logo,
+      setSymbol: snapshot?.set?.symbol,
+      setReleaseDate: snapshot?.set?.releaseDate,
+      setCardCount: snapshot?.set?.cardCount?.total,
+      number: snapshot?.number,
+      rarity: snapshot?.rarity,
+      imageUrl: snapshot?.imageUrl,
+      imageUrlHiRes: snapshot?.imageUrlHiRes,
+      types: snapshot?.types,
+      supertype: snapshot?.supertype,
+      subtypes: snapshot?.subtypes,
+    };
   }
 }
