@@ -9,7 +9,7 @@ import SearchBar from '../components/ui/Search';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { Toast } from '../components/ui/Toast';
 import { ArrowLeft, Package, Ban } from 'lucide-react';
-import SetCardDetailsModal from '../components/cards/SetCardDetailsModal';
+import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
 import styles from './SetDetail.module.css';
 
 /**
@@ -441,7 +441,8 @@ export function SetDetail() {
           };
 
           return (
-            <SetCardDetailsModal
+            <UnifiedCardDetailsModal
+              mode="set"
               card={selectedCard}
               setName={currentSet.setName || 'Set inconnu'}
               setId={currentSet.setId}

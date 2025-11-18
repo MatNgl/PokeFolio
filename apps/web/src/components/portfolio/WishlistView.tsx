@@ -7,7 +7,7 @@ import SearchBar from '../ui/Search';
 import { FilterButton, type SortOption as FilterSortOption } from '../ui/FilterButton';
 import { QuickAddModal } from '../cards/QuickAddModal';
 import { AddCardModal } from '../cards/AddCardModal';
-import SetCardDetailsModal from '../cards/SetCardDetailsModal';
+import UnifiedCardDetailsModal from '../cards/UnifiedCardDetailsModal';
 import { Toast } from '../ui/Toast';
 import { Heart, Package, PlusCircle } from 'lucide-react';
 import styles from './WishlistView.module.css';
@@ -346,7 +346,8 @@ export function WishlistView() {
           };
 
           return (
-            <SetCardDetailsModal
+            <UnifiedCardDetailsModal
+              mode="set"
               card={completeSetCard}
               setName={selectedCardForDetails.setName || 'Set inconnu'}
               setId={selectedCardForDetails.setId}

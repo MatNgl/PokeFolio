@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { cardsService } from '../services/cards.service';
 import { wishlistService } from '../services/wishlist.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
-import SetCardDetailsModal from '../components/cards/SetCardDetailsModal';
+import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
 import { QuickAddModal } from '../components/cards/QuickAddModal';
 import { CardRecognition } from '../components/CardRecognition/CardRecognition';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
@@ -667,27 +667,13 @@ export default function Discover() {
             }
           };
 
-          // Convertir Card en format attendu par SetCardDetailsModal
-          const completeSetCard = {
-            itemId: `discover-${detailsCard.id}`,
-            cardId: detailsCard.id,
-            name: detailsCard.name,
-            number: detailsCard.localId,
-            rarity: detailsCard.rarity,
-            imageUrl: detailsCard.image || detailsCard.images?.small || '',
-            owned: ownershipStatuses?.[detailsCard.id] || false,
-            quantity: 0,
-          };
-
           return (
-            <SetCardDetailsModal
-              card={completeSetCard}
-              setName={
-                detailsCard.set?.name ||
-                detailsCard.id?.split('-')[0]?.toUpperCase() ||
-                'Set inconnu'
-              }
-              setId={detailsCard.set?.id}
+            <UnifiedCardDetailsModal
+              mode="discover"
+              card={detailsCard}
+              onAdd={(card) => {
+                setSelectedCard(card);
+              }}
               onClose={() => setDetailsCard(null)}
               onNavigatePrevious={handleNavigatePrevious}
               onNavigateNext={handleNavigateNext}

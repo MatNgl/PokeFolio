@@ -10,7 +10,7 @@ import { wishlistService } from '../services/wishlist.service';
 import { AddCardModal } from '../components/cards/AddCardModal';
 import { EditCardModal } from '../components/cards/EditCardModal';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
-import PortfolioCardDetailsModal from '../components/cards/PortfolioCardDetailsModal';
+import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
 import { CardRecognition } from '../components/CardRecognition/CardRecognition';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
@@ -24,6 +24,8 @@ import GradedCardFrame from '../components/grading/GradedCardFrame';
 import GradingBadge, { type GradingCompany } from '../components/grading/GradingBadge';
 import { SetsView } from '../components/portfolio/SetsView';
 import { WishlistView } from '../components/portfolio/WishlistView';
+import { ViewSwitcher } from '../components/ui/ViewSwitcher';
+import { usePortfolioPreferences } from '../hooks/useUserPreferences';
 import { useAuth } from '../contexts/AuthContext';
 
 /** ---- Types côté UI ---- */
@@ -208,7 +210,9 @@ export default function Portfolio() {
   const [deletingCard, setDeletingCard] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [portfolioSection, setPortfolioSection] = useState<'cards' | 'sets' | 'wishlist'>('cards');
-  const [viewMode, setViewMode] = useState<PortfolioViewMode>('grid');
+
+  // Préférences persistantes
+  const { viewMode, setViewMode } = usePortfolioPreferences();
 
   // Détecter si on revient depuis SetDetail et ouvrir la vue Sets
   useEffect(() => {
@@ -287,7 +291,6 @@ export default function Portfolio() {
       setDeleting(false);
     }
   };
-
 
   const resolveId = (card: UserCardView): string =>
     card._id ?? card.id ?? `${card.cardId}-${card.number ?? ''}`;
@@ -534,35 +537,12 @@ export default function Portfolio() {
         )}
 
         {portfolioSection === 'cards' && cards.length > 0 && (
-          <div className={styles.glassGroup}>
-            <input
-              type="radio"
-              id="view-compact"
-              name="viewMode"
-              checked={viewMode === 'compact'}
-              onChange={() => setViewMode('compact')}
+          <div className={styles.viewSwitcherWrapper}>
+            <ViewSwitcher
+              currentView={viewMode}
+              onViewChange={(mode) => setViewMode(mode as 'grid' | 'compact')}
+              options={{ first: 'compact', second: 'grid' }}
             />
-            <label htmlFor="view-compact">☰ Compact</label>
-
-            <input
-              type="radio"
-              id="view-grid"
-              name="viewMode"
-              checked={viewMode === 'grid'}
-              onChange={() => setViewMode('grid')}
-            />
-            <label htmlFor="view-grid">⊞ Grille</label>
-
-            <input
-              type="radio"
-              id="view-detailed"
-              name="viewMode"
-              checked={viewMode === 'detailed'}
-              onChange={() => setViewMode('detailed')}
-            />
-            <label htmlFor="view-detailed">▭ Détaillé</label>
-
-            <div className={styles.glider} data-active={viewMode} />
           </div>
         )}
 
@@ -692,112 +672,6 @@ export default function Portfolio() {
               );
             })}
           </section>
-        ) : viewMode === 'detailed' ? (
-          // Vue Détaillée : grosses cartes empilées avec détails
-          <section className={styles.detailed} aria-label="Mes cartes">
-            {displayedCards.map((card) => {
-              const docId = resolveId(card);
-              const img = resolveImage(card);
-              const entryLike = createEntryLike(card);
-              const total = calculateCardTotal(card);
-
-              return (
-                <article key={docId} className={styles.detailedCard}>
-                  <button
-                    type="button"
-                    className={styles.detailedImageWrap}
-                    onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
-                    aria-label={`Voir les détails de ${card.name}`}
-                  >
-                    <img
-                      src={img}
-                      alt={card.name}
-                      className={styles.detailedImage}
-                      loading="lazy"
-                      onError={(e) => {
-                        const t = e.currentTarget as HTMLImageElement;
-                        t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                      }}
-                    />
-                  </button>
-                  <div className={styles.detailedInfo}>
-                    <div className={styles.detailedHeader}>
-                      <h3 className={styles.detailedName}>{card.name}</h3>
-                      <div className={styles.detailedActions}>
-                        <IconButton
-                          icon="edit"
-                          label={`Modifier ${card.name}`}
-                          onClick={() => setEditingCard(card)}
-                        />
-                        <IconButton
-                          icon="delete"
-                          label={`Supprimer ${card.name}`}
-                          onClick={() => setDeletingCard({ id: docId, name: card.name })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.detailedGrid}>
-                      <div className={styles.detailedItem}>
-                        <span className={styles.detailedLabel}>Set</span>
-                        <span className={styles.detailedValue}>
-                          {card.setName || 'Set inconnu'}
-                        </span>
-                      </div>
-                      <div className={styles.detailedItem}>
-                        <span className={styles.detailedLabel}>Numéro</span>
-                        <span className={styles.detailedValue}>
-                          #{card.number ?? '—'}
-                          {card.setCardCount && `/${card.setCardCount}`}
-                        </span>
-                      </div>
-                      {card.rarity && (
-                        <div className={styles.detailedItem}>
-                          <span className={styles.detailedLabel}>Rareté</span>
-                          <span className={styles.detailedValue}>{card.rarity}</span>
-                        </div>
-                      )}
-                      <div className={styles.detailedItem}>
-                        <span className={styles.detailedLabel}>Quantité</span>
-                        <span className={styles.detailedValue}>{card.quantity ?? 1}</span>
-                      </div>
-                      {total !== null && (
-                        <div className={styles.detailedItem}>
-                          <span className={styles.detailedLabel}>Prix total</span>
-                          <span className={styles.detailedValue}>{euro(total)}</span>
-                        </div>
-                      )}
-                      {card.purchaseDate && (
-                        <div className={styles.detailedItem}>
-                          <span className={styles.detailedLabel}>Date d&apos;achat</span>
-                          <span className={styles.detailedValue}>
-                            {new Date(card.purchaseDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                      {card.isGraded && card.gradeCompany && card.gradeScore !== undefined && card.gradeScore !== null && card.gradeScore !== '' && (
-                        <div className={styles.detailedItem}>
-                          <span className={styles.detailedLabel}>Gradée</span>
-                          <span className={styles.detailedValue}>
-                            <GradingBadge
-                              company={card.gradeCompany as GradingCompany}
-                              grade={card.gradeScore}
-                            />
-                          </span>
-                        </div>
-                      )}
-                      {card.notes && (
-                        <div className={styles.detailedItem} style={{ gridColumn: '1 / -1' }}>
-                          <span className={styles.detailedLabel}>Notes</span>
-                          <p className={styles.detailedNotes}>{card.notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
         ) : (
           // Vue Grid (normale) : grille de cartes
           <section className={styles.grid} aria-label="Mes cartes">
@@ -817,7 +691,11 @@ export default function Portfolio() {
                     aria-label={`Voir les détails de ${card.name}`}
                     title={`Voir les détails de ${card.name}`}
                   >
-                    {card.isGraded && card.gradeCompany && card.gradeScore !== undefined && card.gradeScore !== null && card.gradeScore !== '' ? (
+                    {card.isGraded &&
+                    card.gradeCompany &&
+                    card.gradeScore !== undefined &&
+                    card.gradeScore !== null &&
+                    card.gradeScore !== '' ? (
                       <GradedCardFrame
                         company={
                           card.gradeCompany as
@@ -961,7 +839,8 @@ export default function Portfolio() {
             };
 
             return (
-              <PortfolioCardDetailsModal
+              <UnifiedCardDetailsModal
+                mode="portfolio"
                 entry={detailsEntry}
                 onClose={() => setDetailsEntry(null)}
                 onEdit={(entry) => {

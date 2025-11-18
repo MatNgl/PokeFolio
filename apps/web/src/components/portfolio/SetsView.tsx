@@ -9,8 +9,11 @@ import {
 } from '../../services/sets.service';
 import { FilterButton, type SortOption as FilterSortOption } from '../ui/FilterButton';
 import SearchBar from '../ui/Search';
-import SetCardDetailsModal from '../cards/SetCardDetailsModal';
+import UnifiedCardDetailsModal from '../cards/UnifiedCardDetailsModal';
+import { ViewSwitcher } from '../ui/ViewSwitcher';
+import { Checkbox } from '../ui/Checkbox';
 import { useSetLogos, resolveLogoUrl } from '../../hooks/useSetLogos';
+import { useSetsPreferences } from '../../hooks/useUserPreferences';
 import styles from './SetsView.module.css';
 import { Package, ChevronRight } from 'lucide-react';
 
@@ -32,10 +35,23 @@ const resolveImageUrl = (imageUrl?: string): string => {
 export function SetsView() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Préférences persistantes
+  const { viewMode, setViewMode, sortBy, setSortBy, sortOrder, setSortOrder, showAll, setShowAll } =
+    useSetsPreferences();
+
   const [sortOption, setSortOption] = useState<FilterSortOption>({
-    field: 'date',
-    direction: 'desc',
+    field: sortBy as 'name' | 'date' | 'quantity' | 'default',
+    direction: sortOrder,
   });
+
+  // Mettre à jour les préférences quand le tri change
+  const handleSortChange = (newSort: FilterSortOption) => {
+    setSortOption(newSort);
+    setSortBy(newSort.field);
+    setSortOrder(newSort.direction);
+  };
+
   const [selectedCard, setSelectedCard] = useState<{
     card: CompleteSetCard;
     setName: string;
@@ -118,8 +134,8 @@ export function SetsView() {
 
   return (
     <div className={styles.container}>
-      {/* Search and Filter */}
-      <div className={styles.controls}>
+      {/* Search bar + filter + checkbox */}
+      <div className={styles.searchRow}>
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
@@ -127,7 +143,24 @@ export function SetsView() {
           ariaLabel="Rechercher dans vos sets"
           className={styles.searchBar}
         />
-        <FilterButton onSortChange={setSortOption} currentSort={sortOption} context="sets" />
+        <div className={styles.searchRowRight}>
+          <FilterButton onSortChange={handleSortChange} currentSort={sortOption} context="sets" />
+          <Checkbox
+            id="show-all-sets"
+            checked={showAll}
+            onChange={(e) => setShowAll(e.target.checked)}
+            label="Tous les sets"
+          />
+        </div>
+      </div>
+
+      {/* View switcher row */}
+      <div className={styles.viewSwitcherRow}>
+        <ViewSwitcher
+          currentView={viewMode}
+          onViewChange={(mode) => setViewMode(mode as 'grid' | 'detailed')}
+          options={{ first: 'detailed', second: 'grid' }}
+        />
       </div>
 
       {filteredAndSortedSets.length === 0 ? (
@@ -135,7 +168,49 @@ export function SetsView() {
           <Package className={styles.emptyIcon} />
           <p className={styles.emptyText}>Aucun résultat pour &quot;{searchQuery}&quot;</p>
         </div>
+      ) : viewMode === 'grid' ? (
+        /* Vue grille compacte */
+        <div className={styles.setsGrid}>
+          {filteredAndSortedSets.map((set: PortfolioSet) => {
+            const logoUrl = resolveLogoUrl(logos[set.setId] || set.setLogo);
+            return (
+              <button
+                key={set.setId}
+                className={styles.gridCard}
+                onClick={() => navigate(`/portfolio/set/${set.setId}`)}
+                type="button"
+              >
+                <div className={styles.gridLogo}>
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={set.setName || 'Set'}
+                      className={styles.gridLogoImg}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Package size={40} />
+                  )}
+                </div>
+                <h3 className={styles.gridName}>{set.setName || 'Set inconnu'}</h3>
+                <div className={styles.gridProgress}>
+                  <div
+                    className={styles.gridProgressFill}
+                    style={{ width: `${set.completion.percentage || 0}%` }}
+                  />
+                </div>
+                <span className={styles.gridStats}>
+                  {set.completion.owned}/{set.completion.total || '?'} (
+                  {set.completion.percentage || 0}%)
+                </span>
+              </button>
+            );
+          })}
+        </div>
       ) : (
+        /* Vue détaillée (existante) */
         <div className={styles.setsList}>
           {filteredAndSortedSets.map((set: PortfolioSet) => {
             const logoUrl = resolveLogoUrl(logos[set.setId] || set.setLogo);
@@ -154,7 +229,6 @@ export function SetsView() {
                         alt={set.setName || 'Set'}
                         className={styles.setLogo}
                         onError={(e) => {
-                          // Hide broken image and show placeholder instead
                           const img = e.currentTarget;
                           const placeholder = img.nextElementSibling as HTMLElement | null;
                           img.style.display = 'none';
@@ -178,7 +252,6 @@ export function SetsView() {
                       type="button"
                     >
                       {set.setName || 'Set inconnu'}
-
                       <ChevronRight size={20} className={styles.setNameArrow} />
                     </button>
                     <div className={styles.setMeta}>
@@ -252,7 +325,14 @@ export function SetsView() {
                       </div>
                     ))}
                     {set.cards.length > 8 && (
-                      <div className={styles.moreCards}>+{set.cards.length - 8}</div>
+                      <button
+                        type="button"
+                        className={styles.moreCards}
+                        onClick={() => navigate(`/portfolio/set/${set.setId}`)}
+                        title={`Voir les ${set.cards.length - 8} autres cartes`}
+                      >
+                        +{set.cards.length - 8}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -301,7 +381,8 @@ export function SetsView() {
           };
 
           return (
-            <SetCardDetailsModal
+            <UnifiedCardDetailsModal
+              mode="set"
               card={selectedCard.card}
               setName={selectedCard.setName}
               setId={currentSet.setId}

@@ -1,0 +1,482 @@
+/* === Overlay plein écran === */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 20, 0.55);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 120ms ease-out;
+}
+
+/* === Fenêtre modale === */
+.modal {
+  width: 100%;
+  max-width: 980px;
+  max-height: calc(100vh - 48px);
+  border-radius: var(--radii);
+  background: color-mix(in oklab, var(--glass) 94%, transparent);
+  border: var(--border);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow-y: auto;
+  outline: none;
+  animation: popIn 160ms cubic-bezier(0.37, 1.05, 0.66, 1);
+}
+
+/* === En-tête === */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  color: var(--text);
+  flex: 1;
+  text-align: center;
+}
+
+/* === Boutons de navigation latéraux === */
+.navBtnLeft,
+.navBtnRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(124, 243, 255, 0.1);
+  border: 2px solid rgba(124, 243, 255, 0.3);
+  color: var(--primary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+  z-index: 1001;
+}
+
+.navBtnLeft {
+  left: 80px;
+}
+
+.navBtnRight {
+  right: 80px;
+}
+
+.navBtnLeft:hover,
+.navBtnRight:hover {
+  background: rgba(124, 243, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.4);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.navBtnLeft:active,
+.navBtnRight:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.navBtnLeft:focus-visible,
+.navBtnRight:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.closeBtn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.closeBtn:hover,
+.closeBtn:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 18px rgba(124, 243, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+/* === Corps === */
+.content {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  padding: 18px;
+}
+
+.loading {
+  padding: 40px;
+  display: grid;
+  place-items: center;
+}
+
+/* === Colonne gauche (image) === */
+.left {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 0;
+  display: grid;
+  align-content: start;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  border-radius: 16px;
+  display: block;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* === Colonne droite (infos) === */
+.right {
+  min-width: 0;
+}
+
+.name {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+/* Set info row - logo + tags sur la même ligne */
+.setInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.setLogoButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(124, 243, 255, 0.08);
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.setLogoButton:hover {
+  background: rgba(124, 243, 255, 0.15);
+  border-color: rgba(124, 243, 255, 0.4);
+  box-shadow: 0 0 12px rgba(124, 243, 255, 0.2);
+}
+
+.setLogoSmall {
+  height: 24px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+}
+
+.setNameFallback {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.setNameText {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+/* Tags (#, rareté) */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+/* Bloc section */
+.block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radii);
+  padding: 14px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(var(--blur));
+}
+
+.blockTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+
+/* Grille de métriques */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.item {
+  display: grid;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Notes */
+.noteText {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Carte non possédée */
+.notOwned {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Badge possédée (pour discover mode) */
+.ownedBadge {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #22c55e;
+  text-align: center;
+}
+
+/* Actions */
+.actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* === Bloc résumé === */
+.summaryBlock {
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.12), rgba(124, 140, 243, 0.08));
+  border: 1px solid rgba(124, 243, 255, 0.3);
+  border-radius: var(--radii);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 0 20px rgba(124, 243, 255, 0.15);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.summaryItem {
+  display: grid;
+  gap: 4px;
+}
+
+/* === Cartes de variantes === */
+.variantCard {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(124, 243, 255, 0.15);
+  border-radius: var(--radii-sm);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.variantCard:last-child {
+  margin-bottom: 0;
+}
+
+.variantHeader {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.variantTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* === Bouton de suppression de variante === */
+.deleteVariantBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteVariantBtn:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+.deleteVariantBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.deleteVariantBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Responsive === */
+
+/* Tablettes et petits écrans */
+@media (max-width: 920px) {
+  .content {
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+  }
+
+  .navBtnLeft {
+    left: 20px;
+  }
+
+  .navBtnRight {
+    right: 20px;
+  }
+}
+
+/* Petites tablettes et mobiles */
+@media (max-width: 768px) {
+  .overlay {
+    padding: 16px;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .left {
+    order: 0;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .right {
+    order: 1;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .navBtnLeft,
+  .navBtnRight {
+    display: none;
+  }
+}
+
+/* Très petits écrans */
+@media (max-width: 480px) {
+  .left {
+    max-width: 240px;
+  }
+
+  .setInfoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* === Animations === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: translateY(4px) scale(0.985);
+    opacity: 0.96;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}

@@ -476,6 +476,11 @@
   text-shadow: 0 0 10px rgba(124, 243, 255, 0.5);
 }
 
+/* Wrapper pour ViewSwitcher avec espacement */
+.viewSwitcherWrapper {
+  margin-bottom: 24px;
+}
+
 /* Vue Compact */
 .compact {
   display: flex;
