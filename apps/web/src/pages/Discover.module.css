@@ -109,20 +109,13 @@
 }
 
 .card {
-  background: var(--glass);
-  border: var(--border);
-  border-radius: var(--radii);
-  padding: 12px;
-  backdrop-filter: blur(var(--blur));
-  transition: all 0.3s ease;
+  position: relative;
   display: flex;
   flex-direction: column;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(124, 243, 255, 0.15);
-  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
 .cardImageWrap {
@@ -150,7 +143,16 @@
 }
 
 .cardImageWrap:hover .cardImage {
-  transform: scale(1.02);
+  transform: scale(1.05);
+}
+
+/* Hide info by default, show on hover if needed */
+.cardInfo {
+  display: none;
+}
+
+.addBtn {
+  display: none;
 }
 
 /* Show overlay buttons on hover */

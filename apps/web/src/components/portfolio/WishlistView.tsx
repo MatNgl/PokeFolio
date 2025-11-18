@@ -9,7 +9,8 @@ import { QuickAddModal } from '../cards/QuickAddModal';
 import { AddCardModal } from '../cards/AddCardModal';
 import UnifiedCardDetailsModal from '../cards/UnifiedCardDetailsModal';
 import { Toast } from '../ui/Toast';
-import { Heart, Package, PlusCircle } from 'lucide-react';
+import { OwnedBadge } from '../ui/OwnedBadge';
+import { Heart, Package } from 'lucide-react';
 import styles from './WishlistView.module.css';
 import type { Card } from '@pokefolio/types';
 import { CardOverlayButtons } from '../cards/CardOverlayButtons';
@@ -45,6 +46,14 @@ export function WishlistView() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['wishlist'],
     queryFn: () => wishlistService.getWishlist(),
+  });
+
+  // Récupérer les statuts de possession pour les cartes de la wishlist
+  const wishlistCardIds = useMemo(() => data?.items?.map((item) => item.cardId) || [], [data?.items]);
+  const { data: ownershipStatuses } = useQuery({
+    queryKey: ['ownership-check', wishlistCardIds],
+    queryFn: () => portfolioService.checkOwnership(wishlistCardIds),
+    enabled: wishlistCardIds.length > 0,
   });
 
   const removeMutation = useMutation({
@@ -233,6 +242,8 @@ export function WishlistView() {
                     }}
                   />
                 </button>
+                {/* Badge Possédée */}
+                <OwnedBadge isOwned={ownershipStatuses?.[item.cardId] || false} />
                 {/* Bouton pour retirer de la wishlist (coeur) */}
                 <button
                   type="button"
@@ -255,7 +266,7 @@ export function WishlistView() {
                 >
                   <Heart size={18} fill="currentColor" />
                 </button>
-                {/* Bouton pour ajouter au portfolio */}
+                {/* Bouton pour ajouter au portfolio (à côté du coeur) */}
                 <CardOverlayButtons
                   type="add"
                   onClick={(e) => {
@@ -264,31 +275,9 @@ export function WishlistView() {
                     setShowQuickAdd(true);
                   }}
                   cardName={item.name}
-                  position="bottom-right"
+                  position="top-left"
                 />
               </div>
-
-              <div className={styles.cardInfo}>
-                <h3 className={styles.cardName}>{item.name}</h3>
-                <p className={styles.cardSet}>
-                  {item.setName || item.setId?.toUpperCase() || 'Set inconnu'}
-                  {item.number && ` · #${item.number}`}
-                </p>
-                {item.rarity && <p className={styles.cardRarity}>{item.rarity}</p>}
-              </div>
-
-              <button
-                type="button"
-                className={styles.addBtn}
-                onClick={() => {
-                  setSelectedItemForQuickAdd(item);
-                  setShowQuickAdd(true);
-                }}
-                aria-label={`Ajouter ${item.name} au portfolio`}
-              >
-                <PlusCircle size={16} />
-                Ajouter
-              </button>
             </article>
           ))}
         </div>

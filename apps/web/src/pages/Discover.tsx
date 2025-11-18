@@ -558,7 +558,7 @@ export default function Discover() {
                       onToast={showToast}
                     />
                   ) : null}
-                  {/* Bouton Add en overlay */}
+                  {/* Bouton Add en overlay (à côté du coeur) */}
                   <CardOverlayButtons
                     type="add"
                     onClick={(e) => {
@@ -566,30 +566,9 @@ export default function Discover() {
                       handleAddCard(card);
                     }}
                     cardName={card.name}
-                    position="bottom-right"
+                    position="top-left"
                   />
                 </div>
-
-                <div className={styles.cardInfo}>
-                  <h3 className={styles.cardName}>{card.name}</h3>
-                  <p className={styles.cardSet}>
-                    {card.set?.name || card.id?.split('-')[0]?.toUpperCase() || 'Set inconnu'}
-                    {card.localId && ` · #${card.localId.padStart(3, '0')}`}
-                    {card.set?.cardCount?.total &&
-                      `/${String(card.set.cardCount.total).padStart(3, '0')}`}
-                  </p>
-                  {card.rarity && <p className={styles.cardRarity}>{card.rarity}</p>}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleAddCard(card)}
-                  className={styles.addBtn}
-                  aria-label={`Ajouter ${card.name} au portfolio`}
-                >
-                  <PlusCircle size={16} />
-                  Ajouter
-                </button>
               </article>
             ))}
           </section>
