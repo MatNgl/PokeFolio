@@ -79,16 +79,25 @@ export function TopSetsList({ data, loading = false }: TopSetsListProps): JSX.El
                 #{index + 1}
               </div>
               <div className={styles.logoWrapper}>
-                {logoUrl && (
+                {logoUrl ? (
                   <img
                     src={logoUrl}
                     alt={set.setName}
                     className={styles.setLogo}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                      if (fallback) fallback.style.display = 'flex';
                     }}
                   />
-                )}
+                ) : null}
+                <div
+                  className={styles.logoFallback}
+                  style={{ display: logoUrl ? 'none' : 'flex' }}
+                  aria-hidden="true"
+                >
+                  <Package size={16} />
+                </div>
               </div>
               <div className={styles.info}>
                 <div className={styles.setName} title={set.setName}>

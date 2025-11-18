@@ -115,7 +115,11 @@ export default function UnifiedCardDetailsModal(props: Props) {
       return parts.length > 1 ? parts.slice(0, -1).join('-') : undefined;
     }
     if (isDiscoverMode && props.card) {
-      return props.card.set?.id;
+      // Priorité au set.id si disponible
+      if (props.card.set?.id) return props.card.set.id;
+      // Fallback: extraire du card.id (e.g., "swsh1-58" → "swsh1")
+      const parts = props.card.id?.split('-');
+      return parts && parts.length > 1 ? parts.slice(0, -1).join('-') : undefined;
     }
     return undefined;
   }, [props, isSetMode, isPortfolioMode, isDiscoverMode]);

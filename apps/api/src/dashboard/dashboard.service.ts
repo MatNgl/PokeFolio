@@ -23,6 +23,8 @@ import { ExpensiveCardsDto, ExpensiveCardItem } from './dto/expensive-cards.dto'
 interface CardSnapshot {
   name?: string;
   image?: string | { small?: string; large?: string };
+  imageUrl?: string;
+  imageUrlHiRes?: string;
   set?: { id?: string; name?: string };
 }
 
@@ -599,11 +601,15 @@ export class DashboardService {
         const snapshot = item.cardSnapshot as CardSnapshot | undefined;
         let imageUrl: string | undefined;
 
-        if (snapshot?.image) {
+        // Priorité: imageUrl (standard) > imageUrlHiRes > image object
+        if (snapshot?.imageUrl) {
+          imageUrl = snapshot.imageUrl;
+        } else if (snapshot?.imageUrlHiRes) {
+          imageUrl = snapshot.imageUrlHiRes;
+        } else if (snapshot?.image) {
           if (typeof snapshot.image === 'string') {
             imageUrl = snapshot.image;
           } else if (snapshot.image.small) {
-            // Priorité aux images small pour optimiser les performances
             imageUrl = snapshot.image.small;
           } else if (snapshot.image.large) {
             imageUrl = snapshot.image.large;

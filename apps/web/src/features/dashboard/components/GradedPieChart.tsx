@@ -5,7 +5,7 @@ import styles from './TimeSeriesChart.module.css';
 
 const COLORS = {
   graded: '#7cf3ff',
-  normal: '#a78bfa',
+  normal: '#0ea5e9',
 };
 
 interface PieData {

@@ -296,12 +296,14 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.8);
-  color: var(--text);
+  background: rgba(0, 0, 0, 0.85);
+  color: #7cf3ff;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
+  z-index: 10;
+  border: 1px solid rgba(124, 243, 255, 0.3);
 }
 
 .gradeBadge {

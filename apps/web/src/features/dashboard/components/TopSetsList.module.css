@@ -96,6 +96,17 @@
   object-fit: contain;
 }
 
+.logoFallback {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(124, 243, 255, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%);
+  border-radius: 6px;
+  color: #7cf3ff;
+}
+
 .info {
   flex: 1;
   min-width: 0;
