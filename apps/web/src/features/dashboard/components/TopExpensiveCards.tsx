@@ -2,6 +2,16 @@ import { DollarSign } from 'lucide-react';
 import type { ExpensiveCards } from '../types/dashboard.types';
 import styles from './TopExpensiveCards.module.css';
 
+// Résoudre les URLs d'images TCGDex
+function resolveImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
+  if (url.includes('assets.tcgdex.net') && !url.match(/\.(webp|png|jpg|jpeg)$/i)) {
+    return `${url}/high.webp`;
+  }
+  return url;
+}
+
 export interface TopExpensiveCardsProps {
   data: ExpensiveCards | undefined;
   loading?: boolean;
@@ -75,10 +85,13 @@ export function TopExpensiveCards({ data, loading = false }: TopExpensiveCardsPr
             {card.imageUrl && (
               <div className={styles.imageWrapper}>
                 <img
-                  src={card.imageUrl}
+                  src={resolveImageUrl(card.imageUrl)}
                   alt={card.cardName || card.cardId}
                   className={styles.cardImage}
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             )}

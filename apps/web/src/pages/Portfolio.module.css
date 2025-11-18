@@ -294,7 +294,7 @@
 
 .quantity {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   right: 8px;
   background: rgba(0, 0, 0, 0.85);
   color: #7cf3ff;
