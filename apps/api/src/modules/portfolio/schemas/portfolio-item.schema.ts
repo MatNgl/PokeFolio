@@ -93,6 +93,10 @@ export class PortfolioItem {
   @Prop({ type: Object, required: false })
   cardSnapshot?: Record<string, unknown>;
 
+  // Carte favorite
+  @Prop({ type: Boolean, required: false, default: false })
+  isFavorite?: boolean;
+
   @Prop({ type: Date, default: Date.now })
   createdAt!: Date;
 

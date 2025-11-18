@@ -17,7 +17,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
-import { Layers, Camera, Package, Heart } from 'lucide-react';
+import { Layers, Camera, Package, Heart, Star } from 'lucide-react';
 import styles from './Portfolio.module.css';
 import { Toast } from '../components/ui/Toast';
 import GradedCardFrame from '../components/grading/GradedCardFrame';
@@ -25,8 +25,10 @@ import GradingBadge, { type GradingCompany } from '../components/grading/Grading
 import { SetsView } from '../components/portfolio/SetsView';
 import { WishlistView } from '../components/portfolio/WishlistView';
 import { ViewSwitcher } from '../components/ui/ViewSwitcher';
+import { Checkbox } from '../components/ui/Checkbox';
 import { usePortfolioPreferences } from '../hooks/useUserPreferences';
 import { useAuth } from '../contexts/AuthContext';
+import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
 
 /** ---- Types côté UI ---- */
 type PortfolioVariant = {
@@ -59,6 +61,7 @@ type UserCardView = Partial<Omit<UserCard, 'gradeScore' | 'imageUrl'>> & {
   currentValue?: number;
   createdAt?: string;
   updatedAt?: string;
+  isFavorite?: boolean;
 };
 
 /** ---- Types “bruts” possibles venant de l’API (tolérants) ---- */
@@ -86,6 +89,7 @@ type ApiCard = {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+  isFavorite?: boolean;
 };
 
 type ApiStats = {
@@ -212,7 +216,14 @@ export default function Portfolio() {
   const [portfolioSection, setPortfolioSection] = useState<'cards' | 'sets' | 'wishlist'>('cards');
 
   // Préférences persistantes
-  const { viewMode, setViewMode } = usePortfolioPreferences();
+  const {
+    viewMode,
+    setViewMode,
+    showOnlyGraded,
+    setShowOnlyGraded,
+    showOnlyFavorites,
+    setShowOnlyFavorites,
+  } = usePortfolioPreferences();
 
   // Détecter si on revient depuis SetDetail et ouvrir la vue Sets
   useEffect(() => {
@@ -289,6 +300,26 @@ export default function Portfolio() {
       setToast({ message: 'Erreur lors de la suppression de la carte', type: 'error' });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleToggleFavorite = async (card: UserCardView) => {
+    const docId = card._id ?? card.id;
+    if (!docId) return;
+
+    try {
+      const updated = await portfolioService.toggleFavorite(docId);
+      // Mettre à jour la carte localement
+      setCards((prev) =>
+        prev.map((c) => ((c._id ?? c.id) === docId ? { ...c, isFavorite: updated.isFavorite } : c))
+      );
+      setToast({
+        message: updated.isFavorite ? 'Carte ajoutée aux favoris' : 'Carte retirée des favoris',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Erreur toggle favorite:', error);
+      setToast({ message: 'Erreur lors de la modification du favori', type: 'error' });
     }
   };
 
@@ -401,6 +432,16 @@ export default function Portfolio() {
   // Filtrer et trier les cartes
   const getFilteredAndSortedCards = (): UserCardView[] => {
     let filtered = [...cards];
+
+    // Filtre: uniquement les gradées
+    if (showOnlyGraded) {
+      filtered = filtered.filter((card) => card.isGraded);
+    }
+
+    // Filtre: uniquement les favoris
+    if (showOnlyFavorites) {
+      filtered = filtered.filter((card) => card.isFavorite);
+    }
 
     // Recherche (nom de carte, nom de set, ID de set, rareté)
     if (searchQuery.trim()) {
@@ -537,6 +578,23 @@ export default function Portfolio() {
         )}
 
         {portfolioSection === 'cards' && cards.length > 0 && (
+          <div className={styles.filtersRow}>
+            <Checkbox
+              id="filter-graded"
+              checked={showOnlyGraded}
+              onChange={(e) => setShowOnlyGraded(e.target.checked)}
+              label="Gradées uniquement"
+            />
+            <Checkbox
+              id="filter-favorites"
+              checked={showOnlyFavorites}
+              onChange={(e) => setShowOnlyFavorites(e.target.checked)}
+              label="Favoris uniquement"
+            />
+          </div>
+        )}
+
+        {portfolioSection === 'cards' && cards.length > 0 && (
           <div className={styles.viewSwitcherWrapper}>
             <ViewSwitcher
               currentView={viewMode}
@@ -651,6 +709,18 @@ export default function Portfolio() {
                     )}
                   </div>
                   <div className={styles.compactActions}>
+                    <button
+                      type="button"
+                      className={`${styles.favoriteBtn} ${card.isFavorite ? styles.favoriteActive : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(card);
+                      }}
+                      aria-label={card.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      title={card.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    >
+                      <Star size={16} fill={card.isFavorite ? 'currentColor' : 'none'} />
+                    </button>
                     <IconButton
                       icon="edit"
                       label={`Modifier ${card.name}`}
@@ -684,35 +754,50 @@ export default function Portfolio() {
               return (
                 <article key={docId} className={styles.card}>
                   {/* ✅ bouton accessible pour ouvrir les détails */}
-                  <button
-                    type="button"
-                    className={styles.cardImageWrap}
-                    onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
-                    aria-label={`Voir les détails de ${card.name}`}
-                    title={`Voir les détails de ${card.name}`}
-                  >
-                    {card.isGraded &&
-                    card.gradeCompany &&
-                    card.gradeScore !== undefined &&
-                    card.gradeScore !== null &&
-                    card.gradeScore !== '' ? (
-                      <GradedCardFrame
-                        company={
-                          card.gradeCompany as
-                            | 'PSA'
-                            | 'BGS'
-                            | 'CGC'
-                            | 'PCA'
-                            | 'CollectAura'
-                            | 'AGS'
-                            | 'CCC'
-                            | 'SGC'
-                            | 'TAG'
-                            | 'Other'
-                        }
-                        grade={card.gradeScore}
-                        size="medium"
-                      >
+                  <div className={styles.cardImageWrap}>
+                    <button
+                      type="button"
+                      className={styles.cardImageButton}
+                      onClick={() => setDetailsEntry(entryLike as PortfolioCard)}
+                      aria-label={`Voir les détails de ${card.name}`}
+                      title={`Voir les détails de ${card.name}`}
+                    >
+                      {card.isGraded &&
+                      card.gradeCompany &&
+                      card.gradeScore !== undefined &&
+                      card.gradeScore !== null &&
+                      card.gradeScore !== '' ? (
+                        <GradedCardFrame
+                          company={
+                            card.gradeCompany as
+                              | 'PSA'
+                              | 'BGS'
+                              | 'CGC'
+                              | 'PCA'
+                              | 'CollectAura'
+                              | 'AGS'
+                              | 'CCC'
+                              | 'SGC'
+                              | 'TAG'
+                              | 'Other'
+                          }
+                          grade={card.gradeScore}
+                          size="medium"
+                        >
+                          <img
+                            src={img}
+                            alt={card.name}
+                            className={styles.cardImage}
+                            loading="lazy"
+                            width={245}
+                            height={342}
+                            onError={(e) => {
+                              const t = e.currentTarget as HTMLImageElement;
+                              t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                            }}
+                          />
+                        </GradedCardFrame>
+                      ) : (
                         <img
                           src={img}
                           alt={card.name}
@@ -725,23 +810,21 @@ export default function Portfolio() {
                             t.src = 'https://images.pokemontcg.io/swsh1/back.png';
                           }}
                         />
-                      </GradedCardFrame>
-                    ) : (
-                      <img
-                        src={img}
-                        alt={card.name}
-                        className={styles.cardImage}
-                        loading="lazy"
-                        width={245}
-                        height={342}
-                        onError={(e) => {
-                          const t = e.currentTarget as HTMLImageElement;
-                          t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                        }}
-                      />
-                    )}
-                    {card.quantity > 1 && <span className={styles.quantity}>×{card.quantity}</span>}
-                  </button>
+                      )}
+                      {card.quantity > 1 && (
+                        <span className={styles.quantity}>×{card.quantity}</span>
+                      )}
+                    </button>
+                    <CardOverlayButtons
+                      type="favorite"
+                      isActive={card.isFavorite}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(card);
+                      }}
+                      cardName={card.name}
+                    />
+                  </div>
 
                   <div className={styles.cardInfo}>
                     <h3 className={styles.cardName}>{card.name}</h3>

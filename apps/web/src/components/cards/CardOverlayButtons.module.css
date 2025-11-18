@@ -1,0 +1,113 @@
+/* Overlay button base styles */
+.overlayButton {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Show on parent hover */
+.overlayButton:global(.show),
+*:hover > .overlayButton,
+*:focus-within > .overlayButton {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Positions */
+.top-right {
+  top: 8px;
+  right: 8px;
+}
+
+.top-left {
+  top: 8px;
+  left: 8px;
+}
+
+.bottom-right {
+  bottom: 8px;
+  right: 8px;
+}
+
+.bottom-left {
+  bottom: 8px;
+  left: 8px;
+}
+
+/* Sizes */
+.small {
+  padding: 6px;
+}
+
+.medium {
+  padding: 8px;
+}
+
+/* Button types - base states */
+.favorite {
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.favorite:hover {
+  background: rgba(255, 193, 7, 0.3);
+  border-color: rgba(255, 193, 7, 0.5);
+  color: #ffc107;
+}
+
+.favoriteActive {
+  background: rgba(255, 193, 7, 0.4);
+  border-color: rgba(255, 193, 7, 0.6);
+  color: #ffc107;
+}
+
+.favoriteActive:hover {
+  background: rgba(255, 193, 7, 0.5);
+}
+
+.wishlist {
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.wishlist:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.wishlistActive {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+}
+
+.wishlistActive:hover {
+  background: rgba(239, 68, 68, 0.5);
+}
+
+.add {
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.add:hover {
+  background: rgba(124, 243, 255, 0.3);
+  border-color: rgba(124, 243, 255, 0.5);
+  color: #7cf3ff;
+}
+
+.addActive {
+  background: rgba(124, 243, 255, 0.4);
+  border-color: rgba(124, 243, 255, 0.6);
+  color: #7cf3ff;
+}

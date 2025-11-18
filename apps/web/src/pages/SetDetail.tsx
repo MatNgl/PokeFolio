@@ -375,27 +375,27 @@ export function SetDetail() {
             <div
               key={card.itemId}
               className={`${styles.card} ${!card.owned ? styles.cardNotOwned : ''}`}
-              onClick={() => setSelectedCard(card)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  setSelectedCard(card);
-                }
-              }}
-              role="button"
-              tabIndex={0}
             >
-              <img
-                src={resolveImageUrl(card.imageUrl)}
-                alt={card.name || card.cardId}
-                className={styles.cardImage}
-                loading="lazy"
-                width={245}
-                height={342}
-                onError={(e) => {
-                  const t = e.currentTarget as HTMLImageElement;
-                  t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                }}
-              />
+              <button
+                type="button"
+                className={styles.cardImageButton}
+                onClick={() => setSelectedCard(card)}
+                aria-label={`Voir les détails de ${card.name}`}
+                title={`Voir les détails de ${card.name}`}
+              >
+                <img
+                  src={resolveImageUrl(card.imageUrl)}
+                  alt={card.name || card.cardId}
+                  className={styles.cardImage}
+                  loading="lazy"
+                  width={245}
+                  height={342}
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                  }}
+                />
+              </button>
               {!card.owned && (
                 <WishlistHeart
                   cardId={card.cardId}

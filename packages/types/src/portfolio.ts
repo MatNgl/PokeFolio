@@ -43,8 +43,11 @@ export interface PortfolioItem {
   /** ===== Mode B : variantes distinctes ===== */
   variants?: PortfolioVariant[];
 
-  /** Snapshot carte (sécuriser l’affichage offline) */
+  /** Snapshot carte (sécuriser l'affichage offline) */
   cardSnapshot?: CardSnapshot;
+
+  /** Carte favorite */
+  isFavorite?: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -95,6 +98,9 @@ export interface UpdatePortfolioItemDto {
 
   /** Passer au Mode B ou mettre à jour ses variantes */
   variants?: PortfolioVariant[]; // si défini, quantity peut être recalculé
+
+  /** Carte favorite */
+  isFavorite?: boolean;
 }
 
 export type PortfolioViewMode = 'grid' | 'compact' | 'detailed' | 'sets';

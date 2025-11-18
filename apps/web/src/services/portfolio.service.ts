@@ -125,7 +125,17 @@ export const portfolioService = {
    * Supprimer une variante spécifique d'une carte
    */
   async deleteVariant(itemId: string, variantIndex: number): Promise<PortfolioCard | null> {
-    const response = await api.delete<PortfolioCard>(`/portfolio/cards/${itemId}/variants/${variantIndex}`);
+    const response = await api.delete<PortfolioCard>(
+      `/portfolio/cards/${itemId}/variants/${variantIndex}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Toggle le statut favori d'une carte
+   */
+  async toggleFavorite(itemId: string): Promise<PortfolioCard> {
+    const response = await api.patch<PortfolioCard>(`/portfolio/cards/${itemId}/favorite`);
     return response.data;
   },
 };

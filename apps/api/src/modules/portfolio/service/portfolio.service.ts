@@ -259,9 +259,9 @@ export class PortfolioService {
           : obj.graded;
 
       // Pour gradeCompany et gradeScore, prendre la variante avec la meilleure note
-      const gradedVariants = mappedVariants?.filter(
-        (v: { isGraded?: boolean }) => v.isGraded
-      ) as Array<{ gradeScore?: string | number; gradeCompany?: string }> | undefined;
+      const gradedVariants = mappedVariants?.filter((v: { isGraded?: boolean }) => v.isGraded) as
+        | Array<{ gradeScore?: string | number; gradeCompany?: string }>
+        | undefined;
 
       let bestGraded: { gradeScore?: string | number; gradeCompany?: string } | undefined;
       if (gradedVariants && gradedVariants.length > 0) {
@@ -646,17 +646,20 @@ export class PortfolioService {
         setSymbol?: string;
         releaseDate?: string;
         setTotal?: number;
-        cardMap: Map<string, {
-          itemId: string;
-          cardId: string;
-          name?: string;
-          number?: string;
-          imageUrl?: string;
-          rarity?: string;
-          quantity: number;
-          isGraded?: boolean;
-          purchasePrice?: number;
-        }>;
+        cardMap: Map<
+          string,
+          {
+            itemId: string;
+            cardId: string;
+            name?: string;
+            number?: string;
+            imageUrl?: string;
+            rarity?: string;
+            quantity: number;
+            isGraded?: boolean;
+            purchasePrice?: number;
+          }
+        >;
       }
     >();
 
@@ -770,10 +773,7 @@ export class PortfolioService {
   /**
    * Vérifie quelles cartes l'utilisateur possède parmi une liste d'IDs
    */
-  async checkOwnership(
-    ownerId: string,
-    cardIds: string[]
-  ): Promise<Record<string, boolean>> {
+  async checkOwnership(ownerId: string, cardIds: string[]): Promise<Record<string, boolean>> {
     if (cardIds.length === 0) {
       return {};
     }
@@ -818,7 +818,7 @@ export class PortfolioService {
 
     // Vérifier si l'item est en Mode B (avec variantes)
     if (!item.variants || item.variants.length === 0) {
-      throw new BadRequestException('Cet item n\'a pas de variantes');
+      throw new BadRequestException("Cet item n'a pas de variantes");
     }
 
     // Vérifier que l'index est valide
@@ -904,15 +904,31 @@ export class PortfolioService {
 
     // Scores textuels (pour certaines sociétés anciennes)
     const textScores: Record<string, number> = {
-      'MINT': 10,
+      MINT: 10,
       'GEM MINT': 10,
       'NEAR MINT': 8,
-      'EXCELLENT': 6,
+      EXCELLENT: 6,
       'VERY GOOD': 4,
-      'GOOD': 2,
-      'POOR': 1,
+      GOOD: 2,
+      POOR: 1,
     };
 
     return textScores[scoreStr] || 0;
+  }
+
+  /**
+   * Toggle le statut favori d'une carte
+   */
+  async toggleFavorite(ownerId: string, id: string) {
+    const item = await this.portfolioModel.findOne({ _id: id, ownerId }).exec();
+    if (!item) {
+      throw new NotFoundException('Item non trouvé');
+    }
+
+    // Toggle le statut
+    item.isFavorite = !item.isFavorite;
+    await item.save();
+
+    return this.enrichPortfolioItem(item);
   }
 }

@@ -12,6 +12,7 @@ import { Toast } from '../ui/Toast';
 import { Heart, Package, PlusCircle } from 'lucide-react';
 import styles from './WishlistView.module.css';
 import type { Card } from '@pokefolio/types';
+import { CardOverlayButtons } from '../cards/CardOverlayButtons';
 
 /**
  * Résout l'URL de l'image d'une carte
@@ -213,30 +214,26 @@ export function WishlistView() {
         <div className={styles.grid}>
           {filteredAndSortedItems.map((item) => (
             <article key={item.id} className={styles.card}>
-              <div
-                className={styles.cardImageWrap}
-                onClick={() => setSelectedCardForDetails(item)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setSelectedCardForDetails(item);
-                  }
-                }}
-                aria-label={`Voir les détails de ${item.name}`}
-                title={`Voir les détails de ${item.name}`}
-              >
-                <img
-                  src={resolveImageUrl(item.imageUrl)}
-                  alt={item.name || item.cardId}
-                  className={styles.cardImage}
-                  loading="lazy"
-                  onError={(e) => {
-                    const t = e.currentTarget as HTMLImageElement;
-                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                  }}
-                />
+              <div className={styles.cardImageWrap}>
+                <button
+                  type="button"
+                  className={styles.cardImageButton}
+                  onClick={() => setSelectedCardForDetails(item)}
+                  aria-label={`Voir les détails de ${item.name}`}
+                  title={`Voir les détails de ${item.name}`}
+                >
+                  <img
+                    src={resolveImageUrl(item.imageUrl)}
+                    alt={item.name || item.cardId}
+                    className={styles.cardImage}
+                    loading="lazy"
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                    }}
+                  />
+                </button>
+                {/* Bouton pour retirer de la wishlist (coeur) */}
                 <button
                   type="button"
                   className={styles.removeBtn}
@@ -258,6 +255,17 @@ export function WishlistView() {
                 >
                   <Heart size={18} fill="currentColor" />
                 </button>
+                {/* Bouton pour ajouter au portfolio */}
+                <CardOverlayButtons
+                  type="add"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItemForQuickAdd(item);
+                    setShowQuickAdd(true);
+                  }}
+                  cardName={item.name}
+                  position="bottom-right"
+                />
               </div>
 
               <div className={styles.cardInfo}>

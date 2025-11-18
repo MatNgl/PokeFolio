@@ -13,6 +13,7 @@ import SearchBar from '../components/ui/Search';
 import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { OwnedBadge } from '../components/ui/OwnedBadge';
+import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
 import styles from './Discover.module.css';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -503,56 +504,71 @@ export default function Discover() {
           <section className={styles.grid}>
             {sortedCards.map((card) => (
               <article key={`${card.id}-${card.localId}`} className={styles.card}>
-                {/* ⬇️ Remplacement du div cliquable par un vrai bouton accessible */}
-                <button
-                  type="button"
-                  className={styles.cardImageWrap}
-                  onClick={() => setDetailsCard(card)}
-                  aria-label={`Voir les détails de ${card.name}`}
-                  title={`Voir les détails de ${card.name}`}
-                >
-                  <img
-                    src={getCardImageUrl(card)}
-                    alt={card.name}
-                    className={styles.cardImage}
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      const currentSrc = target.src;
+                {/* Conteneur pour image et boutons overlay */}
+                <div className={styles.cardImageWrap}>
+                  <button
+                    type="button"
+                    className={styles.cardImageButton}
+                    onClick={() => setDetailsCard(card)}
+                    aria-label={`Voir les détails de ${card.name}`}
+                    title={`Voir les détails de ${card.name}`}
+                  >
+                    <img
+                      src={getCardImageUrl(card)}
+                      alt={card.name}
+                      className={styles.cardImage}
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        const currentSrc = target.src;
 
-                      // Si l'URL contient "high.png", essayer avec "high.webp"
-                      if (currentSrc.includes('/high.png')) {
-                        target.src = currentSrc.replace('/high.png', '/high.webp');
-                      }
-                      // Si WebP échoue aussi, utiliser l'image de dos
-                      else if (currentSrc.includes('/high.webp')) {
-                        target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                      }
-                      // Sinon, directement l'image de dos
-                      else {
-                        target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                      }
-                    }}
-                  />
+                        // Si l'URL contient "high.png", essayer avec "high.webp"
+                        if (currentSrc.includes('/high.png')) {
+                          target.src = currentSrc.replace('/high.png', '/high.webp');
+                        }
+                        // Si WebP échoue aussi, utiliser l'image de dos
+                        else if (currentSrc.includes('/high.webp')) {
+                          target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                        }
+                        // Sinon, directement l'image de dos
+                        else {
+                          target.src = 'https://images.pokemontcg.io/swsh1/back.png';
+                        }
+                      }}
+                    />
+                  </button>
                   <OwnedBadge isOwned={ownershipStatuses?.[card.id] || false} />
-                  <WishlistHeart
-                    cardId={card.id}
-                    isInWishlist={wishlistStatuses?.[card.id] || false}
-                    cardData={{
-                      name: card.name,
-                      setId: card.set?.id,
-                      setName: card.set?.name,
-                      setLogo: card.set?.logo,
-                      number: card.localId,
-                      rarity: card.rarity,
-                      imageUrl: card.image || card.images?.small,
-                      imageUrlHiRes: card.images?.large,
-                      types: card.types,
-                      category: card.category,
+                  {/* Bouton Wishlist ou Add selon si possédée */}
+                  {!ownershipStatuses?.[card.id] ? (
+                    <WishlistHeart
+                      cardId={card.id}
+                      isInWishlist={wishlistStatuses?.[card.id] || false}
+                      cardData={{
+                        name: card.name,
+                        setId: card.set?.id,
+                        setName: card.set?.name,
+                        setLogo: card.set?.logo,
+                        number: card.localId,
+                        rarity: card.rarity,
+                        imageUrl: card.image || card.images?.small,
+                        imageUrlHiRes: card.images?.large,
+                        types: card.types,
+                        category: card.category,
+                      }}
+                      onToast={showToast}
+                    />
+                  ) : null}
+                  {/* Bouton Add en overlay */}
+                  <CardOverlayButtons
+                    type="add"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddCard(card);
                     }}
-                    onToast={showToast}
+                    cardName={card.name}
+                    position="bottom-right"
                   />
-                </button>
+                </div>
 
                 <div className={styles.cardInfo}>
                   <h3 className={styles.cardName}>{card.name}</h3>

@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -137,7 +138,7 @@ export class PortfolioController {
   @Delete('cards/:id/variants/:variantIndex')
   @ApiOperation({ summary: 'Supprimer une variante spécifique' })
   @ApiResponse({ status: 200, description: 'Variante supprimée avec succès' })
-  @ApiResponse({ status: 204, description: 'Item supprimé (c\'était la dernière variante)' })
+  @ApiResponse({ status: 204, description: "Item supprimé (c'était la dernière variante)" })
   @ApiResponse({ status: 404, description: 'Item non trouvé' })
   async deleteVariant(
     @Req() req: AuthenticatedRequest,
@@ -159,5 +160,15 @@ export class PortfolioController {
     }
 
     return result;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('cards/:id/favorite')
+  @ApiOperation({ summary: "Toggle le statut favori d'une carte" })
+  @ApiResponse({ status: 200, description: 'Statut favori mis à jour' })
+  @ApiResponse({ status: 404, description: 'Carte non trouvée' })
+  async toggleFavorite(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    const ownerId = getOwnerId(req);
+    return this.service.toggleFavorite(ownerId, id);
   }
 }

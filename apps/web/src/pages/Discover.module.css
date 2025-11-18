@@ -132,10 +132,32 @@
   overflow: hidden;
 }
 
+.cardImageButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radii-sm);
+}
+
 .cardImage {
   width: 100%;
   border-radius: var(--radii-sm);
   display: block;
+  transition: transform 0.2s ease;
+}
+
+.cardImageWrap:hover .cardImage {
+  transform: scale(1.02);
+}
+
+/* Show overlay buttons on hover */
+.cardImageWrap:hover > button[class*="overlayButton"],
+.cardImageWrap:focus-within > button[class*="overlayButton"] {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .cardInfo {
