@@ -26,7 +26,11 @@ const resolveImageUrl = (imageUrl?: string): string => {
   return imageUrl;
 };
 
-export function WishlistView() {
+interface WishlistViewProps {
+  onCardAdded?: () => void;
+}
+
+export function WishlistView({ onCardAdded }: WishlistViewProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<FilterSortOption>({
@@ -88,6 +92,7 @@ export function WishlistView() {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
       queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
       removeMutation.mutate(item.cardId);
+      onCardAdded?.();
     },
   });
 
@@ -172,6 +177,7 @@ export function WishlistView() {
     setSelectedCardForDetailedAdd(null);
     queryClient.invalidateQueries({ queryKey: ['portfolio'] });
     queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
+    onCardAdded?.();
     setToast({
       message: (
         <>

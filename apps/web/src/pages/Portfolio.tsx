@@ -155,6 +155,50 @@ const resolveImg = (c: ApiCard) => {
   return img || PLACEHOLDER_IMG;
 };
 
+// Générer l'URL de fallback suivante pour les images TCGDex
+const getNextImageFallback = (currentSrc: string): string | null => {
+  // Pattern: https://assets.tcgdex.net/{lang}/{set}/{setnum}/{cardnum}/high.{format}
+  const tcgdexPattern = /assets\.tcgdex\.net\/(\w+)\/(.+)\/high\.(webp|png|jpg)/;
+  const match = currentSrc.match(tcgdexPattern);
+
+  if (!match) return null;
+
+  const [, lang, path, format] = match;
+  const baseUrl = `https://assets.tcgdex.net`;
+
+  // Ordre des tentatives: FR (webp, png, jpg) -> EN (webp, png, jpg) -> JA (webp, png, jpg)
+  const formats = ['webp', 'png', 'jpg'];
+  const languages = ['fr', 'en', 'ja'];
+
+  const langIndex = languages.indexOf(lang);
+  const formatIndex = formats.indexOf(format);
+
+  // Essayer le format suivant dans la même langue
+  if (formatIndex < formats.length - 1) {
+    return `${baseUrl}/${lang}/${path}/high.${formats[formatIndex + 1]}`;
+  }
+
+  // Passer à la langue suivante avec le premier format
+  if (langIndex < languages.length - 1) {
+    return `${baseUrl}/${languages[langIndex + 1]}/${path}/high.${formats[0]}`;
+  }
+
+  // Toutes les tentatives échouées
+  return null;
+};
+
+// Handler pour le fallback d'images
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const target = e.currentTarget as HTMLImageElement;
+  const nextUrl = getNextImageFallback(target.src);
+
+  if (nextUrl) {
+    target.src = nextUrl;
+  } else {
+    target.src = PLACEHOLDER_IMG;
+  }
+};
+
 const normalizeCard = (c: ApiCard): UserCardView => {
   const gradeScore = typeof c.gradeScore === 'number' ? String(c.gradeScore) : c.gradeScore;
 
@@ -640,7 +684,7 @@ export default function Portfolio() {
         {portfolioSection === 'sets' ? (
           <SetsView />
         ) : portfolioSection === 'wishlist' ? (
-          <WishlistView />
+          <WishlistView onCardAdded={() => void loadData()} />
         ) : cards.length === 0 ? (
           <div className={styles.empty}>
             <svg
@@ -707,10 +751,7 @@ export default function Portfolio() {
                     alt={card.name}
                     className={styles.compactImage}
                     loading="lazy"
-                    onError={(e) => {
-                      const t = e.currentTarget as HTMLImageElement;
-                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                    }}
+                    onError={handleImageError}
                   />
                   <div className={styles.compactInfo}>
                     <span className={styles.compactName}>{card.name}</span>
@@ -823,10 +864,7 @@ export default function Portfolio() {
                             loading="lazy"
                             width={245}
                             height={342}
-                            onError={(e) => {
-                              const t = e.currentTarget as HTMLImageElement;
-                              t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                            }}
+                            onError={handleImageError}
                           />
                         </GradedCardFrame>
                       ) : (
@@ -837,10 +875,7 @@ export default function Portfolio() {
                           loading="lazy"
                           width={245}
                           height={342}
-                          onError={(e) => {
-                            const t = e.currentTarget as HTMLImageElement;
-                            t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                          }}
+                          onError={handleImageError}
                         />
                       )}
                       {card.quantity > 1 && (
