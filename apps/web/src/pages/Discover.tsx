@@ -345,6 +345,7 @@ export default function Discover() {
         quantity: 1,
         // Métadonnées de la carte
         name: card.name,
+        number: card.localId,
         setId: card.set?.id,
         setName: card.set?.name,
         setLogo: card.set?.logo,
@@ -357,6 +358,7 @@ export default function Discover() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
     },
   });
 
@@ -400,6 +402,7 @@ export default function Discover() {
       type: 'success',
     });
     queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+    queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
   };
 
   const showToast = (message: React.ReactNode, type: 'success' | 'error' | 'info') => {

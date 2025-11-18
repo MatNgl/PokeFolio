@@ -86,6 +86,7 @@ export function WishlistView() {
       }),
     onSuccess: (_, item) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
       removeMutation.mutate(item.cardId);
     },
   });
@@ -170,6 +171,7 @@ export function WishlistView() {
     setSelectedItemForQuickAdd(null);
     setSelectedCardForDetailedAdd(null);
     queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+    queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
     setToast({
       message: (
         <>
