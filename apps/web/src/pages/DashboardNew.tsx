@@ -10,9 +10,9 @@ import { TopExpensiveCards } from '@/features/dashboard/components/TopExpensiveC
 import type { PeriodFilter } from '@/features/dashboard/components/PeriodSelector';
 import {
   TimeSeriesMetric,
-  TimeSeriesBucket,
   PeriodType,
 } from '@/features/dashboard/types/dashboard.types';
+import { useDashboardPreferences } from '@/hooks/useUserPreferences';
 import styles from './DashboardNew.module.css';
 
 export function DashboardNew(): JSX.Element {
@@ -20,6 +20,9 @@ export function DashboardNew(): JSX.Element {
   useEffect(() => {
     document.title = 'PokéFolio - Dashboard';
   }, []);
+
+  // Préférences persistantes pour masquer la valeur
+  const { hideValue, setHideValue } = useDashboardPreferences();
 
   // Toujours afficher toutes les données depuis le début (pas de sélecteur de période)
   const globalPeriod: PeriodFilter = {
@@ -141,6 +144,9 @@ export function DashboardNew(): JSX.Element {
           icon={<DollarSign size={20} />}
           value={summary ? formatCurrency(summary.totalValue) : '0€'}
           loading={summaryLoading}
+          hideable
+          isHidden={hideValue}
+          onToggleHidden={() => setHideValue(!hideValue)}
         />
       </section>
 

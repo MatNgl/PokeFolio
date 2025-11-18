@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setsService, type PortfolioSet } from '../services/sets.service';
 import styles from './Sets.module.css';
@@ -8,6 +8,11 @@ import { Package } from 'lucide-react';
 export default function Sets() {
   const navigate = useNavigate();
   const [showMissingCards, setShowMissingCards] = useState(false);
+
+  // Définir le titre de la page
+  useEffect(() => {
+    document.title = 'PokéFolio - Sets';
+  }, []);
 
   const {
     data,

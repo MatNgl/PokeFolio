@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './FilterButton.module.css';
 import { SlidersHorizontal, Check, ChevronUp, ChevronDown } from 'lucide-react';
 
-export type SortField = 'default' | 'name' | 'quantity' | 'price' | 'date' | 'graded';
+export type SortField = 'default' | 'name' | 'quantity' | 'price' | 'date' | 'graded' | 'rarity';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortOption {
@@ -18,7 +18,7 @@ interface FilterButtonProps {
 
 const getSortFields = (context: 'portfolio' | 'discover' | 'sets'): SortField[] => {
   if (context === 'portfolio') {
-    return ['default', 'name', 'quantity', 'price', 'date', 'graded'];
+    return ['default', 'name', 'quantity', 'price', 'date', 'graded', 'rarity'];
   }
   if (context === 'sets') {
     return ['date', 'quantity', 'name'];
@@ -40,6 +40,8 @@ const getFieldLabel = (field: SortField, context?: 'portfolio' | 'discover' | 's
       return context === 'sets' ? 'Date de sortie' : "Date d'achat";
     case 'graded':
       return 'Gradées';
+    case 'rarity':
+      return 'Rareté';
     default:
       return field;
   }

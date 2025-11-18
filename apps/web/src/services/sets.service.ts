@@ -16,6 +16,21 @@ export interface SetCard {
 }
 
 /**
+ * Set TCGDex (pour la liste de tous les sets)
+ */
+export interface TCGDexSet {
+  id: string;
+  name: string;
+  logo?: string;
+  symbol?: string;
+  releaseDate?: string;
+  cardCount?: {
+    total?: number;
+    official?: number;
+  };
+}
+
+/**
  * Informations de complétion d'un set
  */
 export interface SetCompletion {
@@ -64,6 +79,21 @@ export const setsService = {
   async getSets(): Promise<PortfolioSetsResponse> {
     const response = await api.get<PortfolioSetsResponse>('/portfolio/sets');
     return response.data;
+  },
+
+  /**
+   * Récupérer tous les sets depuis TCGDex
+   */
+  async getAllSetsFromTCGDex(): Promise<TCGDexSet[]> {
+    try {
+      const response = await fetch('https://api.tcgdex.net/v2/fr/sets');
+      if (!response.ok) throw new Error('Failed to fetch sets from TCGdex');
+      const sets = await response.json();
+      return sets as TCGDexSet[];
+    } catch (error) {
+      console.error('Error fetching sets from TCGdex:', error);
+      throw error;
+    }
   },
 
   /**

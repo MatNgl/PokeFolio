@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { setsService, type CompleteSetCard } from '../services/sets.service';
 import { wishlistService } from '../services/wishlist.service';
 import { useSetLogos, resolveLogoUrl } from '../hooks/useSetLogos';
+import { useSetDetailPreferences } from '../hooks/useUserPreferences';
 import { Checkbox } from '../components/ui/Checkbox';
 import SearchBar from '../components/ui/Search';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
@@ -131,8 +132,10 @@ export function SetDetail() {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
 
+  // Préférences persistantes
+  const { showComplete: showCompleteSet, setShowComplete: setShowCompleteSet } = useSetDetailPreferences();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCompleteSet, setShowCompleteSet] = useState(false);
   const [selectedRarities, setSelectedRarities] = useState<Set<string>>(new Set());
   const [selectedCard, setSelectedCard] = useState<CompleteSetCard | null>(null);
   const [toast, setToast] = useState<{
@@ -213,6 +216,15 @@ export function SetDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setId]);
+
+  // Définir le titre de la page avec le nom du set
+  useEffect(() => {
+    if (currentSet?.setName) {
+      document.title = `PokéFolio - ${currentSet.setName}`;
+    } else {
+      document.title = 'PokéFolio - Set';
+    }
+  }, [currentSet?.setName]);
 
   // Filtrer les cartes (seulement possédées ou set complet)
   const filteredCards = useMemo(() => {
@@ -336,6 +348,7 @@ export function SetDetail() {
           checked={showCompleteSet}
           onChange={(e) => setShowCompleteSet(e.target.checked)}
         />
+        {/* Note: Cette préférence est persistée globalement */}
       </div>
 
       {/* Filtres de rareté */}

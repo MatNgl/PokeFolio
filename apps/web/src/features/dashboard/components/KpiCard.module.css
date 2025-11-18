@@ -62,10 +62,34 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: color 0.3s ease;
+  flex: 1;
 }
 
 .kpiCard:hover .title {
   color: rgba(124, 243, 255, 1);
+}
+
+.toggleBtn {
+  background: rgba(124, 243, 255, 0.1);
+  border: 1px solid rgba(124, 243, 255, 0.2);
+  border-radius: 8px;
+  padding: 6px;
+  color: rgba(124, 243, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.toggleBtn:hover {
+  background: rgba(124, 243, 255, 0.2);
+  border-color: rgba(124, 243, 255, 0.4);
+  color: rgba(124, 243, 255, 1);
+}
+
+.toggleBtn:active {
+  transform: scale(0.95);
 }
 
 .valueSection {

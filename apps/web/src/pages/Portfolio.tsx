@@ -113,6 +113,31 @@ type ApiStats = {
 
 const PLACEHOLDER_IMG = 'https://placehold.co/245x342?text=Card';
 
+/**
+ * Ordre de rareté des cartes Pokémon (de la moins rare à la plus rare)
+ */
+const RARITY_ORDER: Record<string, number> = {
+  Common: 1, Commune: 1,
+  Uncommon: 2, 'Peu commune': 2, 'Peu Commune': 2,
+  Rare: 3,
+  'Holo Rare': 4, 'Rare Holo': 4, 'Rare holo': 4,
+  'Reverse Holo': 5, 'Rare Reverse Holo': 5,
+  Holo: 6,
+  'Double Rare': 7, 'Double rare': 7,
+  'Rare Holo V': 8, 'Rare Holo VMAX': 9, 'Rare Holo VSTAR': 10, 'Rare Holo ex': 11,
+  'Ultra Rare': 12, 'Rare Ultra': 12, 'Ultra rare': 12,
+  'Illustration Rare': 13, 'Rare Illustration': 13, 'Illustration rare': 13,
+  'Special Illustration Rare': 14, 'Rare Special Illustration': 14, 'Rare illustration spéciale': 14,
+  'Hyper Rare': 15, 'Rare Hyper': 15, 'Hyper rare': 15,
+  'Rare Secret': 16, 'Secret Rare': 16, 'Secret rare': 16,
+  'Rare Rainbow': 17, 'Rainbow Rare': 17,
+  'Rare Shiny': 18, 'Shiny Rare': 18,
+  'Amazing Rare': 19,
+  'Radiant Rare': 20, 'Radiant rare': 20,
+  'Trainer Gallery Rare Holo': 21,
+  'ACE SPEC Rare': 22,
+};
+
 /** ---- Utils ---- */
 function euro(n: number | undefined | null): string {
   if (typeof n !== 'number' || Number.isNaN(n)) return '0,00 €';
@@ -490,6 +515,13 @@ export default function Portfolio() {
             const gradedA = a.isGraded ? 1 : 0;
             const gradedB = b.isGraded ? 1 : 0;
             comparison = gradedB - gradedA; // Inversé pour avoir gradées en premier
+            break;
+          }
+          case 'rarity': {
+            // Tri par rareté (utilise l'ordre défini dans RARITY_ORDER)
+            const rarityA = RARITY_ORDER[a.rarity || ''] || 999;
+            const rarityB = RARITY_ORDER[b.rarity || ''] || 999;
+            comparison = rarityA - rarityB;
             break;
           }
           default:

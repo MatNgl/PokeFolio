@@ -6,6 +6,7 @@ import {
   type PortfolioSet,
   type SetCard,
   type CompleteSetCard,
+  type TCGDexSet,
 } from '../../services/sets.service';
 import { FilterButton, type SortOption as FilterSortOption } from '../ui/FilterButton';
 import SearchBar from '../ui/Search';
@@ -62,19 +63,68 @@ export function SetsView() {
     queryFn: () => setsService.getSets(),
   });
 
+  // Récupérer tous les sets de TCGDex quand showAll est activé
+  const { data: allTCGDexSets, isLoading: isLoadingAllSets } = useQuery({
+    queryKey: ['tcgdex', 'all-sets'],
+    queryFn: () => setsService.getAllSetsFromTCGDex(),
+    enabled: showAll,
+  });
+
+  // Fusionner les sets du portfolio avec tous les sets TCGDex
+  const mergedSets = useMemo(() => {
+    if (!showAll || !allTCGDexSets) {
+      return data?.sets || [];
+    }
+
+    // Créer un map des sets du portfolio
+    const portfolioSetsMap = new Map<string, PortfolioSet>();
+    data?.sets.forEach((set) => {
+      portfolioSetsMap.set(set.setId, set);
+    });
+
+    // Créer la liste fusionnée
+    const merged: PortfolioSet[] = allTCGDexSets.map((tcgSet: TCGDexSet) => {
+      const portfolioSet = portfolioSetsMap.get(tcgSet.id);
+
+      if (portfolioSet) {
+        // Set déjà dans le portfolio
+        return portfolioSet;
+      }
+
+      // Set pas encore dans le portfolio
+      return {
+        setId: tcgSet.id,
+        setName: tcgSet.name,
+        setLogo: tcgSet.logo,
+        setSymbol: tcgSet.symbol,
+        releaseDate: tcgSet.releaseDate,
+        cards: [],
+        completion: {
+          owned: 0,
+          total: tcgSet.cardCount?.official || tcgSet.cardCount?.total,
+          percentage: 0,
+        },
+        totalValue: 0,
+        totalQuantity: 0,
+      };
+    });
+
+    return merged;
+  }, [data?.sets, allTCGDexSets, showAll]);
+
   // Récupérer les logos depuis TCGDex
-  const setIds = useMemo(() => data?.sets.map((s) => s.setId) || [], [data?.sets]);
+  const setIds = useMemo(() => mergedSets.map((s) => s.setId) || [], [mergedSets]);
   const logos = useSetLogos(setIds);
 
   // Filtrage et tri des sets
   const filteredAndSortedSets = useMemo(() => {
-    if (!data?.sets) return [];
+    if (mergedSets.length === 0) return [];
 
     // 1. Filtrage par recherche (nom du set ou nom des cartes Pokémon)
-    let filtered = data.sets;
+    let filtered = mergedSets;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = data.sets.filter((set) => {
+      filtered = mergedSets.filter((set) => {
         // Recherche dans le nom du set
         if (set.setName?.toLowerCase().includes(query)) return true;
         // Recherche dans les noms des cartes du set
@@ -104,13 +154,13 @@ export function SetsView() {
           return multiplier * (b.completion.owned - a.completion.owned); // Par défaut: tri par nb cartes
       }
     });
-  }, [data?.sets, searchQuery, sortOption]);
+  }, [mergedSets, searchQuery, sortOption]);
 
-  if (isLoading) {
+  if (isLoading || (showAll && isLoadingAllSets)) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner}></div>
-        <p>Chargement de vos sets...</p>
+        <p>{showAll ? 'Chargement de tous les sets...' : 'Chargement de vos sets...'}</p>
       </div>
     );
   }
