@@ -159,7 +159,12 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {topUsers.map((user, index) => (
-                <tr key={user.userId}>
+                <tr
+                  key={user.userId}
+                  onClick={() => navigate(`/admin/users/${user.userId}`)}
+                  style={{ cursor: 'pointer' }}
+                  title={`Voir le portfolio de ${user.pseudo}`}
+                >
                   <td>{index + 1}</td>
                   <td>{user.pseudo}</td>
                   <td>{user.email}</td>
