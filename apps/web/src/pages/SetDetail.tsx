@@ -286,8 +286,8 @@ export function SetDetail() {
       <div className={styles.error}>
         <Package className={styles.errorIcon} />
         <p>Erreur lors du chargement du set</p>
-        <button type="button" onClick={() => navigate('/portfolio')} className={styles.backButton}>
-          Retour au portfolio
+        <button type="button" onClick={() => navigate('/portfolio', { state: { section: 'sets' } })} className={styles.backButton}>
+          Retour aux sets
         </button>
       </div>
     );

@@ -78,16 +78,18 @@ export function TopSetsList({ data, loading = false }: TopSetsListProps): JSX.El
               <div className={styles.rank} aria-label={`Rank ${index + 1}`}>
                 #{index + 1}
               </div>
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt={set.setName}
-                  className={styles.setLogo}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
+              <div className={styles.logoWrapper}>
+                {logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt={set.setName}
+                    className={styles.setLogo}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+              </div>
               <div className={styles.info}>
                 <div className={styles.setName} title={set.setName}>
                   {set.setName}

@@ -11,7 +11,7 @@
 .pageTitle {
   font-size: 36px;
   font-weight: 700;
-  background: linear-gradient(135deg, #7cf3ff 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #7cf3ff 0%, #38bdf8 50%, #0ea5e9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

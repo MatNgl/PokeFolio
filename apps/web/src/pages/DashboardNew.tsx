@@ -164,7 +164,7 @@ export function DashboardNew(): JSX.Element {
           data={valueSeries?.data || []}
           loading={valueLoading}
           valueFormatter={formatCurrency}
-          color="#a78bfa"
+          color="#0ea5e9"
         />
       </section>
 
