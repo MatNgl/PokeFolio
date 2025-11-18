@@ -153,29 +153,66 @@ export function SetDetail() {
     queryFn: () => setsService.getSets(),
   });
 
+  // Récupérer les infos du set depuis TCGDex (pour les sets non possédés)
+  const { data: tcgdexSetInfo } = useQuery({
+    queryKey: ['tcgdex-set-info', setId],
+    queryFn: async () => {
+      if (!setId) return null;
+      const response = await fetch(`https://api.tcgdex.net/v2/fr/sets/${setId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!setId,
+  });
+
   const currentSet = useMemo(() => {
-    return data?.sets.find((s) => s.setId === setId);
-  }, [data?.sets, setId]);
+    const portfolioSet = data?.sets.find((s) => s.setId === setId);
+
+    // Si on a le set dans le portfolio, l'utiliser
+    if (portfolioSet) return portfolioSet;
+
+    // Sinon, créer un set virtuel à partir des données TCGDex
+    if (tcgdexSetInfo && setId) {
+      return {
+        setId,
+        setName: tcgdexSetInfo.name,
+        setLogo: tcgdexSetInfo.logo,
+        setSymbol: tcgdexSetInfo.symbol,
+        releaseDate: tcgdexSetInfo.releaseDate,
+        cards: [],
+        completion: {
+          owned: 0,
+          total: tcgdexSetInfo.cardCount?.total || tcgdexSetInfo.cardCount?.official,
+          percentage: 0,
+        },
+        totalValue: 0,
+        totalQuantity: 0,
+      };
+    }
+
+    return undefined;
+  }, [data?.sets, setId, tcgdexSetInfo]);
 
   // Récupérer le logo depuis TCGDex
   const setIdsForLogo = useMemo(() => (setId ? [setId] : []), [setId]);
   const logos = useSetLogos(setIdsForLogo);
   const logoUrl = setId ? resolveLogoUrl(logos[setId] || currentSet?.setLogo) : null;
 
-  // Récupérer le set complet depuis TCGdex si nécessaire
-  const { data: completeSetData } = useQuery({
+  // Récupérer le set complet depuis TCGdex - toujours actif si on n'a pas de cartes du portfolio
+  const shouldFetchCompleteSet = showCompleteSet || (currentSet && currentSet.cards.length === 0);
+  const { data: completeSetData, isLoading: isLoadingCompleteSet } = useQuery({
     queryKey: ['complete-set', setId],
     queryFn: () => (setId ? setsService.getCompleteSet(setId) : Promise.resolve([])),
-    enabled: showCompleteSet && !!setId,
+    enabled: shouldFetchCompleteSet && !!setId,
   });
 
   // Récupérer les statuts wishlist pour toutes les cartes affichées
   const cardIds = useMemo(() => {
-    if (showCompleteSet && completeSetData) {
+    if ((showCompleteSet || shouldFetchCompleteSet) && completeSetData) {
       return completeSetData.map((card) => card.cardId);
     }
     return currentSet?.cards.map((card) => card.cardId) || [];
-  }, [showCompleteSet, completeSetData, currentSet]);
+  }, [showCompleteSet, shouldFetchCompleteSet, completeSetData, currentSet]);
 
   const { data: wishlistStatuses } = useQuery({
     queryKey: ['wishlist-check', cardIds],
@@ -188,7 +225,7 @@ export function SetDetail() {
     const rarities = new Set<string>();
 
     // Si on affiche le set complet ET qu'on a les données chargées
-    if (showCompleteSet && completeSetData && completeSetData.length > 0) {
+    if ((showCompleteSet || shouldFetchCompleteSet) && completeSetData && completeSetData.length > 0) {
       // Utiliser les raretés du set complet
       completeSetData.forEach((card) => {
         if (card.rarity) rarities.add(card.rarity);
@@ -203,7 +240,7 @@ export function SetDetail() {
 
     // Trier les raretés de la moins rare à la plus rare
     return sortRarities(Array.from(rarities));
-  }, [currentSet, completeSetData, showCompleteSet]);
+  }, [currentSet, completeSetData, showCompleteSet, shouldFetchCompleteSet]);
 
   // Sélectionner toutes les raretés par défaut quand elles changent
   useEffect(() => {
@@ -272,7 +309,10 @@ export function SetDetail() {
     });
   };
 
-  if (isLoading) {
+  // Afficher le chargement si on attend les données
+  const isLoadingData = isLoading || (shouldFetchCompleteSet && isLoadingCompleteSet && !completeSetData);
+
+  if (isLoadingData) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner}></div>
