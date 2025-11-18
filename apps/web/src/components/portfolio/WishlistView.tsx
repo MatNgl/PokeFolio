@@ -14,17 +14,7 @@ import { Heart, Package } from 'lucide-react';
 import styles from './WishlistView.module.css';
 import type { Card } from '@pokefolio/types';
 import { CardOverlayButtons } from '../cards/CardOverlayButtons';
-
-/**
- * Résout l'URL de l'image d'une carte
- */
-const resolveImageUrl = (imageUrl?: string): string => {
-  if (!imageUrl) return 'https://images.pokemontcg.io/swsh1/back.png';
-  if (imageUrl.includes('assets.tcgdex.net') && !imageUrl.match(/\.(webp|png|jpg|jpeg)$/i)) {
-    return `${imageUrl}/high.webp`;
-  }
-  return imageUrl;
-};
+import { resolveImageUrl, handleImageError } from '../../utils/imageUtils';
 
 interface WishlistViewProps {
   onCardAdded?: () => void;
@@ -244,10 +234,7 @@ export function WishlistView({ onCardAdded }: WishlistViewProps) {
                     alt={item.name || item.cardId}
                     className={styles.cardImage}
                     loading="lazy"
-                    onError={(e) => {
-                      const t = e.currentTarget as HTMLImageElement;
-                      t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                    }}
+                    onError={handleImageError}
                   />
                 </button>
                 {/* Badge Possédée */}

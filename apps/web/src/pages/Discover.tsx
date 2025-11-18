@@ -14,6 +14,7 @@ import { FilterButton, type SortOption } from '../components/ui/FilterButton';
 import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { OwnedBadge } from '../components/ui/OwnedBadge';
 import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
+import { resolveImageUrl, handleImageError } from '../utils/imageUtils';
 import styles from './Discover.module.css';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -410,16 +411,8 @@ export default function Discover() {
   };
 
   const getCardImageUrl = (card: Card): string => {
-    let img = card.image || card.images?.small || '';
-
-    // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension
-    if (img && img.includes('assets.tcgdex.net') && !img.match(/\.(webp|png|jpg|jpeg)$/i)) {
-      // Priorité: PNG puis WebP
-      img = `${img}/high.png`;
-    }
-
-    // Image de dos de carte Pokémon par défaut
-    return img || 'https://images.pokemontcg.io/swsh1/back.png';
+    const img = card.image || card.images?.small;
+    return resolveImageUrl(img);
   };
 
   // Trier les cartes selon l'option sélectionnée
@@ -521,23 +514,7 @@ export default function Discover() {
                       alt={card.name}
                       className={styles.cardImage}
                       loading="lazy"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        const currentSrc = target.src;
-
-                        // Si l'URL contient "high.png", essayer avec "high.webp"
-                        if (currentSrc.includes('/high.png')) {
-                          target.src = currentSrc.replace('/high.png', '/high.webp');
-                        }
-                        // Si WebP échoue aussi, utiliser l'image de dos
-                        else if (currentSrc.includes('/high.webp')) {
-                          target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                        }
-                        // Sinon, directement l'image de dos
-                        else {
-                          target.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                        }
-                      }}
+                      onError={handleImageError}
                     />
                   </button>
                   <OwnedBadge isOwned={ownershipStatuses?.[card.id] || false} />

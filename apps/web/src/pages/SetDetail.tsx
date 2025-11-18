@@ -11,22 +11,8 @@ import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { Toast } from '../components/ui/Toast';
 import { ArrowLeft, Package, Ban } from 'lucide-react';
 import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
+import { resolveImageUrl, handleImageError } from '../utils/imageUtils';
 import styles from './SetDetail.module.css';
-
-/**
- * Résout l'URL de l'image d'une carte
- * Ajoute /high.webp si l'URL provient de assets.tcgdex.net sans extension
- */
-const resolveImageUrl = (imageUrl?: string): string => {
-  if (!imageUrl) return 'https://images.pokemontcg.io/swsh1/back.png';
-
-  // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
-  if (imageUrl.includes('assets.tcgdex.net') && !imageUrl.match(/\.(webp|png|jpg|jpeg)$/i)) {
-    return `${imageUrl}/high.webp`;
-  }
-
-  return imageUrl;
-};
 
 /**
  * Ordre de rareté des cartes Pokémon (de la moins rare à la plus rare)
@@ -443,10 +429,7 @@ export function SetDetail() {
                   loading="lazy"
                   width={245}
                   height={342}
-                  onError={(e) => {
-                    const t = e.currentTarget as HTMLImageElement;
-                    t.src = 'https://images.pokemontcg.io/swsh1/back.png';
-                  }}
+                  onError={handleImageError}
                 />
               </button>
               {!card.owned && (

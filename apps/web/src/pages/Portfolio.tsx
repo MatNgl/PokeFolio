@@ -28,6 +28,7 @@ import { ViewSwitcher } from '../components/ui/ViewSwitcher';
 import { Checkbox } from '../components/ui/Checkbox';
 import { usePortfolioPreferences } from '../hooks/useUserPreferences';
 import { useAuth } from '../contexts/AuthContext';
+import { resolveImageUrl, handleImageError, PLACEHOLDER_IMG } from '../utils/imageUtils';
 import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
 
 /** ---- Types côté UI ---- */
@@ -111,8 +112,6 @@ type ApiStats = {
   graded?: number;
 };
 
-const PLACEHOLDER_IMG = 'https://placehold.co/245x342?text=Card';
-
 /**
  * Ordre de rareté des cartes Pokémon (de la moins rare à la plus rare)
  */
@@ -145,58 +144,8 @@ function euro(n: number | undefined | null): string {
 }
 
 const resolveImg = (c: ApiCard) => {
-  let img = c.imageUrl || c.image || c.images?.small;
-
-  // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
-  if (img && img.includes('assets.tcgdex.net') && !img.match(/\.(webp|png|jpg|jpeg)$/i)) {
-    img = `${img}/high.webp`;
-  }
-
-  return img || PLACEHOLDER_IMG;
-};
-
-// Générer l'URL de fallback suivante pour les images TCGDex
-const getNextImageFallback = (currentSrc: string): string | null => {
-  // Pattern: https://assets.tcgdex.net/{lang}/{set}/{setnum}/{cardnum}/high.{format}
-  const tcgdexPattern = /assets\.tcgdex\.net\/(\w+)\/(.+)\/high\.(webp|png|jpg)/;
-  const match = currentSrc.match(tcgdexPattern);
-
-  if (!match) return null;
-
-  const [, lang, path, format] = match;
-  const baseUrl = `https://assets.tcgdex.net`;
-
-  // Ordre des tentatives: FR (webp, png, jpg) -> EN (webp, png, jpg) -> JA (webp, png, jpg)
-  const formats = ['webp', 'png', 'jpg'];
-  const languages = ['fr', 'en', 'ja'];
-
-  const langIndex = languages.indexOf(lang);
-  const formatIndex = formats.indexOf(format);
-
-  // Essayer le format suivant dans la même langue
-  if (formatIndex < formats.length - 1) {
-    return `${baseUrl}/${lang}/${path}/high.${formats[formatIndex + 1]}`;
-  }
-
-  // Passer à la langue suivante avec le premier format
-  if (langIndex < languages.length - 1) {
-    return `${baseUrl}/${languages[langIndex + 1]}/${path}/high.${formats[0]}`;
-  }
-
-  // Toutes les tentatives échouées
-  return null;
-};
-
-// Handler pour le fallback d'images
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  const target = e.currentTarget as HTMLImageElement;
-  const nextUrl = getNextImageFallback(target.src);
-
-  if (nextUrl) {
-    target.src = nextUrl;
-  } else {
-    target.src = PLACEHOLDER_IMG;
-  }
+  const img = c.imageUrl || c.image || c.images?.small;
+  return resolveImageUrl(img);
 };
 
 const normalizeCard = (c: ApiCard): UserCardView => {
