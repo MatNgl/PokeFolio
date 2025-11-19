@@ -144,28 +144,110 @@
   text-shadow: 0 0 10px rgba(29, 78, 216, 0.5);
 }
 
-/* ========= Theme Toggle ========= */
-.themeToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 10px;
-  border: var(--border);
-  background: var(--bg);
-  color: var(--text);
+/* ========= Theme Toggle Switch ========= */
+.themeSwitch {
+  font-size: 17px;
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 34px;
+}
+
+.themeSwitchInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.themeSwitchSlider {
+  position: absolute;
   cursor: pointer;
-  transition: all 0.2s ease;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: 0.4s;
+  border-radius: 30px;
 }
-.themeToggle:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--glow);
-  color: var(--primary);
+
+.themeSwitchSlider:before {
+  position: absolute;
+  content: "";
+  height: 30px;
+  width: 30px;
+  border-radius: 20px;
+  left: 2px;
+  bottom: 2px;
+  z-index: 2;
+  background-color: #e8e8e8;
+  transition: 0.4s;
 }
-.themeToggle:active {
-  transform: translateY(0);
+
+.themeSwitchInput:checked + .themeSwitchSlider {
+  background-color: #1f2937;
+}
+
+.themeSwitchInput:checked + .themeSwitchSlider:before {
+  transform: translateX(30px);
+}
+
+.themeSwitchSun,
+.themeSwitchMoon {
+  position: absolute;
+  transition: 0.3s;
+}
+
+.themeSwitchSun {
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.themeSwitchSun svg {
+  width: 20px;
+  height: 20px;
+  fill: #1f2937;
+  animation: rotate 15s linear infinite;
+}
+
+.themeSwitchMoon {
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.themeSwitchMoon svg {
+  width: 20px;
+  height: 20px;
+  fill: #e8e8e8;
+  animation: tilt 5s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 /* ========= Profil ========= */
