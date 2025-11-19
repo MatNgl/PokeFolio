@@ -47,6 +47,20 @@ export default function Discover() {
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
+  // Vérifier s'il y a un toast à afficher depuis localStorage (après reload)
+  useEffect(() => {
+    const storedToast = localStorage.getItem('toast');
+    if (storedToast) {
+      try {
+        const { message, type } = JSON.parse(storedToast);
+        setToast({ message, type });
+        localStorage.removeItem('toast');
+      } catch (e) {
+        localStorage.removeItem('toast');
+      }
+    }
+  }, []);
+
   const queryClient = useQueryClient();
 
   const CARDS_PER_PAGE = 15;

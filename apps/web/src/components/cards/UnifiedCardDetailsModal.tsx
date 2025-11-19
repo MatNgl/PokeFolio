@@ -355,8 +355,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
       });
       setShowQuickAddModal(false);
       onClose();
-      // Stocker le message pour l'afficher après le reload
-      localStorage.setItem('toast', JSON.stringify({ message: 'Carte ajoutée au portfolio', type: 'success' }));
+      // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
+      const cardName = cardData.name || 'Carte';
+      localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' }));
       window.location.reload();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
@@ -373,16 +374,18 @@ export default function UnifiedCardDetailsModal(props: Props) {
   const handleAddModalSuccess = () => {
     setShowAddCardModal(false);
     onClose();
-    // Stocker le message pour l'afficher après le reload
-    localStorage.setItem('toast', JSON.stringify({ message: 'Carte ajoutée au portfolio', type: 'success' }));
+    // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
+    const cardName = isSetMode ? props.card.name : isDiscoverMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
+    localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' }));
     window.location.reload();
   };
 
   // Handler pour succès d'édition (mode set)
   const handleEditSuccess = () => {
     setShowEditModal(false);
-    // Stocker le message pour l'afficher après le reload
-    localStorage.setItem('toast', JSON.stringify({ message: 'Carte modifiée avec succès', type: 'success' }));
+    // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
+    const cardName = isSetMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
+    localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été modifiée avec succès`, type: 'success' }));
     window.location.reload();
   };
 
@@ -397,8 +400,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
       await portfolioService.deleteCard(docId);
       setShowDeleteConfirm(false);
       onClose();
-      // Stocker le message pour l'afficher après le reload
-      localStorage.setItem('toast', JSON.stringify({ message: 'Carte supprimée avec succès', type: 'success' }));
+      // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
+      const cardName = isSetMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
+      localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été supprimée du portfolio`, type: 'success' }));
       window.location.reload();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
