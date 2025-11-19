@@ -277,7 +277,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
       cardId = props.card.id;
       cardData = {
         name: props.card.name,
-        setId: props.card.set?.id,
+        setId: props.card.set?.id || props.card.id?.split('-')[0],
         setName: props.card.set?.name,
         number: props.card.localId,
         rarity: props.card.rarity,
@@ -326,7 +326,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
       cardId = props.card.id;
       cardData = {
         name: props.card.name,
-        setId: props.card.set?.id,
+        setId: props.card.set?.id || props.card.id?.split('-')[0],
         setName: props.card.set?.name,
         number: props.card.localId,
         rarity: props.card.rarity,

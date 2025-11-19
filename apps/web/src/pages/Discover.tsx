@@ -392,24 +392,28 @@ export default function Discover() {
   };
 
   const addToPortfolioMutation = useMutation({
-    mutationFn: (card: Card) =>
-      portfolioService.addCard({
+    mutationFn: (card: Card) => {
+      // Extraire setId depuis card.set ou depuis l'ID de la carte (format: setId-localId)
+      const setId = card.set?.id || card.id?.split('-')[0] || undefined;
+
+      return portfolioService.addCard({
         cardId: card.id,
         language: 'fr',
         quantity: 1,
         // Métadonnées de la carte
         name: card.name,
         number: card.localId,
-        setId: card.set?.id,
+        setId: setId,
         setName: card.set?.name,
         setLogo: card.set?.logo,
-        setCardCount: card.set?.cardCount?.total,
+        setCardCount: card.set?.total,
         rarity: card.rarity,
         imageUrl: card.image || card.images?.small,
         imageUrlHiRes: card.images?.large,
         types: card.types,
         supertype: card.category,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
       queryClient.invalidateQueries({ queryKey: ['ownership-check'] });
@@ -578,7 +582,7 @@ export default function Discover() {
                       isInWishlist={wishlistStatuses?.[card.id] || false}
                       cardData={{
                         name: card.name,
-                        setId: card.set?.id,
+                        setId: card.set?.id || card.id?.split('-')[0],
                         setName: card.set?.name,
                         setLogo: card.set?.logo,
                         number: card.localId,
