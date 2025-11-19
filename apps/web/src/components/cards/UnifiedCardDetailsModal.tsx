@@ -14,6 +14,8 @@ import { Button } from '../ui/Button';
 import { CardOverlayButtons } from './CardOverlayButtons';
 import { QuickAddModal } from './QuickAddModal';
 import { AddCardModal } from './AddCardModal';
+import { EditCardModal } from './EditCardModal';
+import { DeleteConfirmModal } from '../ui/DeleteConfirmModal';
 import styles from './UnifiedCardDetailsModal.module.css';
 
 type PortfolioVariant = {
@@ -101,6 +103,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isPortfolioMode = props.mode === 'portfolio';
   const isSetMode = props.mode === 'set';
@@ -370,6 +375,33 @@ export default function UnifiedCardDetailsModal(props: Props) {
     if (isPortfolioMode && 'onRefresh' in props) {
       props.onToast?.('Carte ajoutée au portfolio', 'success');
       props.onRefresh?.();
+    }
+  };
+
+  // Handler pour succès d'édition (mode set)
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    // Recharger les données
+    window.location.reload();
+  };
+
+  // Handler pour suppression (mode set)
+  const handleDeleteCard = async () => {
+    if (!portfolioData) return;
+    const docId = (portfolioData._id || portfolioData.id) as string;
+    if (!docId) return;
+
+    setDeleting(true);
+    try {
+      await portfolioService.deleteCard(docId);
+      setShowDeleteConfirm(false);
+      onClose();
+      // Recharger les données
+      window.location.reload();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -840,7 +872,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
                 {isPortfolioMode && (
                   <>
                     <Button
-                      variant="secondary"
+                      variant="warning"
                       onClick={() => (props as PortfolioModeProps).onEdit(props.entry)}
                     >
                       Modifier
@@ -851,6 +883,34 @@ export default function UnifiedCardDetailsModal(props: Props) {
                     >
                       Supprimer
                     </Button>
+                  </>
+                )}
+                {isSetMode && (
+                  <>
+                    {portfolioData ? (
+                      // Carte possédée: Modifier + Supprimer
+                      <>
+                        <Button
+                          variant="warning"
+                          onClick={() => setShowEditModal(true)}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => setShowDeleteConfirm(true)}
+                        >
+                          Supprimer
+                        </Button>
+                      </>
+                    ) : (
+                      // Carte non possédée: Ajouter
+                      <Button
+                        onClick={() => setShowQuickAddModal(true)}
+                      >
+                        + Ajouter au portfolio
+                      </Button>
+                    )}
                   </>
                 )}
                 {isDiscoverMode && (
@@ -929,6 +989,26 @@ export default function UnifiedCardDetailsModal(props: Props) {
           }
           onClose={() => setShowAddCardModal(false)}
           onSuccess={handleAddModalSuccess}
+        />
+      )}
+
+      {/* Modal d'édition (mode set) */}
+      {showEditModal && portfolioData && (
+        <EditCardModal
+          entry={portfolioData}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Modal de confirmation de suppression */}
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          title="Supprimer la carte"
+          message={`Êtes-vous sûr de vouloir supprimer "${title}" de votre portfolio ?`}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteCard}
+          loading={deleting}
         />
       )}
     </div>
