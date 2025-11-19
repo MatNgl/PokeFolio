@@ -180,7 +180,7 @@ export function SetDetail() {
         quantity: 1,
       });
       setQuickAddCard(null);
-      showToast('Carte ajoutée au portfolio', 'success');
+      showToast(`${card.name || 'Carte'} a été ajoutée au portfolio`, 'success');
       await refreshSetData();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
@@ -196,8 +196,9 @@ export function SetDetail() {
 
   // Après ajout réussi via le modal
   const handleAddModalSuccess = async () => {
+    const cardName = addModalCard?.name || 'Carte';
     setAddModalCard(null);
-    showToast('Carte ajoutée au portfolio', 'success');
+    showToast(`${cardName} a été ajoutée au portfolio`, 'success');
     await refreshSetData();
   };
 

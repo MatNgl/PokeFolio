@@ -345,12 +345,13 @@ export default function Portfolio() {
 
   const handleDeleteCard = async () => {
     if (!deletingCard) return;
+    const cardName = deletingCard.name || 'Carte';
     setDeleting(true);
     try {
       await portfolioService.deleteCard(deletingCard.id);
       await loadData();
       setDeletingCard(null);
-      setToast({ message: 'Carte supprimée avec succès', type: 'success' });
+      setToast({ message: `${cardName} a été supprimée du portfolio`, type: 'success' });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Erreur de suppression:', error);
@@ -395,7 +396,7 @@ export default function Portfolio() {
         quantity: 1,
       });
       setQuickAddCard(null);
-      setToast({ message: 'Carte ajoutée au portfolio', type: 'success' });
+      setToast({ message: `${card.name || 'Carte'} a été ajoutée au portfolio`, type: 'success' });
       await loadData();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
