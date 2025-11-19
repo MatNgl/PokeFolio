@@ -71,17 +71,13 @@
 }
 
 .glassGroup {
-  --bg: rgba(255, 255, 255, 0.06);
-  --text: var(--text);
   display: flex;
   position: relative;
-  background: var(--bg);
+  background: var(--glass-light);
   border-radius: 1rem;
   backdrop-filter: blur(12px);
-  box-shadow:
-    inset 1px 1px 4px rgba(255, 255, 255, 0.2),
-    inset -1px -1px 6px rgba(0, 0, 0, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow);
+  border: var(--border);
   overflow: hidden;
   width: fit-content;
 }
@@ -148,6 +144,30 @@
   text-shadow: 0 0 10px rgba(124, 243, 255, 0.5);
 }
 
+/* ========= Theme Toggle ========= */
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  border: var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.themeToggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(124, 243, 255, 0.3);
+  color: var(--primary);
+}
+.themeToggle:active {
+  transform: translateY(0);
+}
+
 /* ========= Profil ========= */
 .profile {
   display: inline-flex;
@@ -156,7 +176,7 @@
   padding: 4px;
   border-radius: 12px;
   border: var(--border);
-  background: #0b0f1a;
+  background: var(--bg);
   cursor: pointer;
   transition: all 0.2s ease;
 }

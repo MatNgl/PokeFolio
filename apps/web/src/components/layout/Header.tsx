@@ -1,8 +1,9 @@
 import { useMemo, useLayoutEffect, useRef, useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import styles from './Header.module.css';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import logo from '../../assets/logo-pokefolio.png';
 
 type Tab = 'portfolio' | 'dashboard' | 'decouvrir' | 'admin' | null;
@@ -11,6 +12,7 @@ export function Header() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const headerRef = useRef<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -135,8 +137,16 @@ export function Header() {
           </div>
         </nav>
 
-        {/* Profil à droite */}
+        {/* Theme toggle + Profil à droite */}
         <div className={styles.right}>
+          <button
+            className={styles.themeToggle}
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'}
+            title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <button
             className={styles.profile}
             title={user?.email ?? 'Profil'}
