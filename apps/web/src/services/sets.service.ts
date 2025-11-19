@@ -13,6 +13,7 @@ export interface SetCard {
   quantity: number;
   isGraded?: boolean;
   purchasePrice?: number;
+  isFavorite?: boolean;
 }
 
 /**

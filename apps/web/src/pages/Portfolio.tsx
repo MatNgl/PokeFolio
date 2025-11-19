@@ -12,6 +12,7 @@ import { EditCardModal } from '../components/cards/EditCardModal';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
 import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
 import { CardRecognition } from '../components/CardRecognition/CardRecognition';
+import { QuickAddModal } from '../components/cards/QuickAddModal';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
@@ -116,23 +117,46 @@ type ApiStats = {
  * Ordre de rareté des cartes Pokémon (de la moins rare à la plus rare)
  */
 const RARITY_ORDER: Record<string, number> = {
-  Common: 1, Commune: 1,
-  Uncommon: 2, 'Peu commune': 2, 'Peu Commune': 2,
+  Common: 1,
+  Commune: 1,
+  Uncommon: 2,
+  'Peu commune': 2,
+  'Peu Commune': 2,
   Rare: 3,
-  'Holo Rare': 4, 'Rare Holo': 4, 'Rare holo': 4,
-  'Reverse Holo': 5, 'Rare Reverse Holo': 5,
+  'Holo Rare': 4,
+  'Rare Holo': 4,
+  'Rare holo': 4,
+  'Reverse Holo': 5,
+  'Rare Reverse Holo': 5,
   Holo: 6,
-  'Double Rare': 7, 'Double rare': 7,
-  'Rare Holo V': 8, 'Rare Holo VMAX': 9, 'Rare Holo VSTAR': 10, 'Rare Holo ex': 11,
-  'Ultra Rare': 12, 'Rare Ultra': 12, 'Ultra rare': 12,
-  'Illustration Rare': 13, 'Rare Illustration': 13, 'Illustration rare': 13,
-  'Special Illustration Rare': 14, 'Rare Special Illustration': 14, 'Rare illustration spéciale': 14,
-  'Hyper Rare': 15, 'Rare Hyper': 15, 'Hyper rare': 15,
-  'Rare Secret': 16, 'Secret Rare': 16, 'Secret rare': 16,
-  'Rare Rainbow': 17, 'Rainbow Rare': 17,
-  'Rare Shiny': 18, 'Shiny Rare': 18,
+  'Double Rare': 7,
+  'Double rare': 7,
+  'Rare Holo V': 8,
+  'Rare Holo VMAX': 9,
+  'Rare Holo VSTAR': 10,
+  'Rare Holo ex': 11,
+  'Ultra Rare': 12,
+  'Rare Ultra': 12,
+  'Ultra rare': 12,
+  'Illustration Rare': 13,
+  'Rare Illustration': 13,
+  'Illustration rare': 13,
+  'Special Illustration Rare': 14,
+  'Rare Special Illustration': 14,
+  'Rare illustration spéciale': 14,
+  'Hyper Rare': 15,
+  'Rare Hyper': 15,
+  'Hyper rare': 15,
+  'Rare Secret': 16,
+  'Secret Rare': 16,
+  'Secret rare': 16,
+  'Rare Rainbow': 17,
+  'Rainbow Rare': 17,
+  'Rare Shiny': 18,
+  'Shiny Rare': 18,
   'Amazing Rare': 19,
-  'Radiant Rare': 20, 'Radiant rare': 20,
+  'Radiant Rare': 20,
+  'Radiant rare': 20,
   'Trainer Gallery Rare Holo': 21,
   'ACE SPEC Rare': 22,
 };
@@ -232,6 +256,7 @@ export default function Portfolio() {
   const [deletingCard, setDeletingCard] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [portfolioSection, setPortfolioSection] = useState<'cards' | 'sets' | 'wishlist'>('cards');
+  const [quickAddCard, setQuickAddCard] = useState<UserCardView | null>(null);
 
   // Préférences persistantes
   const {
@@ -339,6 +364,46 @@ export default function Portfolio() {
       console.error('Erreur toggle favorite:', error);
       setToast({ message: 'Erreur lors de la modification du favori', type: 'error' });
     }
+  };
+
+  // Ajouter une variante directement (sans détails)
+  const handleAddDirect = async (card: UserCardView) => {
+    try {
+      await portfolioService.addCard({
+        cardId: card.cardId,
+        name: card.name,
+        setId: card.setId,
+        setName: card.setName,
+        number: card.number,
+        rarity: card.rarity,
+        imageUrl: card.imageUrl,
+        quantity: 1,
+      });
+      setQuickAddCard(null);
+      setToast({ message: 'Carte ajoutée au portfolio', type: 'success' });
+      await loadData();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout:", error);
+      setToast({ message: "Erreur lors de l'ajout de la carte", type: 'error' });
+    }
+  };
+
+  // Ouvrir le modal d'ajout avec détails
+  const handleAddWithDetails = (card: UserCardView) => {
+    setQuickAddCard(null);
+    // Convertir UserCardView en Card pour AddCardModal
+    setSelectedCard({
+      id: card.cardId,
+      localId: card.number || card.cardId,
+      name: card.name,
+      images: { small: card.imageUrl, large: card.images?.large },
+      set: {
+        id: card.setId || '',
+        name: card.setName || '',
+      },
+      number: card.number,
+      rarity: card.rarity,
+    } as Card);
   };
 
   const resolveId = (card: UserCardView): string =>
@@ -840,6 +905,16 @@ export default function Portfolio() {
                       }}
                       cardName={card.name}
                     />
+                    <CardOverlayButtons
+                      type="add"
+                      isActive={false}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickAddCard(card);
+                      }}
+                      cardName={card.name}
+                      position="bottom-right"
+                    />
                   </div>
 
                   <div className={styles.cardInfo}>
@@ -959,6 +1034,17 @@ export default function Portfolio() {
               />
             );
           })()}
+
+        {/* Modal QuickAdd pour ajouter une variante */}
+        {quickAddCard && (
+          <QuickAddModal
+            cardName={quickAddCard.name}
+            setName={quickAddCard.setName}
+            onClose={() => setQuickAddCard(null)}
+            onAddDirect={() => handleAddDirect(quickAddCard)}
+            onAddWithDetails={() => handleAddWithDetails(quickAddCard)}
+          />
+        )}
 
         {/* ✅ Toast */}
         {toast && (

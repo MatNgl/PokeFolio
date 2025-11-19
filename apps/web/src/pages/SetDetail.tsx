@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { setsService, type CompleteSetCard } from '../services/sets.service';
 import { wishlistService } from '../services/wishlist.service';
+import { portfolioService } from '../services/portfolio.service';
 import { useSetLogos, resolveLogoUrl } from '../hooks/useSetLogos';
 import { useSetDetailPreferences } from '../hooks/useUserPreferences';
 import { Checkbox } from '../components/ui/Checkbox';
@@ -11,6 +12,9 @@ import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { Toast } from '../components/ui/Toast';
 import { ArrowLeft, Package, Ban } from 'lucide-react';
 import UnifiedCardDetailsModal from '../components/cards/UnifiedCardDetailsModal';
+import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
+import { QuickAddModal } from '../components/cards/QuickAddModal';
+import { AddCardModal } from '../components/cards/AddCardModal';
 import { resolveImageUrl, handleImageError } from '../utils/imageUtils';
 import styles from './SetDetail.module.css';
 
@@ -117,9 +121,11 @@ const sortRarities = (rarities: string[]): string[] => {
 export function SetDetail() {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Préférences persistantes
-  const { showComplete: showCompleteSet, setShowComplete: setShowCompleteSet } = useSetDetailPreferences();
+  const { showComplete: showCompleteSet, setShowComplete: setShowCompleteSet } =
+    useSetDetailPreferences();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRarities, setSelectedRarities] = useState<Set<string>>(new Set());
@@ -129,8 +135,72 @@ export function SetDetail() {
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
+  // États pour l'ajout de carte
+  const [quickAddCard, setQuickAddCard] = useState<CompleteSetCard | null>(null);
+  const [addModalCard, setAddModalCard] = useState<CompleteSetCard | null>(null);
+
   const showToast = (message: ReactNode, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
+  };
+
+  // Fonction pour rafraîchir les données après ajout
+  const refreshSetData = async () => {
+    // Invalider le cache pour recharger les données
+    await queryClient.invalidateQueries({ queryKey: ['portfolio', 'sets'] });
+    await queryClient.invalidateQueries({ queryKey: ['complete-set', setId] });
+    await queryClient.invalidateQueries({ queryKey: ['wishlist-check'] });
+  };
+
+  // Ajouter une carte directement (sans détails)
+  const handleAddDirect = async (card: CompleteSetCard) => {
+    try {
+      await portfolioService.addCard({
+        cardId: card.cardId,
+        name: card.name || 'Carte inconnue',
+        setId: currentSet?.setId,
+        setName: currentSet?.setName,
+        number: card.number,
+        rarity: card.rarity,
+        imageUrl: card.imageUrl,
+        quantity: 1,
+      });
+      setQuickAddCard(null);
+      showToast('Carte ajoutée au portfolio', 'success');
+      await refreshSetData();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout:", error);
+      showToast("Erreur lors de l'ajout de la carte", 'error');
+    }
+  };
+
+  // Ouvrir le modal d'ajout avec détails
+  const handleAddWithDetails = (card: CompleteSetCard) => {
+    setQuickAddCard(null);
+    setAddModalCard(card);
+  };
+
+  // Après ajout réussi via le modal
+  const handleAddModalSuccess = async () => {
+    setAddModalCard(null);
+    showToast('Carte ajoutée au portfolio', 'success');
+    await refreshSetData();
+  };
+
+  // Toggle favori pour une carte possédée
+  const handleToggleFavorite = async (card: CompleteSetCard) => {
+    if (!card.itemId) return;
+
+    try {
+      const updated = await portfolioService.toggleFavorite(card.itemId);
+      showToast(
+        updated.isFavorite ? 'Carte ajoutée aux favoris' : 'Carte retirée des favoris',
+        'success'
+      );
+      await refreshSetData();
+    } catch (error) {
+      console.error('Erreur toggle favorite:', error);
+      showToast('Erreur lors de la modification du favori', 'error');
+    }
   };
 
   // Récupérer les sets du portfolio
@@ -211,7 +281,11 @@ export function SetDetail() {
     const rarities = new Set<string>();
 
     // Si on affiche le set complet ET qu'on a les données chargées
-    if ((showCompleteSet || shouldFetchCompleteSet) && completeSetData && completeSetData.length > 0) {
+    if (
+      (showCompleteSet || shouldFetchCompleteSet) &&
+      completeSetData &&
+      completeSetData.length > 0
+    ) {
       // Utiliser les raretés du set complet
       completeSetData.forEach((card) => {
         if (card.rarity) rarities.add(card.rarity);
@@ -296,7 +370,8 @@ export function SetDetail() {
   };
 
   // Afficher le chargement si on attend les données
-  const isLoadingData = isLoading || (shouldFetchCompleteSet && isLoadingCompleteSet && !completeSetData);
+  const isLoadingData =
+    isLoading || (shouldFetchCompleteSet && isLoadingCompleteSet && !completeSetData);
 
   if (isLoadingData) {
     return (
@@ -312,7 +387,11 @@ export function SetDetail() {
       <div className={styles.error}>
         <Package className={styles.errorIcon} />
         <p>Erreur lors du chargement du set</p>
-        <button type="button" onClick={() => navigate('/portfolio', { state: { section: 'sets' } })} className={styles.backButton}>
+        <button
+          type="button"
+          onClick={() => navigate('/portfolio', { state: { section: 'sets' } })}
+          className={styles.backButton}
+        >
           Retour aux sets
         </button>
       </div>
@@ -432,7 +511,18 @@ export function SetDetail() {
                   onError={handleImageError}
                 />
               </button>
-              {!card.owned && (
+              {/* Bouton favori ou wishlist selon si la carte est possédée */}
+              {card.owned ? (
+                <CardOverlayButtons
+                  type="favorite"
+                  isActive={card.isFavorite}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite(card);
+                  }}
+                  cardName={card.name}
+                />
+              ) : (
                 <WishlistHeart
                   cardId={card.cardId}
                   isInWishlist={wishlistStatuses?.[card.cardId] || false}
@@ -450,6 +540,17 @@ export function SetDetail() {
                   onToast={showToast}
                 />
               )}
+              {/* Bouton d'ajout pour toutes les cartes */}
+              <CardOverlayButtons
+                type="add"
+                isActive={false}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQuickAddCard(card);
+                }}
+                cardName={card.name}
+                position="bottom-right"
+              />
             </div>
           ))}
         </div>
@@ -490,6 +591,37 @@ export function SetDetail() {
             />
           );
         })()}
+
+      {/* Modal QuickAdd */}
+      {quickAddCard && (
+        <QuickAddModal
+          cardName={quickAddCard.name || 'Carte inconnue'}
+          setName={currentSet?.setName}
+          onClose={() => setQuickAddCard(null)}
+          onAddDirect={() => handleAddDirect(quickAddCard)}
+          onAddWithDetails={() => handleAddWithDetails(quickAddCard)}
+        />
+      )}
+
+      {/* Modal d'ajout avec détails */}
+      {addModalCard && (
+        <AddCardModal
+          card={{
+            id: addModalCard.cardId,
+            localId: addModalCard.number || addModalCard.cardId,
+            name: addModalCard.name || 'Carte inconnue',
+            images: { small: addModalCard.imageUrl, large: addModalCard.imageUrl },
+            set: {
+              id: currentSet?.setId || '',
+              name: currentSet?.setName || '',
+              logo: currentSet?.setLogo,
+            },
+            rarity: addModalCard.rarity,
+          }}
+          onClose={() => setAddModalCard(null)}
+          onSuccess={handleAddModalSuccess}
+        />
+      )}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>
