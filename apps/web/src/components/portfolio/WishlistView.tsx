@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wishlistService, type WishlistItem } from '../../services/wishlist.service';
 import { portfolioService } from '../../services/portfolio.service';
@@ -36,6 +36,20 @@ export function WishlistView({ onCardAdded }: WishlistViewProps) {
     message: ReactNode;
     type: 'success' | 'error' | 'info';
   } | null>(null);
+
+  // Vérifier s'il y a un toast à afficher depuis localStorage (après reload)
+  useEffect(() => {
+    const storedToast = localStorage.getItem('toast');
+    if (storedToast) {
+      try {
+        const { message, type } = JSON.parse(storedToast);
+        setToast({ message, type });
+        localStorage.removeItem('toast');
+      } catch (e) {
+        localStorage.removeItem('toast');
+      }
+    }
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['wishlist'],

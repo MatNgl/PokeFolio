@@ -355,7 +355,8 @@ export default function UnifiedCardDetailsModal(props: Props) {
       });
       setShowQuickAddModal(false);
       onClose();
-      // Recharger les données pour voir les changements
+      // Stocker le message pour l'afficher après le reload
+      localStorage.setItem('toast', JSON.stringify({ message: 'Carte ajoutée au portfolio', type: 'success' }));
       window.location.reload();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
@@ -372,14 +373,16 @@ export default function UnifiedCardDetailsModal(props: Props) {
   const handleAddModalSuccess = () => {
     setShowAddCardModal(false);
     onClose();
-    // Recharger les données pour voir les changements
+    // Stocker le message pour l'afficher après le reload
+    localStorage.setItem('toast', JSON.stringify({ message: 'Carte ajoutée au portfolio', type: 'success' }));
     window.location.reload();
   };
 
   // Handler pour succès d'édition (mode set)
   const handleEditSuccess = () => {
     setShowEditModal(false);
-    // Recharger les données
+    // Stocker le message pour l'afficher après le reload
+    localStorage.setItem('toast', JSON.stringify({ message: 'Carte modifiée avec succès', type: 'success' }));
     window.location.reload();
   };
 
@@ -394,7 +397,8 @@ export default function UnifiedCardDetailsModal(props: Props) {
       await portfolioService.deleteCard(docId);
       setShowDeleteConfirm(false);
       onClose();
-      // Recharger les données
+      // Stocker le message pour l'afficher après le reload
+      localStorage.setItem('toast', JSON.stringify({ message: 'Carte supprimée avec succès', type: 'success' }));
       window.location.reload();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
