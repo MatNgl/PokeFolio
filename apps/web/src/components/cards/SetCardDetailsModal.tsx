@@ -446,8 +446,8 @@ export default function SetCardDetailsModal({
                 </section>
               )}
 
-              {/* Évolution des prix */}
-              {card.cardId && <CardPriceChart cardId={card.cardId} />}
+              {/* Évolution des prix - Désactivé car l'API ne fonctionne pas */}
+              {/* {card.cardId && <CardPriceChart cardId={card.cardId} />} */}
             </div>
           </div>
         )}

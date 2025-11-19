@@ -870,8 +870,8 @@ export default function UnifiedCardDetailsModal(props: Props) {
                 </section>
               )}
 
-              {/* Évolution des prix */}
-              {cardIdForChart && <CardPriceChart cardId={cardIdForChart} />}
+              {/* Évolution des prix - Désactivé car l'API ne fonctionne pas */}
+              {/* {cardIdForChart && <CardPriceChart cardId={cardIdForChart} />} */}
 
               {/* Actions selon le mode */}
               <div className={styles.actions}>

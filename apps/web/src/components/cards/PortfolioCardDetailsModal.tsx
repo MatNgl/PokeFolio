@@ -481,8 +481,8 @@ export default function PortfolioCardDetailsModal({
                 </>
               )}
 
-              {/* --- Évolution des prix --- */}
-              {entry.cardId && <CardPriceChart cardId={entry.cardId} />}
+              {/* --- Évolution des prix - Désactivé car l'API ne fonctionne pas --- */}
+              {/* {entry.cardId && <CardPriceChart cardId={entry.cardId} />} */}
 
               {/* --- Actions --- */}
               <div className={styles.actions}>
