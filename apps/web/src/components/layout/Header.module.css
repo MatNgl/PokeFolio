@@ -95,10 +95,10 @@
     opacity 0.3s ease-in-out,
     background 0.4s ease-in-out,
     box-shadow 0.4s ease-in-out;
-  background: linear-gradient(135deg, #3480d140, #005c9e99);
+  background: linear-gradient(135deg, #3480d180, #005c9ecc);
   box-shadow:
-    0 0 12px rgba(160, 216, 255, 0.35),
-    0 0 6px rgba(200, 240, 255, 0.3) inset;
+    0 0 16px rgba(160, 216, 255, 0.45),
+    0 0 8px rgba(200, 240, 255, 0.4) inset;
   transform: translateX(0%);
   opacity: 0;
 }
@@ -215,7 +215,7 @@
 .themeSwitchSun svg {
   width: 20px;
   height: 20px;
-  fill: #1f2937;
+  fill: #ffffff;
   animation: rotate 15s linear infinite;
 }
 
@@ -229,7 +229,7 @@
 .themeSwitchMoon svg {
   width: 20px;
   height: 20px;
-  fill: #e8e8e8;
+  fill: #1f2937;
   animation: tilt 5s linear infinite;
 }
 
