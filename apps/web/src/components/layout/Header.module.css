@@ -178,6 +178,10 @@
   border-radius: 30px;
 }
 
+:root[data-theme='light'] .themeSwitchSlider {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
 .themeSwitchSlider:before {
   position: absolute;
   content: "";
@@ -229,7 +233,7 @@
 .themeSwitchMoon svg {
   width: 20px;
   height: 20px;
-  fill: #1f2937;
+  fill: #ffffff;
   animation: tilt 5s linear infinite;
 }
 

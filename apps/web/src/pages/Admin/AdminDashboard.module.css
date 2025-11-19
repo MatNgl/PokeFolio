@@ -145,6 +145,10 @@
   background: rgba(124, 243, 255, 0.1);
 }
 
+:root[data-theme='light'] .table thead {
+  background: rgba(29, 78, 216, 0.1);
+}
+
 .table th,
 .table td {
   padding: 12px 16px;
@@ -164,6 +168,10 @@
 
 .table tbody tr:hover {
   background: rgba(124, 243, 255, 0.05);
+}
+
+:root[data-theme='light'] .table tbody tr:hover {
+  background: rgba(29, 78, 216, 0.05);
 }
 
 .table td {

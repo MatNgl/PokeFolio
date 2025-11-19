@@ -107,6 +107,18 @@
   transform: scale(0.95);
 }
 
+:root[data-theme='light'] .toggleBtn {
+  background: rgba(29, 78, 216, 0.1);
+  border: 1px solid rgba(29, 78, 216, 0.3);
+  color: var(--primary);
+}
+
+:root[data-theme='light'] .toggleBtn:hover {
+  background: rgba(29, 78, 216, 0.2);
+  border-color: rgba(29, 78, 216, 0.5);
+  color: var(--primary-hover);
+}
+
 .valueSection {
   margin-bottom: 12px;
 }
