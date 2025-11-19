@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0b0f1a 0%, #1a1f35 100%);
+  background: var(--bg);
   padding: 32px;
 }
 
@@ -11,7 +11,7 @@
 .pageTitle {
   font-size: 36px;
   font-weight: 700;
-  background: linear-gradient(135deg, #7cf3ff 0%, #38bdf8 50%, #0ea5e9 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #38bdf8 50%, #0ea5e9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -20,7 +20,7 @@
 
 .pageSubtitle {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
 }
 
 .kpiGrid {
@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  background: var(--card-bg);
   border: 1px solid rgba(248, 113, 113, 0.3);
   border-radius: 16px;
   padding: 40px;
@@ -59,7 +59,7 @@
 
 .errorState p {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
 }
 
 @media (max-width: 1200px) {

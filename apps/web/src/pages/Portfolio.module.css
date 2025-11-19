@@ -48,13 +48,8 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 50%,
-    rgba(11, 15, 26, 0.95) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   color: var(--muted);
   font-size: 14px;
@@ -93,20 +88,12 @@
 }
 
 .statCard {
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 50%,
-    rgba(11, 15, 26, 0.95) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   padding: 20px;
   backdrop-filter: blur(12px);
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -166,13 +153,13 @@
   justify-content: center;
   padding: 10px 16px;
   height: 45px;
-  background: #16171d;
-  border: 1.5px solid #2b2c37;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #bdbecb;
+  color: var(--text);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 0 25px -17px #000;
+  box-shadow: var(--shadow);
 }
 
 .scanButton:hover {
@@ -225,19 +212,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(
-    135deg,
-    rgba(15, 20, 36, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   padding: 12px;
   backdrop-filter: blur(var(--blur));
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -440,21 +420,16 @@
 }
 /* Glass Radio Group (View selector) — compact */
 .glassGroup {
-  --bg: rgba(255, 255, 255, 0.06);
-  --text: var(--text);
-
   display: flex;
   position: relative;
-  background: var(--bg);
-  border-radius: 0.75rem; /* 12px au lieu de 16px */
+  background: var(--glass-light);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
   backdrop-filter: blur(10px);
-  box-shadow:
-    inset 0 0 2px rgba(255, 255, 255, 0.18),
-    inset 0 0 4px rgba(0, 0, 0, 0.25),
-    0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow);
   overflow: hidden;
   width: fit-content;
-  margin-bottom: 16px; /* moins d’air */
+  margin-bottom: 16px;
 }
 
 .glassGroup input {
@@ -549,20 +524,13 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(
-    135deg,
-    rgba(15, 20, 36, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   padding: 12px;
   backdrop-filter: blur(var(--blur));
   cursor: pointer;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -637,19 +605,12 @@
 .detailedCard {
   display: flex;
   gap: 24px;
-  background: linear-gradient(
-    135deg,
-    rgba(15, 20, 36, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   padding: 20px;
   backdrop-filter: blur(var(--blur));
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

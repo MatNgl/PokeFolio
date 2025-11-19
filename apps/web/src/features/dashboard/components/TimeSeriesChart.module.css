@@ -1,9 +1,10 @@
 .chartContainer {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  border: 1px solid rgba(124, 243, 255, 0.1);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
   backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
 }
 
 .header {
@@ -18,7 +19,7 @@
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -43,9 +44,9 @@
 .filterButton {
   padding: 8px 16px;
   border-radius: 8px;
-  border: 1px solid rgba(124, 243, 255, 0.2);
-  background: rgba(15, 23, 42, 0.6);
-  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-color);
+  background: var(--glass-light);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -95,7 +96,7 @@
   align-items: center;
   justify-content: center;
   height: 300px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
   gap: 12px;
 }
 

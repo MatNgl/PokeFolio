@@ -21,7 +21,7 @@
 
 .subtitle {
   margin: 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -44,18 +44,18 @@
   justify-content: center;
   padding: 10px 16px;
   height: 45px;
-  background: #16171d;
-  border: 1.5px solid #2b2c37;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
-  color: #bdbecb;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 0 25px -17px #000;
+  box-shadow: var(--shadow);
 }
 
 .scanButton:hover {
-  border-color: #2f303d;
-  box-shadow: 0 0 25px -15px #000;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
   transform: translateY(-1px);
 }
 

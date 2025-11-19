@@ -38,14 +38,10 @@
 
 .backButton {
   padding: 12px 24px;
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
-  color: var(--fg);
+  color: var(--text);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -151,14 +147,11 @@
   gap: 12px;
   margin-bottom: 24px;
   padding: 16px;
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
 }
 
 .filterLabel {
@@ -180,10 +173,10 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--glass-light);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   position: relative;
-  max-width: 520px; /* plus large que l’exemple (190px) */
+  max-width: 520px;
   width: 100%;
   line-height: 28px;
 }
@@ -27,28 +27,25 @@
   height: 45px;
   padding-left: 2.5rem;
   padding-right: 0.75rem;
-  box-shadow:
-    0 0 0 1.5px #2b2c37,
-    0 0 25px -17px #000;
-  border: 0;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background-color: #16171d;
+  background-color: var(--input-bg);
   outline: none;
-  color: #bdbecb;
+  color: var(--text);
   transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
   cursor: text;
   z-index: 0;
 }
 
 .input::placeholder {
-  color: #bdbecb;
+  color: var(--muted);
   opacity: 0.9;
 }
 
 .input:hover {
-  box-shadow:
-    0 0 0 2.5px #2f303d,
-    0px 0px 25px -15px #000;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
 }
 
 .input:active {
@@ -56,15 +53,14 @@
 }
 
 .input:focus {
-  box-shadow:
-    0 0 0 2.5px #2f303d,
-    0 0 0 1px var(--primary, #7cf3ff);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(124, 243, 255, 0.2);
 }
 
 .searchIcon {
   position: absolute;
   left: 1rem;
-  fill: #bdbecb;
+  fill: var(--muted);
   width: 1rem;
   height: 1rem;
   pointer-events: none;

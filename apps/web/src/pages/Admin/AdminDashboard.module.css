@@ -30,7 +30,7 @@
 
 .subtitle {
   margin: 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -54,7 +54,7 @@
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
 }
 
 .bigNumber {
@@ -66,7 +66,7 @@
 
 .detail {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
 }
 
 .section {
@@ -123,13 +123,13 @@
 .cardSet {
   margin: 0 0 4px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .cardStats {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
 }
 
 .table {
@@ -159,7 +159,7 @@
 }
 
 .table tbody tr {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
 }
 
 .table tbody tr:hover {
@@ -173,7 +173,7 @@
 .empty {
   padding: 40px 20px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
   font-size: 16px;
   background: var(--glass);
   border: var(--border);
@@ -208,6 +208,6 @@
 .maintenanceDesc {
   margin: 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   max-width: 600px;
 }
