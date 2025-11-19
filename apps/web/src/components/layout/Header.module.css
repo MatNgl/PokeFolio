@@ -120,10 +120,10 @@
 }
 
 :root[data-theme='light'] .glider {
-  background: linear-gradient(135deg, rgba(29, 78, 216, 0.3), rgba(30, 64, 175, 0.4));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(29, 78, 216, 0.95));
   box-shadow:
-    0 0 12px rgba(29, 78, 216, 0.25),
-    0 0 6px rgba(29, 78, 216, 0.2) inset;
+    0 4px 12px rgba(37, 99, 235, 0.3),
+    0 0 0 1px rgba(37, 99, 235, 0.1) inset;
 }
 
 /* Liens onglets */
@@ -173,34 +173,37 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #d1d5db;
-  transition: 0.4s;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 30px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 :root[data-theme='light'] .themeSwitchSlider {
-  border: 2px solid rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(15, 23, 42, 0.15);
 }
 
 .themeSwitchSlider:before {
   position: absolute;
   content: "";
-  height: 30px;
-  width: 30px;
-  border-radius: 20px;
-  left: 2px;
-  bottom: 2px;
+  height: 28px;
+  width: 28px;
+  border-radius: 50%;
+  left: 3px;
+  bottom: 3px;
   z-index: 2;
-  background-color: #e8e8e8;
-  transition: 0.4s;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .themeSwitchInput:checked + .themeSwitchSlider {
-  background-color: #1f2937;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
 .themeSwitchInput:checked + .themeSwitchSlider:before {
   transform: translateX(30px);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
 .themeSwitchSun,
@@ -217,10 +220,11 @@
 }
 
 .themeSwitchSun svg {
-  width: 20px;
-  height: 20px;
-  fill: #ffffff;
+  width: 18px;
+  height: 18px;
+  fill: #f59e0b;
   animation: rotate 15s linear infinite;
+  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.3));
 }
 
 .themeSwitchMoon {
@@ -231,10 +235,11 @@
 }
 
 .themeSwitchMoon svg {
-  width: 20px;
-  height: 20px;
-  fill: #ffffff;
+  width: 18px;
+  height: 18px;
+  fill: #fbbf24;
   animation: tilt 5s linear infinite;
+  filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.3));
 }
 
 @keyframes rotate {

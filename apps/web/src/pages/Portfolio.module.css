@@ -501,10 +501,10 @@
 }
 
 :root[data-theme='light'] .glider {
-  background: linear-gradient(135deg, rgba(29, 78, 216, 0.3), rgba(30, 64, 175, 0.4));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(29, 78, 216, 0.95));
   box-shadow:
-    0 0 12px rgba(29, 78, 216, 0.25),
-    0 0 6px rgba(29, 78, 216, 0.2) inset;
+    0 4px 12px rgba(37, 99, 235, 0.3),
+    0 0 0 1px rgba(37, 99, 235, 0.1) inset;
 }
 
 /* Position/état du glider selon l'onglet actif */
