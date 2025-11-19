@@ -15,6 +15,15 @@ interface PieData {
   [key: string]: string | number; // Index signature pour Recharts
 }
 
+interface PieLabelProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+}
+
 export interface GradedPieChartProps {
   data: GradeDistribution | undefined;
   loading?: boolean;
@@ -61,8 +70,7 @@ export function GradedPieChart({ data, loading = false }: GradedPieChartProps): 
     { name: 'Normales', value: data.normal, color: COLORS.normal },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderCustomLabel = (props: any): JSX.Element | null => {
+  const renderCustomLabel = (props: PieLabelProps): JSX.Element | null => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
     if (percent < 0.05) return null;
 

@@ -18,6 +18,10 @@ export interface CardSet {
   symbol?: string;
   releaseDate?: string;
   total?: number;
+  cardCount?: {
+    total?: number;
+    official?: number;
+  };
 }
 
 /**

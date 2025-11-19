@@ -59,7 +59,7 @@ export function WishlistHeart({
         );
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Error adding to wishlist:', error);
       if (onToast) {
         onToast("Erreur lors de l'ajout à la wishlist", 'error');
@@ -82,7 +82,7 @@ export function WishlistHeart({
         );
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Error removing from wishlist:', error);
       if (onToast) {
         onToast('Erreur lors du retrait de la wishlist', 'error');
