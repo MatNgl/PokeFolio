@@ -354,10 +354,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
         quantity: 1,
       });
       setShowQuickAddModal(false);
-      if (isPortfolioMode && 'onRefresh' in props) {
-        props.onToast?.('Carte ajoutée au portfolio', 'success');
-        props.onRefresh?.();
-      }
+      onClose();
+      // Recharger les données pour voir les changements
+      window.location.reload();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
     }
@@ -372,10 +371,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
   // Handler pour succès d'ajout via modal
   const handleAddModalSuccess = () => {
     setShowAddCardModal(false);
-    if (isPortfolioMode && 'onRefresh' in props) {
-      props.onToast?.('Carte ajoutée au portfolio', 'success');
-      props.onRefresh?.();
-    }
+    onClose();
+    // Recharger les données pour voir les changements
+    window.location.reload();
   };
 
   // Handler pour succès d'édition (mode set)
