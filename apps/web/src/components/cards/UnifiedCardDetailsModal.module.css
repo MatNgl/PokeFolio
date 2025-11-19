@@ -66,11 +66,11 @@
 }
 
 .navBtnLeft {
-  left: 80px;
+  left: calc(50% - 490px - 24px);
 }
 
 .navBtnRight {
-  right: 80px;
+  right: calc(50% - 490px - 24px);
 }
 
 .navBtnLeft:hover,
