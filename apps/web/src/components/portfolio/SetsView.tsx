@@ -145,7 +145,7 @@ export function SetsView() {
           if (!a.releaseDate) return 1;
           if (!b.releaseDate) return -1;
           return (
-            multiplier * (new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+            multiplier * (new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime())
           );
         case 'name': // Nom du set
           return multiplier * (a.setName || '').localeCompare(b.setName || '');

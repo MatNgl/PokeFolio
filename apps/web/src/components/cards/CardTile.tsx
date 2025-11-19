@@ -158,6 +158,18 @@ export function CardTile({
                 cardName={card.name}
               />
             )}
+            {onAdd && (
+              <CardOverlayButtons
+                type="add"
+                isActive={false}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd();
+                }}
+                cardName={card.name}
+                position="bottom-right"
+              />
+            )}
           </>
         );
 
@@ -183,7 +195,21 @@ export function CardTile({
       case 'set':
         return (
           <>
-            {!isOwned && (
+            {isOwned ? (
+              // Carte possédée : afficher bouton favori
+              onToggleFavorite && (
+                <CardOverlayButtons
+                  type="favorite"
+                  isActive={isFavorite}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite();
+                  }}
+                  cardName={card.name}
+                />
+              )
+            ) : (
+              // Carte non possédée : afficher bouton wishlist
               <WishlistHeart
                 cardId={card.cardId}
                 isInWishlist={isInWishlist}
@@ -199,6 +225,19 @@ export function CardTile({
                   imageUrl: card.imageUrl,
                 }}
                 onToast={onToast}
+              />
+            )}
+            {/* Bouton d'ajout pour toutes les cartes */}
+            {onAdd && (
+              <CardOverlayButtons
+                type="add"
+                isActive={false}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd();
+                }}
+                cardName={card.name}
+                position="bottom-right"
               />
             )}
           </>
@@ -221,7 +260,19 @@ export function CardTile({
         >
           {showGrading ? (
             <GradedCardFrame
-              company={grading.company as 'PSA' | 'BGS' | 'CGC' | 'PCA' | 'CollectAura' | 'AGS' | 'CCC' | 'SGC' | 'TAG' | 'Other'}
+              company={
+                grading.company as
+                  | 'PSA'
+                  | 'BGS'
+                  | 'CGC'
+                  | 'PCA'
+                  | 'CollectAura'
+                  | 'AGS'
+                  | 'CCC'
+                  | 'SGC'
+                  | 'TAG'
+                  | 'Other'
+              }
               grade={grading.score!}
               size="medium"
             >
@@ -253,9 +304,7 @@ export function CardTile({
             />
           )}
 
-          {quantity > 1 && (
-            <span className={styles.quantity}>×{quantity}</span>
-          )}
+          {quantity > 1 && <span className={styles.quantity}>×{quantity}</span>}
         </button>
 
         {renderOverlayButtons()}

@@ -84,6 +84,11 @@ const GRADING_COMPANIES = [
     name: 'TAG',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
+  {
+    id: 'Other',
+    name: 'Autre',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+  },
 ] as const;
 
 export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
