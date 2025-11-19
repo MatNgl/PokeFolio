@@ -53,7 +53,7 @@ function parseTcgdexUrl(url: string): {
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) {
-      if (match.length === 6) {
+      if (match.length === 6 && match[1] && match[2] && match[3] && match[4] && match[5]) {
         // Avec qualité et format
         return {
           baseUrl: 'https://assets.tcgdex.net',
@@ -63,7 +63,7 @@ function parseTcgdexUrl(url: string): {
           quality: match[4],
           format: match[5],
         };
-      } else if (match.length === 4) {
+      } else if (match.length === 4 && match[1] && match[2] && match[3]) {
         // Sans extension
         return {
           baseUrl: 'https://assets.tcgdex.net',
@@ -116,8 +116,9 @@ export function createImageErrorHandler(fallbacks: string[]) {
     const target = e.currentTarget;
     currentIndex++;
 
-    if (currentIndex < fallbacks.length) {
-      target.src = fallbacks[currentIndex];
+    const nextFallback = fallbacks[currentIndex];
+    if (currentIndex < fallbacks.length && nextFallback) {
+      target.src = nextFallback;
     } else {
       target.src = PLACEHOLDER_IMG;
     }
