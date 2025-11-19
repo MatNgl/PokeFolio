@@ -37,47 +37,52 @@ interface FormData {
   variants?: VariantForm[];
 }
 
-// Sociétés de gradation et leurs barèmes
+// Sociétés de gradation et leurs barèmes (IDs doivent correspondre au backend)
 const GRADING_COMPANIES = [
   { id: 'PSA', name: 'PSA', grades: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'] },
   {
     id: 'PCA',
-    name: 'PCA (Pokémon Card Authentication)',
+    name: 'PCA',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
-    id: 'COLLECT_AURA',
+    id: 'CollectAura',
     name: 'Collect Aura',
     grades: ['10+', '10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'],
   },
   {
     id: 'CGC',
-    name: 'CGC (Certified Guaranty Company)',
+    name: 'CGC',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'BGS',
-    name: 'BGS (Beckett Grading Services)',
+    name: 'BGS',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'AGS',
-    name: 'AGS (ACE Grading)',
+    name: 'AGS',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'CCC',
-    name: 'CCC (Certified Collectibles Group)',
+    name: 'CCC',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'SGC',
-    name: 'SGC (Sportscard Guaranty)',
+    name: 'SGC',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
   {
     id: 'TAG',
-    name: 'TAG (The Authentication Group)',
+    name: 'TAG',
+    grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
+  },
+  {
+    id: 'Other',
+    name: 'Autre',
     grades: ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5'],
   },
 ] as const;
@@ -327,11 +332,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
                       Copier la 1ʳᵉ sur toutes
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className={styles.addVariantBtn}
-                    onClick={handleAddVariant}
-                  >
+                  <button type="button" className={styles.addVariantBtn} onClick={handleAddVariant}>
                     <PlusCircle size={16} />
                     Ajouter une variante
                   </button>
@@ -474,9 +475,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
               <Button type="button" variant="secondary" onClick={onClose}>
                 Annuler
               </Button>
-              <Button type="submit">
-                Enregistrer les modifications
-              </Button>
+              <Button type="submit">Enregistrer les modifications</Button>
             </div>
           </form>
         </div>
