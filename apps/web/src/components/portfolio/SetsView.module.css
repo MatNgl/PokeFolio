@@ -15,8 +15,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(124, 243, 255, 0.2);
-  border-top-color: #7cf3ff;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -84,29 +84,18 @@
 }
 
 .setCard {
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 50%,
-    rgba(11, 15, 26, 0.95) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   padding: 20px;
   backdrop-filter: blur(12px);
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .setCard:hover {
-  border-color: rgba(124, 243, 255, 0.4);
-  box-shadow:
-    0 10px 15px -3px rgba(124, 243, 255, 0.1),
-    0 4px 6px -2px rgba(124, 243, 255, 0.05),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.1);
+  border-color: var(--primary);
+  box-shadow: var(--glow);
 }
 
 .setHeader {
@@ -126,7 +115,7 @@
 
 .setLogoBtn:hover {
   transform: scale(1.05);
-  filter: drop-shadow(0 0 12px rgba(124, 243, 255, 0.4));
+  filter: drop-shadow(0 0 12px var(--primary));
 }
 
 .setLogo {
@@ -142,8 +131,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px dashed rgba(124, 243, 255, 0.2);
+  background: var(--glass-light);
+  border: 2px dashed var(--border-color);
   border-radius: 12px;
   color: var(--muted);
 }
@@ -170,8 +159,8 @@
 }
 
 .setName:hover {
-  color: #7cf3ff;
-  text-shadow: 0 0 8px rgba(124, 243, 255, 0.3);
+  color: var(--primary);
+  text-shadow: 0 0 8px var(--primary);
 }
 
 .setNameArrow {
@@ -200,12 +189,12 @@
   align-items: center;
   justify-content: center;
   padding: 4px 10px;
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.2), rgba(167, 139, 250, 0.2));
-  border: 1px solid rgba(124, 243, 255, 0.3);
+  background: var(--glass-light);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #7cf3ff;
+  color: var(--primary);
 }
 
 .setBody {
@@ -217,14 +206,14 @@
 .progressBar {
   width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-color);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #7cf3ff 0%, #a78bfa 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, var(--violet) 100%);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -291,29 +280,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    rgba(124, 243, 255, 0.1) 0%,
-    rgba(167, 139, 250, 0.1) 100%
-  );
-  border: 2px dashed rgba(124, 243, 255, 0.3);
+  background: var(--glass-light);
+  border: 2px dashed var(--border-color);
   padding: 6px;
   font-size: 16px;
   font-weight: 600;
-  color: #7cf3ff;
+  color: var(--primary);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .moreCards:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(124, 243, 255, 0.2) 0%,
-    rgba(167, 139, 250, 0.2) 100%
-  );
-  border-color: rgba(124, 243, 255, 0.5);
+  background: var(--glass);
+  border-color: var(--primary);
   transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 16px rgba(124, 243, 255, 0.2);
+  box-shadow: var(--glow);
 }
 
 /* Vue Grille */
@@ -328,13 +309,8 @@
   flex-direction: column;
   align-items: center;
   padding: 20px 16px;
-  background: linear-gradient(
-    135deg,
-    rgba(11, 15, 26, 0.95) 0%,
-    rgba(15, 30, 50, 0.9) 50%,
-    rgba(11, 15, 26, 0.95) 100%
-  );
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -342,10 +318,8 @@
 }
 
 .gridCard:hover {
-  border-color: rgba(124, 243, 255, 0.4);
-  box-shadow:
-    0 10px 15px -3px rgba(124, 243, 255, 0.1),
-    0 4px 6px -2px rgba(124, 243, 255, 0.05);
+  border-color: var(--primary);
+  box-shadow: var(--glow);
   transform: translateY(-4px);
 }
 
@@ -370,14 +344,14 @@
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text);
   line-height: 1.3;
 }
 
 .gridProgress {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-color);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -385,7 +359,7 @@
 
 .gridProgressFill {
   height: 100%;
-  background: linear-gradient(90deg, #7cf3ff 0%, #a78bfa 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, var(--violet) 100%);
   border-radius: 3px;
   transition: width 0.3s ease;
 }

@@ -9,10 +9,10 @@
   gap: 8px;
   padding: 10px 16px;
   height: 45px;
-  background: #16171d;
-  border: 1.5px solid #2b2c37;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
-  color: #bdbecb;
+  color: var(--text-secondary);
   font-family: var(
     --font-sans,
     Inter,
@@ -30,12 +30,12 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 0 25px -17px #000;
+  box-shadow: var(--shadow);
 }
 
 .filterButton:hover {
-  border-color: #2f303d;
-  box-shadow: 0 0 25px -15px #000;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
   transform: translateY(-1px);
 }
 
@@ -44,11 +44,9 @@
 }
 
 .filterButton.active {
-  border-color: var(--primary, #7cf3ff);
-  box-shadow:
-    0 0 0 1px var(--primary, #7cf3ff),
-    0 0 20px rgba(124, 243, 255, 0.2);
-  color: var(--primary, #7cf3ff);
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+  color: var(--primary);
 }
 
 .filterLabel {
@@ -61,12 +59,10 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
-  background: #16171d;
-  border: 1.5px solid #2b2c37;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(124, 243, 255, 0.1);
+  box-shadow: var(--shadow);
   z-index: 1000;
   overflow: hidden;
   animation: slideDown 0.2s cubic-bezier(0.19, 1, 0.22, 1);
@@ -88,9 +84,9 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--primary, #7cf3ff);
+  background: var(--glass-light);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary);
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
@@ -111,7 +107,7 @@
   padding: 12px 16px;
   background: transparent;
   border: none;
-  color: #bdbecb;
+  color: var(--text-secondary);
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -121,13 +117,13 @@
 }
 
 .option:hover {
-  background: rgba(124, 243, 255, 0.08);
-  color: var(--text, #fff);
+  background: var(--glass-light);
+  color: var(--text);
 }
 
 .option.selected {
-  background: rgba(124, 243, 255, 0.12);
-  color: var(--primary, #7cf3ff);
+  background: var(--glass);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -139,11 +135,11 @@
 
 .directionIcon {
   flex-shrink: 0;
-  color: var(--primary, #7cf3ff);
+  color: var(--primary);
   opacity: 0.8;
 }
 
 .checkIcon {
   flex-shrink: 0;
-  color: var(--primary, #7cf3ff);
+  color: var(--primary);
 }

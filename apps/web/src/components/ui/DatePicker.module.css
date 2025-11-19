@@ -5,7 +5,7 @@
 }
 
 .label {
-  color: rgba(124, 243, 255, 0.9);
+  color: var(--primary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -14,40 +14,30 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, rgba(15, 30, 50, 0.5), rgba(11, 15, 26, 0.5));
-  border: 1px solid rgba(124, 243, 255, 0.2);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radii-sm);
   padding: 12px 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.05);
+  box-shadow: var(--shadow);
 }
 
 .wrapper:hover {
-  border-color: rgba(124, 243, 255, 0.4);
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.05), rgba(56, 189, 248, 0.05));
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 1px rgba(124, 243, 255, 0.1),
-    0 0 12px rgba(124, 243, 255, 0.15);
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
 }
 
 .wrapper.focused {
-  border-color: rgba(124, 243, 255, 0.6);
-  background: linear-gradient(135deg, rgba(124, 243, 255, 0.08), rgba(56, 189, 248, 0.08));
-  box-shadow:
-    0 0 0 3px rgba(124, 243, 255, 0.2),
-    0 0 16px rgba(124, 243, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: var(--glow);
 }
 
 .iconWrapper {
   display: flex;
   align-items: center;
-  color: #7cf3ff;
+  color: var(--primary);
   margin-right: 10px;
   pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(124, 243, 255, 0.4));
 }
 
 .input {
