@@ -13,7 +13,7 @@ interface CardOverlayButtonsProps {
   /** Card name for accessibility */
   cardName?: string;
   /** Position of the button */
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  position?: 'top-right' | 'top-right-secondary' | 'top-left' | 'bottom-right' | 'bottom-left';
   /** Size of the button */
   size?: 'small' | 'medium';
 }

@@ -135,13 +135,21 @@
 
 /* === Colonne gauche (image) === */
 .left {
+  position: relative;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 0;
   display: grid;
   align-content: start;
-  overflow: hidden;
+  overflow: visible;
+}
+
+/* Afficher les boutons overlay au hover sur .left */
+.left:hover button,
+.left:focus-within button {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .image {

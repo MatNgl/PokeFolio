@@ -156,6 +156,7 @@ export function SetDetail() {
     try {
       await portfolioService.addCard({
         cardId: card.cardId,
+        language: 'fr',
         name: card.name || 'Carte inconnue',
         setId: currentSet?.setId,
         setName: currentSet?.setName,
@@ -549,7 +550,7 @@ export function SetDetail() {
                   setQuickAddCard(card);
                 }}
                 cardName={card.name}
-                position="bottom-right"
+                position="top-right-secondary"
               />
             </div>
           ))}

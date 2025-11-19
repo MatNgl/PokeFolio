@@ -4,12 +4,16 @@ import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import type { Card } from '@pokefolio/types';
 import type { CompleteSetCard } from '../../services/sets.service';
 import { portfolioService, type PortfolioCard } from '../../services/portfolio.service';
+import { wishlistService } from '../../services/wishlist.service';
 import { cardsService } from '../../services/cards.service';
 import { useSetLogos, resolveLogoUrl } from '../../hooks/useSetLogos';
 import GradedCardFrame, { type GradingCompany } from '../grading/GradedCardFrame';
 import CardPriceChart from '../pricing/CardPriceChart';
 import { Loader } from '../ui/FullScreenLoader';
 import { Button } from '../ui/Button';
+import { CardOverlayButtons } from './CardOverlayButtons';
+import { QuickAddModal } from './QuickAddModal';
+import { AddCardModal } from './AddCardModal';
 import styles from './UnifiedCardDetailsModal.module.css';
 
 type PortfolioVariant = {
@@ -92,6 +96,11 @@ export default function UnifiedCardDetailsModal(props: Props) {
   const [portfolioEntry, setPortfolioEntry] = useState<PortfolioCard | null>(null);
   // État pour mode "portfolio" - fetch card metadata
   const [cardMetadata, setCardMetadata] = useState<Card | null>(null);
+
+  // États pour les boutons overlay
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
 
   const isPortfolioMode = props.mode === 'portfolio';
   const isSetMode = props.mode === 'set';
@@ -184,6 +193,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
           const allCards = await portfolioService.getCards();
           const found = allCards.find((c) => c.cardId === props.card.cardId);
           if (mounted) setPortfolioEntry(found || null);
+          // Fetch wishlist status
+          const wishlistStatus = await wishlistService.checkMultiple([props.card.cardId]);
+          if (mounted) setIsInWishlist(wishlistStatus[props.card.cardId] || false);
         } else if (isPortfolioMode && props.entry) {
           // Mode portfolio: fetch card metadata
           const data = await cardsService.getCardById(props.entry.cardId);
@@ -194,6 +206,9 @@ export default function UnifiedCardDetailsModal(props: Props) {
           const allCards = await portfolioService.getCards();
           const found = allCards.find((c) => c.cardId === props.card.id);
           if (mounted) setPortfolioEntry(found || null);
+          // Fetch wishlist status
+          const wishlistStatus = await wishlistService.checkMultiple([props.card.id]);
+          if (mounted) setIsInWishlist(wishlistStatus[props.card.id] || false);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
@@ -207,6 +222,156 @@ export default function UnifiedCardDetailsModal(props: Props) {
       mounted = false;
     };
   }, [props, isSetMode, isPortfolioMode, isDiscoverMode]);
+
+  // Handler pour toggle favorite
+  const handleToggleFavorite = async () => {
+    if (!portfolioData) return;
+    const docId = (portfolioData._id || portfolioData.id) as string;
+    if (!docId) return;
+
+    try {
+      const updated = await portfolioService.toggleFavorite(docId);
+      if (isPortfolioMode && 'onToast' in props) {
+        props.onToast?.(
+          updated.isFavorite ? 'Carte ajoutée aux favoris' : 'Carte retirée des favoris',
+          'success'
+        );
+        props.onRefresh?.();
+      }
+    } catch (error) {
+      console.error('Erreur toggle favorite:', error);
+      if (isPortfolioMode && 'onToast' in props) {
+        props.onToast?.('Erreur lors de la modification du favori', 'error');
+      }
+    }
+  };
+
+  // Handler pour toggle wishlist
+  const handleToggleWishlist = async () => {
+    let cardId: string;
+    let cardData: {
+      name?: string;
+      setId?: string;
+      setName?: string;
+      number?: string;
+      rarity?: string;
+      imageUrl?: string;
+    };
+
+    if (isSetMode) {
+      cardId = props.card.cardId;
+      cardData = {
+        name: props.card.name,
+        setId: props.setId,
+        setName: props.setName,
+        number: props.card.number,
+        rarity: props.card.rarity,
+        imageUrl: props.card.imageUrl,
+      };
+    } else if (isDiscoverMode) {
+      cardId = props.card.id;
+      cardData = {
+        name: props.card.name,
+        setId: props.card.set?.id,
+        setName: props.card.set?.name,
+        number: props.card.localId,
+        rarity: props.card.rarity,
+        imageUrl: props.card.image || props.card.images?.small,
+      };
+    } else {
+      return;
+    }
+
+    try {
+      if (isInWishlist) {
+        await wishlistService.remove(cardId);
+        setIsInWishlist(false);
+      } else {
+        await wishlistService.add(cardId, cardData);
+        setIsInWishlist(true);
+      }
+    } catch (error) {
+      console.error('Erreur toggle wishlist:', error);
+    }
+  };
+
+  // Handler pour ajout direct
+  const handleAddDirect = async () => {
+    let cardId: string;
+    let cardData: {
+      name?: string;
+      setId?: string;
+      setName?: string;
+      number?: string;
+      rarity?: string;
+      imageUrl?: string;
+    };
+
+    if (isSetMode) {
+      cardId = props.card.cardId;
+      cardData = {
+        name: props.card.name || 'Carte inconnue',
+        setId: props.setId,
+        setName: props.setName,
+        number: props.card.number,
+        rarity: props.card.rarity,
+        imageUrl: props.card.imageUrl,
+      };
+    } else if (isDiscoverMode) {
+      cardId = props.card.id;
+      cardData = {
+        name: props.card.name,
+        setId: props.card.set?.id,
+        setName: props.card.set?.name,
+        number: props.card.localId,
+        rarity: props.card.rarity,
+        imageUrl: props.card.image || props.card.images?.small,
+      };
+    } else if (isPortfolioMode) {
+      cardId = props.entry.cardId;
+      cardData = {
+        name: props.entry.name || 'Carte inconnue',
+        setId: props.entry.setId,
+        setName: props.entry.setName,
+        number: props.entry.number,
+        rarity: props.entry.rarity,
+        imageUrl: props.entry.imageUrl,
+      };
+    } else {
+      return;
+    }
+
+    try {
+      await portfolioService.addCard({
+        cardId,
+        language: 'fr',
+        ...cardData,
+        quantity: 1,
+      });
+      setShowQuickAddModal(false);
+      if (isPortfolioMode && 'onRefresh' in props) {
+        props.onToast?.('Carte ajoutée au portfolio', 'success');
+        props.onRefresh?.();
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'ajout:", error);
+    }
+  };
+
+  // Handler pour ouvrir le modal d'ajout avec détails
+  const handleAddWithDetails = () => {
+    setShowQuickAddModal(false);
+    setShowAddCardModal(true);
+  };
+
+  // Handler pour succès d'ajout via modal
+  const handleAddModalSuccess = () => {
+    setShowAddCardModal(false);
+    if (isPortfolioMode && 'onRefresh' in props) {
+      props.onToast?.('Carte ajoutée au portfolio', 'success');
+      props.onRefresh?.();
+    }
+  };
 
   // Suppression de variante (mode portfolio uniquement)
   const handleDeleteVariant = async (variantIndex: number) => {
@@ -385,6 +550,54 @@ export default function UnifiedCardDetailsModal(props: Props) {
                       'https://images.pokemontcg.io/swsh1/back.png';
                   }}
                 />
+              )}
+              {/* Boutons overlay sur l'image */}
+              {portfolioData ? (
+                // Carte possédée: bouton favori + bouton ajout
+                <>
+                  <CardOverlayButtons
+                    type="favorite"
+                    isActive={portfolioData.isFavorite}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite();
+                    }}
+                    cardName={title}
+                  />
+                  <CardOverlayButtons
+                    type="add"
+                    isActive={false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuickAddModal(true);
+                    }}
+                    cardName={title}
+                    position="top-right-secondary"
+                  />
+                </>
+              ) : (
+                // Carte non possédée: bouton wishlist + bouton ajout
+                <>
+                  <CardOverlayButtons
+                    type="wishlist"
+                    isActive={isInWishlist}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleWishlist();
+                    }}
+                    cardName={title}
+                  />
+                  <CardOverlayButtons
+                    type="add"
+                    isActive={false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuickAddModal(true);
+                    }}
+                    cardName={title}
+                    position="top-right-secondary"
+                  />
+                </>
               )}
             </div>
 
@@ -669,6 +882,54 @@ export default function UnifiedCardDetailsModal(props: Props) {
         >
           <ChevronRight size={28} />
         </button>
+      )}
+
+      {/* Modal QuickAdd */}
+      {showQuickAddModal && (
+        <QuickAddModal
+          cardName={title}
+          setName={setLabel}
+          onClose={() => setShowQuickAddModal(false)}
+          onAddDirect={handleAddDirect}
+          onAddWithDetails={handleAddWithDetails}
+        />
+      )}
+
+      {/* Modal d'ajout avec détails */}
+      {showAddCardModal && (
+        <AddCardModal
+          card={
+            isSetMode
+              ? {
+                  id: props.card.cardId,
+                  localId: props.card.number || props.card.cardId,
+                  name: props.card.name || 'Carte inconnue',
+                  images: { small: props.card.imageUrl, large: props.card.imageUrl },
+                  set: {
+                    id: props.setId || '',
+                    name: props.setName || '',
+                  },
+                  rarity: props.card.rarity,
+                }
+              : isDiscoverMode
+                ? props.card
+                : isPortfolioMode
+                  ? {
+                      id: props.entry.cardId,
+                      localId: props.entry.number || props.entry.cardId,
+                      name: props.entry.name || 'Carte inconnue',
+                      images: { small: props.entry.imageUrl, large: props.entry.imageUrlHiRes },
+                      set: {
+                        id: props.entry.setId || '',
+                        name: props.entry.setName || '',
+                      },
+                      rarity: props.entry.rarity,
+                    }
+                  : undefined
+          }
+          onClose={() => setShowAddCardModal(false)}
+          onSuccess={handleAddModalSuccess}
+        />
       )}
     </div>
   );
