@@ -34,6 +34,16 @@
   color: #7cf3ff;
 }
 
+:root[data-theme='light'] .iconWrapper {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(30, 64, 175, 0.15) 100%);
+  color: var(--primary);
+}
+
+:root[data-theme='light'] .rank {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.2) 0%, rgba(30, 64, 175, 0.2) 100%);
+  color: var(--primary);
+}
+
 .list {
   display: flex;
   flex-direction: column;

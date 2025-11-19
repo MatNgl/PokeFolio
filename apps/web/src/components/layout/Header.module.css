@@ -95,10 +95,10 @@
     opacity 0.3s ease-in-out,
     background 0.4s ease-in-out,
     box-shadow 0.4s ease-in-out;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  background: linear-gradient(135deg, #3480d140, #005c9e99);
   box-shadow:
-    0 0 18px rgba(29, 78, 216, 0.4),
-    0 0 10px rgba(29, 78, 216, 0.3) inset;
+    0 0 12px rgba(160, 216, 255, 0.35),
+    0 0 6px rgba(200, 240, 255, 0.3) inset;
   transform: translateX(0%);
   opacity: 0;
 }
@@ -117,6 +117,13 @@
 .glider[data-active='admin'] {
   transform: translateX(300%);
   opacity: 1;
+}
+
+:root[data-theme='light'] .glider {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.3), rgba(30, 64, 175, 0.4));
+  box-shadow:
+    0 0 12px rgba(29, 78, 216, 0.25),
+    0 0 6px rgba(29, 78, 216, 0.2) inset;
 }
 
 /* Liens onglets */

@@ -61,6 +61,29 @@
   color: rgba(124, 243, 255, 1);
 }
 
+:root[data-theme='light'] .title {
+  color: var(--primary);
+}
+
+:root[data-theme='light'] .kpiCard:hover .title {
+  color: var(--primary-hover);
+}
+
+:root[data-theme='light'] .iconWrapper {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(30, 64, 175, 0.15) 100%);
+  color: var(--primary);
+  box-shadow:
+    0 0 0 1px rgba(29, 78, 216, 0.2),
+    0 0 12px rgba(29, 78, 216, 0.15);
+}
+
+:root[data-theme='light'] .kpiCard:hover .iconWrapper {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.25) 0%, rgba(30, 64, 175, 0.25) 100%);
+  box-shadow:
+    0 0 0 1px rgba(29, 78, 216, 0.4),
+    0 0 16px rgba(29, 78, 216, 0.3);
+}
+
 .toggleBtn {
   background: rgba(124, 243, 255, 0.1);
   border: 1px solid rgba(124, 243, 255, 0.2);
