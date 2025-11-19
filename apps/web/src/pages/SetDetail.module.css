@@ -126,6 +126,12 @@
   color: #7cf3ff;
 }
 
+:root[data-theme='light'] .badge {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.15), rgba(124, 58, 237, 0.15));
+  border: 1px solid rgba(29, 78, 216, 0.3);
+  color: var(--primary);
+}
+
 /* Controls */
 .controls {
   display: flex;
@@ -193,6 +199,12 @@
   background: linear-gradient(135deg, rgba(124, 243, 255, 0.2), rgba(167, 139, 250, 0.2));
   border-color: rgba(124, 243, 255, 0.5);
   color: #7cf3ff;
+}
+
+:root[data-theme='light'] .rarityButtonActive {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.15), rgba(124, 58, 237, 0.15));
+  border-color: rgba(29, 78, 216, 0.5);
+  color: var(--primary);
 }
 
 .rarityButtonInactive {

@@ -31,6 +31,17 @@
   font-size: 16px;
 }
 
+:root[data-theme='light'] .subtitle {
+  color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .title {
+  background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .searchBar {
   margin-bottom: 24px;
 }
@@ -65,6 +76,10 @@
 
 .table thead {
   background: rgba(124, 243, 255, 0.1);
+}
+
+:root[data-theme='light'] .table thead {
+  background: rgba(29, 78, 216, 0.1);
 }
 
 .table th,
@@ -107,6 +122,10 @@
   transition: color 0.2s ease;
 }
 
+:root[data-theme='light'] .inactiveIcon {
+  color: rgba(0, 0, 0, 0.2);
+}
+
 .activeIcon {
   color: var(--primary);
   transition: color 0.2s ease;
@@ -118,6 +137,14 @@
 
 .table tbody tr:hover {
   background: rgba(124, 243, 255, 0.05);
+}
+
+:root[data-theme='light'] .table tbody tr {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme='light'] .table tbody tr:hover {
+  background: rgba(29, 78, 216, 0.05);
 }
 
 .table td {
@@ -135,6 +162,11 @@
   text-transform: uppercase;
 }
 
+:root[data-theme='light'] .roleAdmin {
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
+}
+
 .roleUser {
   display: inline-block;
   padding: 4px 8px;
@@ -146,6 +178,11 @@
   text-transform: uppercase;
 }
 
+:root[data-theme='light'] .roleUser {
+  background: rgba(29, 78, 216, 0.15);
+  color: var(--primary);
+}
+
 .actions {
   display: flex;
   gap: 8px;
@@ -155,4 +192,8 @@
   padding: 40px;
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
+}
+
+:root[data-theme='light'] .empty {
+  color: var(--muted);
 }

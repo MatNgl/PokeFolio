@@ -347,6 +347,10 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+:root[data-theme='light'] .cardActions {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .cardActions > * {
   flex: 1;
   min-width: 0;
@@ -364,6 +368,11 @@
   color: var(--muted);
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+:root[data-theme='light'] .favoriteBtn {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .favoriteBtn:hover {
@@ -396,8 +405,18 @@
   justify-content: center;
 }
 
+:root[data-theme='light'] .editBtn {
+  background: rgba(29, 78, 216, 0.08);
+  border: 1px solid rgba(29, 78, 216, 0.2);
+}
+
 .editBtn:hover {
   background: rgba(124, 243, 255, 0.2);
+  border-color: var(--primary);
+}
+
+:root[data-theme='light'] .editBtn:hover {
+  background: rgba(29, 78, 216, 0.15);
   border-color: var(--primary);
 }
 
@@ -415,9 +434,20 @@
   justify-content: center;
 }
 
+:root[data-theme='light'] .deleteBtn {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+}
+
 .deleteBtn:hover {
   background: rgba(248, 113, 113, 0.2);
   border-color: #f87171;
+}
+
+:root[data-theme='light'] .deleteBtn:hover {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: #dc2626;
 }
 
 /* Header actions */

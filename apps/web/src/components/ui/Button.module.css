@@ -157,13 +157,13 @@
   box-shadow: none;
 }
 .success .buttonInner {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
-  color: #22c55e;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(16, 185, 129, 0.9));
+  color: #ffffff;
   border: 1px solid #22c55e;
   transition: all 0.25s ease;
 }
 .success:hover:not(:disabled) .buttonInner {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.3));
+  background: linear-gradient(135deg, rgba(34, 197, 94, 1), rgba(16, 185, 129, 1));
   border-color: #34d974;
 }
 
