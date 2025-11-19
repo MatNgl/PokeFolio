@@ -15,6 +15,7 @@ import { WishlistHeart } from '../components/ui/WishlistHeart';
 import { OwnedBadge } from '../components/ui/OwnedBadge';
 import { CardOverlayButtons } from '../components/cards/CardOverlayButtons';
 import { resolveImageUrl, handleImageError } from '../utils/imageUtils';
+import { parseSearchQuery, matchCard } from '../utils/searchParser';
 import styles from './Discover.module.css';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -202,10 +203,27 @@ export default function Discover() {
 
       try {
         setLoading(true);
-        const data = await cardsService.searchCards({ q: searchQuery, limit: 0, lang: 'fr' });
+
+        // Parser la query de recherche avancée
+        const parsed = parseSearchQuery(searchQuery);
+
+        // Construire la query pour l'API (utiliser les tokens du nom)
+        let apiQuery = parsed.nameTokens.join(' ');
+
+        // Si on a un numéro préfixé seul (ex: TG03), l'utiliser comme query
+        if (!apiQuery && parsed.prefixedNumber) {
+          apiQuery = parsed.prefixedNumber;
+        }
+
+        // Si toujours pas de query, utiliser la query originale
+        if (!apiQuery) {
+          apiQuery = searchQuery;
+        }
+
+        const data = await cardsService.searchCards({ q: apiQuery, limit: 0, lang: 'fr' });
 
         // Filtrer pour exclure les cartes TCGP (jeu en ligne)
-        const physicalCards = data.cards.filter((card: Card) => {
+        let physicalCards = data.cards.filter((card: Card) => {
           const setId = (card.set?.id || card.id?.split('-')[0] || '').toLowerCase();
           const setName = (card.set?.name || '').toLowerCase();
           // Exclure les sets TCGP (Pokemon Trading Card Game Pocket)
@@ -216,6 +234,27 @@ export default function Discover() {
             !setId.startsWith('a-')
           );
         });
+
+        // Appliquer le filtrage avancé côté client
+        if (
+          parsed.rarity ||
+          parsed.number ||
+          parsed.prefixedNumber ||
+          parsed.nameTokens.length > 1
+        ) {
+          physicalCards = physicalCards.filter((card: Card) =>
+            matchCard(
+              {
+                name: card.name,
+                localId: card.localId,
+                number: card.localId,
+                rarity: card.rarity,
+                subtypes: card.stage ? [card.stage] : undefined,
+              },
+              parsed
+            )
+          );
+        }
 
         // Stocker toutes les cartes et n'afficher que les 15 premières
         setAllCards(physicalCards);

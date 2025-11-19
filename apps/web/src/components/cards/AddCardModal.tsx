@@ -11,6 +11,7 @@ import { DatePicker } from '../ui/DatePicker';
 import { Toast } from '../ui/Toast';
 import { FullScreenLoader } from '../ui/FullScreenLoader';
 import { Camera, Trash2, PlusCircle } from 'lucide-react';
+import { parseSearchQuery, matchCard } from '../../utils/searchParser';
 import styles from './AddCardModal.module.css';
 
 interface AddCardModalProps {
@@ -178,7 +179,7 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
     return img || 'https://images.pokemontcg.io/swsh1/back.png';
   };
 
-  // Recherche dynamique
+  // Recherche dynamique avec parser avancé
   const handleSearchChange = async (value: string) => {
     setSearchQuery(value);
     if (value.trim().length < 3) {
@@ -187,8 +188,32 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
     }
     setLoading(true);
     try {
-      const result = await cardsService.searchCards({ q: value, limit: 0 });
-      setSearchResults(result.cards);
+      // Parser la query de recherche avancée
+      const parsed = parseSearchQuery(value);
+
+      // Construire la query pour l'API (utiliser les tokens du nom)
+      const apiQuery = parsed.nameTokens.join(' ') || value;
+
+      const result = await cardsService.searchCards({ q: apiQuery, limit: 0 });
+      let cards = result.cards;
+
+      // Appliquer le filtrage avancé côté client si nécessaire
+      if (parsed.rarity || parsed.number || parsed.prefixedNumber || parsed.nameTokens.length > 1) {
+        cards = cards.filter((card: Card) =>
+          matchCard(
+            {
+              name: card.name,
+              localId: card.localId,
+              number: card.localId,
+              rarity: card.rarity,
+              subtypes: card.stage ? [card.stage] : undefined,
+            },
+            parsed
+          )
+        );
+      }
+
+      setSearchResults(cards);
     } catch (error) {
       console.error('Erreur de recherche:', error);
     } finally {
@@ -623,14 +648,11 @@ export function AddCardModal({ onClose, onSuccess, card }: AddCardModalProps) {
                 ))}
               </div>
 
-
               <div className={styles.actions}>
                 <Button type="button" variant="secondary" onClick={onClose}>
                   Annuler
                 </Button>
-                <Button type="submit">
-                  Ajouter au portfolio
-                </Button>
+                <Button type="submit">Ajouter au portfolio</Button>
               </div>
             </form>
           )}
