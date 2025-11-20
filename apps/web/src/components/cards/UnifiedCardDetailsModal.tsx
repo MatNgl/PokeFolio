@@ -266,6 +266,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
     if (isSetMode) {
       cardId = props.card.cardId;
       cardData = {
+        cardId: props.card.cardId,
         name: props.card.name,
         setId: props.setId,
         setName: props.setName,
@@ -276,6 +277,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
     } else if (isDiscoverMode) {
       cardId = props.card.id;
       cardData = {
+        cardId: props.card.id,
         name: props.card.name,
         setId: props.card.set?.id || props.card.id?.split('-')[0],
         setName: props.card.set?.name,

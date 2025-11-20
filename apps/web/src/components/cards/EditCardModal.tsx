@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { UserCard } from '@pokefolio/types';
-import { portfolioService } from '../../services/portfolio.service';
+import { portfolioService, type PortfolioCard } from '../../services/portfolio.service';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Checkbox';
@@ -12,7 +11,7 @@ import { Trash2, PlusCircle } from 'lucide-react';
 import styles from './AddCardModal.module.css';
 
 interface EditCardModalProps {
-  card: UserCard;
+  card: PortfolioCard;
   onClose: () => void;
   onSuccess: () => void;
 }
