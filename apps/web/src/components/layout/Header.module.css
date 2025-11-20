@@ -227,6 +227,12 @@
   filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.3));
 }
 
+/* Sun icon in dark mode (when input is checked) should be white/visible */
+.themeSwitchInput:checked ~ .themeSwitchSun svg {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
+}
+
 .themeSwitchMoon {
   right: 3px;
   top: 50%;

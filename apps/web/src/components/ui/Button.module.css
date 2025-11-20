@@ -267,3 +267,12 @@
 .searchForm :global(input) {
   border-radius: var(--radii-md) 0 0 var(--radii-md);
 }
+
+/* Light theme overrides */
+:root[data-theme='light'] .primary .buttonInner {
+  color: #ffffff;
+}
+
+:root[data-theme='light'] .ghost .buttonInner {
+  color: var(--primary);
+}
