@@ -158,7 +158,7 @@ export default function ColorBends({
     // Initialize colors array with provided colors
     const colorVectors = (colors || []).filter(Boolean).slice(0, MAX_COLORS).map(toVec3);
     const uColorsArray = Array.from({ length: MAX_COLORS }, (_, i) =>
-      i < colorVectors.length ? colorVectors[i].clone() : new THREE.Vector3(0, 0, 0)
+      i < colorVectors.length ? colorVectors[i]!.clone() : new THREE.Vector3(0, 0, 0)
     );
 
     const material = new THREE.ShaderMaterial({
@@ -208,7 +208,7 @@ export default function ColorBends({
       const w = container.clientWidth || 1;
       const h = container.clientHeight || 1;
       renderer.setSize(w, h, false);
-      (material.uniforms.uCanvas.value as THREE.Vector2).set(w, h);
+      (material.uniforms.uCanvas!.value as THREE.Vector2).set(w, h);
     };
 
     handleResize();
@@ -224,19 +224,19 @@ export default function ColorBends({
     const loop = () => {
       const dt = clock.getDelta();
       const elapsed = clock.elapsedTime;
-      material.uniforms.uTime.value = elapsed;
+      material.uniforms.uTime!.value = elapsed;
 
       const deg = (rotationRef.current % 360) + autoRotateRef.current * elapsed;
       const rad = (deg * Math.PI) / 180;
       const c = Math.cos(rad);
       const s = Math.sin(rad);
-      (material.uniforms.uRot.value as THREE.Vector2).set(c, s);
+      (material.uniforms.uRot!.value as THREE.Vector2).set(c, s);
 
       const cur = pointerCurrentRef.current;
       const tgt = pointerTargetRef.current;
       const amt = Math.min(1, dt * pointerSmoothRef.current);
       cur.lerp(tgt, amt);
-      (material.uniforms.uPointer.value as THREE.Vector2).copy(cur);
+      (material.uniforms.uPointer!.value as THREE.Vector2).copy(cur);
       renderer.render(scene, camera);
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -263,13 +263,13 @@ export default function ColorBends({
 
     rotationRef.current = rotation;
     autoRotateRef.current = autoRotate;
-    material.uniforms.uSpeed.value = speed;
-    material.uniforms.uScale.value = scale;
-    material.uniforms.uFrequency.value = frequency;
-    material.uniforms.uWarpStrength.value = warpStrength;
-    material.uniforms.uMouseInfluence.value = mouseInfluence;
-    material.uniforms.uParallax.value = parallax;
-    material.uniforms.uNoise.value = noise;
+    material.uniforms.uSpeed!.value = speed;
+    material.uniforms.uScale!.value = scale;
+    material.uniforms.uFrequency!.value = frequency;
+    material.uniforms.uWarpStrength!.value = warpStrength;
+    material.uniforms.uMouseInfluence!.value = mouseInfluence;
+    material.uniforms.uParallax!.value = parallax;
+    material.uniforms.uNoise!.value = noise;
 
     const toVec3 = (hex: string) => {
       const h = hex.replace('#', '').trim();
@@ -282,13 +282,13 @@ export default function ColorBends({
 
     const arr = (colors || []).filter(Boolean).slice(0, MAX_COLORS).map(toVec3);
     for (let i = 0; i < MAX_COLORS; i++) {
-      const vec = (material.uniforms.uColors.value as THREE.Vector3[])[i];
-      if (i < arr.length) vec.copy(arr[i]);
-      else vec.set(0, 0, 0);
+      const vec = (material.uniforms.uColors!.value as THREE.Vector3[])[i];
+      if (i < arr.length) vec!.copy(arr[i]!);
+      else vec!.set(0, 0, 0);
     }
-    material.uniforms.uColorCount.value = arr.length;
+    material.uniforms.uColorCount!.value = arr.length;
 
-    material.uniforms.uTransparent.value = transparent ? 1 : 0;
+    material.uniforms.uTransparent!.value = transparent ? 1 : 0;
     if (renderer) renderer.setClearColor(0x000000, transparent ? 0 : 1);
   }, [
     rotation,
