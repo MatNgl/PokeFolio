@@ -192,9 +192,26 @@ export class DashboardService {
     const matchFilter: {
       ownerId: string;
       createdAt?: { $lte: Date };
+      $or?: Array<Record<string, unknown>>;
     } = {
       ownerId: userId,
     };
+
+    // Pour la période "all", ne compter que les cartes avec une date d'achat
+    if (usePurchaseDate) {
+      matchFilter.$or = [
+        // Soit une purchaseDate directe existe
+        { purchaseDate: { $exists: true, $ne: null } },
+        // Soit au moins une variante avec purchaseDate existe
+        {
+          variants: {
+            $elemMatch: {
+              purchaseDate: { $exists: true, $ne: null },
+            },
+          },
+        },
+      ];
+    }
 
     // Filtrer jusqu'à la date de fin de la période (si spécifiée)
     // Cela permet de voir l'évolution cumulative jusqu'à ce point
@@ -204,66 +221,141 @@ export class DashboardService {
 
     const matchStage = { $match: matchFilter };
 
-    // Pour la période "all", utiliser purchaseDate pour montrer l'historique d'acquisition réel
-    const addFieldsStage = usePurchaseDate
-      ? {
+    // Pour la période "all" avec purchaseDate, traiter différemment les cartes avec variantes
+    if (usePurchaseDate) {
+      // Pipeline pour gérer les variantes individuellement
+      const pipeline = [
+        matchStage,
+        {
           $addFields: {
-            effectivePrice: {
+            // Normaliser en array de "acquisitions" avec leur date
+            acquisitions: {
               $cond: {
-                if: { $ifNull: ['$purchasePrice', false] },
-                then: '$purchasePrice',
+                if: {
+                  $and: [
+                    { $ifNull: ['$purchaseDate', false] },
+                    { $not: { $isArray: '$variants' } },
+                  ],
+                },
+                // Mode A : carte avec purchaseDate directe
+                then: [
+                  {
+                    date: '$purchaseDate',
+                    quantity: '$quantity',
+                    price: { $ifNull: ['$purchasePrice', 0] },
+                  },
+                ],
                 else: {
                   $cond: {
                     if: { $isArray: '$variants' },
+                    // Mode B : variantes (filtrer celles avec purchaseDate)
                     then: {
-                      $sum: {
-                        $map: {
-                          input: '$variants',
-                          as: 'v',
-                          in: { $ifNull: ['$$v.purchasePrice', 0] },
+                      $map: {
+                        input: {
+                          $filter: {
+                            input: '$variants',
+                            as: 'v',
+                            cond: { $ifNull: ['$$v.purchaseDate', false] },
+                          },
+                        },
+                        as: 'v',
+                        in: {
+                          date: '$$v.purchaseDate',
+                          quantity: 1,
+                          price: { $ifNull: ['$$v.purchasePrice', 0] },
                         },
                       },
                     },
-                    else: 0,
+                    else: [],
                   },
                 },
               },
             },
-            // Utiliser purchaseDate si disponible, sinon createdAt - directement dans $dateToString
+          },
+        },
+        // Éclater les acquisitions en documents séparés
+        { $unwind: '$acquisitions' },
+        // Formatter la date pour le bucket
+        {
+          $addFields: {
             bucketDate: {
               $dateToString: {
                 format: bucketFormat,
-                date: { $ifNull: ['$purchaseDate', '$createdAt'] },
+                date: '$acquisitions.date',
               },
             },
           },
-        }
-      : {
-          $addFields: {
-            effectivePrice: {
+        },
+        // Grouper par bucket
+        {
+          $group: {
+            _id: '$bucketDate',
+            value:
+              query.metric === TimeSeriesMetric.COUNT
+                ? { $sum: '$acquisitions.quantity' }
+                : { $sum: '$acquisitions.price' },
+          },
+        },
+        { $sort: { _id: 1 as const } },
+      ];
+
+      const data = await this.portfolioModel.aggregate<{
+        _id: string;
+        value: number;
+      }>(pipeline);
+
+      // Calculer les valeurs cumulatives
+      let cumulative = 0;
+      const dataPoints: TimeSeriesDataPoint[] = data.map((item) => {
+        cumulative += item.value;
+        return {
+          date: item._id,
+          value: Math.round(cumulative * 100) / 100,
+        };
+      });
+
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        metric: query.metric!,
+        period: {
+          type: query.type,
+          year: query.year,
+          month: query.month,
+          week: query.week,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        bucket: query.bucket!,
+        data: dataPoints,
+      };
+    }
+
+    // Pour les autres périodes, utiliser createdAt (comportement original)
+    const addFieldsStage = {
+      $addFields: {
+        effectivePrice: {
+          $cond: {
+            if: { $ifNull: ['$purchasePrice', false] },
+            then: '$purchasePrice',
+            else: {
               $cond: {
-                if: { $ifNull: ['$purchasePrice', false] },
-                then: '$purchasePrice',
-                else: {
-                  $cond: {
-                    if: { $isArray: '$variants' },
-                    then: {
-                      $sum: {
-                        $map: {
-                          input: '$variants',
-                          as: 'v',
-                          in: { $ifNull: ['$$v.purchasePrice', 0] },
-                        },
-                      },
+                if: { $isArray: '$variants' },
+                then: {
+                  $sum: {
+                    $map: {
+                      input: '$variants',
+                      as: 'v',
+                      in: { $ifNull: ['$$v.purchasePrice', 0] },
                     },
-                    else: 0,
                   },
                 },
+                else: 0,
               },
             },
-            bucketDate: this.getBucketDateExpression(bucketFormat),
           },
-        };
+        },
+        bucketDate: this.getBucketDateExpression(bucketFormat),
+      },
+    };
 
     const groupStage =
       query.metric === TimeSeriesMetric.COUNT
@@ -805,7 +897,10 @@ export class DashboardService {
     };
   }
 
-  private getBucketDateExpressionForDate(format: string, dateField: string): Record<string, unknown> {
+  private getBucketDateExpressionForDate(
+    format: string,
+    dateField: string
+  ): Record<string, unknown> {
     return {
       $dateToString: {
         format,
