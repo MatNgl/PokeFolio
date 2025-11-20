@@ -205,7 +205,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
     ? GRADING_COMPANIES.find((c) => c.id === selectedCompany)?.grades || []
     : [];
 
-  const getCardImageUrl = (cardData: UserCard): string => {
+  const getCardImageUrl = (cardData: PortfolioCard): string => {
     let img = cardData.imageUrl || '';
 
     // Si l'URL provient de assets.tcgdex.net et n'a pas d'extension, ajouter /high.webp
