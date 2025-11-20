@@ -25,7 +25,7 @@ type VariantForm = {
   notes?: string;
 };
 
-interface FormData {
+interface EditCardFormData {
   quantity: number;
   isGraded: boolean;
   gradeCompany?: string;
@@ -96,15 +96,15 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
       ? card.variants.map(
           (v: {
             purchasePrice?: number;
-            purchaseDate?: string;
+            purchaseDate?: string | Date;
             isGraded?: boolean;
             gradeCompany?: string;
-            gradeScore?: string;
+            gradeScore?: string | number;
             notes?: string;
           }) => ({
             isGraded: v.isGraded,
             gradeCompany: v.gradeCompany,
-            gradeScore: v.gradeScore,
+            gradeScore: typeof v.gradeScore === 'number' ? String(v.gradeScore) : v.gradeScore,
             purchasePrice: v.purchasePrice,
             purchaseDate: v.purchaseDate
               ? new Date(v.purchaseDate).toISOString().split('T')[0]
@@ -116,7 +116,8 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
           {
             isGraded: card.isGraded,
             gradeCompany: card.gradeCompany,
-            gradeScore: card.gradeScore,
+            gradeScore:
+              typeof card.gradeScore === 'number' ? String(card.gradeScore) : card.gradeScore,
             purchasePrice: card.purchasePrice,
             purchaseDate: card.purchaseDate
               ? new Date(card.purchaseDate).toISOString().split('T')[0]
@@ -125,12 +126,12 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
           },
         ];
 
-  const { register, handleSubmit, watch, setValue } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue } = useForm<EditCardFormData>({
     defaultValues: {
       quantity: card.quantity,
       isGraded: card.isGraded,
       gradeCompany: card.gradeCompany,
-      gradeScore: card.gradeScore,
+      gradeScore: typeof card.gradeScore === 'number' ? String(card.gradeScore) : card.gradeScore,
       purchasePrice: card.purchasePrice,
       purchaseDate: card.purchaseDate
         ? new Date(card.purchaseDate).toISOString().split('T')[0]
@@ -217,9 +218,14 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
     return img || 'https://images.pokemontcg.io/swsh1/back.png';
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: EditCardFormData) => {
     setSaving(true);
     try {
+      const cardId = card._id || card.id;
+      if (!cardId) {
+        throw new Error('ID de carte manquant');
+      }
+
       // Construire les données de mise à jour
       const updateData: Record<string, unknown> = {};
 
@@ -240,7 +246,7 @@ export function EditCardModal({ card, onClose, onSuccess }: EditCardModalProps) 
         }));
       }
 
-      await portfolioService.updateCard(card._id, updateData);
+      await portfolioService.updateCard(cardId, updateData);
       onSuccess();
       onClose();
     } catch (error) {

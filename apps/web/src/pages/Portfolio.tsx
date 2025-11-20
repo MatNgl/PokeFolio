@@ -988,7 +988,7 @@ export default function Portfolio() {
 
         {editingCard && (
           <EditCardModal
-            card={editingCard as UserCard}
+            card={editingCard as PortfolioCard}
             onClose={() => setEditingCard(null)}
             onSuccess={handleEditSuccess}
           />

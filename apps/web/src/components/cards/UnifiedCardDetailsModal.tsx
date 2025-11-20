@@ -255,6 +255,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
   const handleToggleWishlist = async () => {
     let cardId: string;
     let cardData: {
+      cardId: string;
       name?: string;
       setId?: string;
       setName?: string;
