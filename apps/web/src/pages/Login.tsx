@@ -77,15 +77,15 @@ export function Login() {
       {loading && <FullScreenLoader message="Connexion en cours..." />}
       <div className={styles.container} aria-hidden={loading}>
         <ColorBends
-          colors={['#ff5c7a', '#8a5cff', '#00ffd1']}
+          colors={['#3b82f6', '#a855f7', '#f97316', '#10b981', '#06b6d4', '#ec4899']}
           rotation={30}
           speed={0.3}
-          scale={1.2}
-          frequency={1.4}
-          warpStrength={1.2}
-          mouseInfluence={0.8}
-          parallax={0.6}
-          noise={0.08}
+          scale={0.6}
+          frequency={1.6}
+          warpStrength={1.0}
+          mouseInfluence={0}
+          parallax={0}
+          noise={0.05}
           transparent
         />
         <Card className={styles.card}>

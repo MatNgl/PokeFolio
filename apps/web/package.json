@@ -33,6 +33,7 @@
     "@pokefolio/tsconfig": "workspace:*",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
+    "@types/three": "^0.181.0",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.56.0",
     "pwa-asset-generator": "^8.1.2",

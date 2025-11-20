@@ -79,15 +79,15 @@ export function Register() {
       {loading && <FullScreenLoader message="Création du compte..." />}
       <div className={styles.container} aria-hidden={loading}>
         <ColorBends
-          colors={['#ff5c7a', '#8a5cff', '#00ffd1']}
+          colors={['#3b82f6', '#a855f7', '#f97316', '#10b981', '#06b6d4', '#ec4899']}
           rotation={30}
           speed={0.3}
-          scale={1.2}
-          frequency={1.4}
-          warpStrength={1.2}
-          mouseInfluence={0.8}
-          parallax={0.6}
-          noise={0.08}
+          scale={0.6}
+          frequency={1.6}
+          warpStrength={1.0}
+          mouseInfluence={0}
+          parallax={0}
+          noise={0.05}
           transparent
         />
         <Card className={styles.card}>
@@ -128,32 +128,34 @@ export function Register() {
                 })}
               />
 
-              <PasswordInput
-                label="Mot de passe"
-                placeholder="••••••••••••"
-                error={errors.password?.message}
-                {...register('password', {
-                  required: 'Mot de passe requis',
-                  minLength: {
-                    value: 6,
-                    message: 'Au moins 6 caractères',
-                  },
-                  validate: (value) =>
-                    hasThreeClasses(value) ||
-                    'Au moins 3 catégories: majuscules, minuscules, chiffres, symboles',
-                })}
-              />
+              <div className={styles.passwordRow}>
+                <PasswordInput
+                  label="Mot de passe"
+                  placeholder="••••••••••••"
+                  error={errors.password?.message}
+                  {...register('password', {
+                    required: 'Mot de passe requis',
+                    minLength: {
+                      value: 6,
+                      message: 'Au moins 6 caractères',
+                    },
+                    validate: (value) =>
+                      hasThreeClasses(value) ||
+                      'Au moins 3 catégories: majuscules, minuscules, chiffres, symboles',
+                  })}
+                />
 
-              <PasswordInput
-                label="Confirmation du mot de passe"
-                placeholder="••••••••••••"
-                error={errors.confirmPassword?.message}
-                {...register('confirmPassword', {
-                  required: 'Veuillez confirmer votre mot de passe',
-                  validate: (value) =>
-                    value === password || 'Les mots de passe ne correspondent pas',
-                })}
-              />
+                <PasswordInput
+                  label="Confirmation"
+                  placeholder="••••••••••••"
+                  error={errors.confirmPassword?.message}
+                  {...register('confirmPassword', {
+                    required: 'Veuillez confirmer votre mot de passe',
+                    validate: (value) =>
+                      value === password || 'Les mots de passe ne correspondent pas',
+                  })}
+                />
+              </div>
 
               <div className={styles.hint}>
                 Mot de passe : ≥ 6 caractères & au moins 3 catégories parmi maj., min., chiffres,
