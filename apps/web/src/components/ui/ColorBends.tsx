@@ -144,7 +144,22 @@ export default function ColorBends({
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     const geometry = new THREE.PlaneGeometry(2, 2);
-    const uColorsArray = Array.from({ length: MAX_COLORS }, () => new THREE.Vector3(0, 0, 0));
+
+    // Initialize colors array with actual colors
+    const toVec3 = (hex: string) => {
+      const h = hex.replace('#', '').trim();
+      const v =
+        h.length === 3
+          ? [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16)]
+          : [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+      return new THREE.Vector3(v[0] / 255, v[1] / 255, v[2] / 255);
+    };
+
+    const initialColors = (colors || []).filter(Boolean).slice(0, MAX_COLORS).map(toVec3);
+    const uColorsArray = Array.from({ length: MAX_COLORS }, (_, i) =>
+      i < initialColors.length ? initialColors[i] : new THREE.Vector3(0, 0, 0)
+    );
+
     const material = new THREE.ShaderMaterial({
       vertexShader: vert,
       fragmentShader: frag,
@@ -153,7 +168,7 @@ export default function ColorBends({
         uTime: { value: 0 },
         uSpeed: { value: speed },
         uRot: { value: new THREE.Vector2(1, 0) },
-        uColorCount: { value: 0 },
+        uColorCount: { value: initialColors.length },
         uColors: { value: uColorsArray },
         uTransparent: { value: transparent ? 1 : 0 },
         uScale: { value: scale },
