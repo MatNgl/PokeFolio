@@ -70,7 +70,7 @@ export function GradedPieChart({ data, loading = false }: GradedPieChartProps): 
     { name: 'Normales', value: data.normal, color: COLORS.normal },
   ];
 
-  const renderCustomLabel = (props: PieLabelProps): JSX.Element | null => {
+  const renderCustomLabel = (props: any): JSX.Element | null => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
     if (percent < 0.05) return null;
 

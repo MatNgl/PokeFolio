@@ -289,10 +289,10 @@ export default function UnifiedCardDetailsModal(props: Props) {
 
     try {
       if (isInWishlist) {
-        await wishlistService.remove(cardId);
+        await wishlistService.removeFromWishlist(cardId);
         setIsInWishlist(false);
       } else {
-        await wishlistService.add(cardId, cardData);
+        await wishlistService.addToWishlist(cardData);
         setIsInWishlist(true);
       }
     } catch (error) {
@@ -357,7 +357,10 @@ export default function UnifiedCardDetailsModal(props: Props) {
       onClose();
       // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
       const cardName = cardData.name || 'Carte';
-      localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' }));
+      localStorage.setItem(
+        'toast',
+        JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' })
+      );
       window.location.reload();
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
@@ -375,8 +378,17 @@ export default function UnifiedCardDetailsModal(props: Props) {
     setShowAddCardModal(false);
     onClose();
     // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
-    const cardName = isSetMode ? props.card.name : isDiscoverMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
-    localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' }));
+    const cardName = isSetMode
+      ? props.card.name
+      : isDiscoverMode
+        ? props.card.name
+        : isPortfolioMode
+          ? props.entry.name
+          : 'Carte';
+    localStorage.setItem(
+      'toast',
+      JSON.stringify({ message: `${cardName} a été ajoutée au portfolio`, type: 'success' })
+    );
     window.location.reload();
   };
 
@@ -385,7 +397,10 @@ export default function UnifiedCardDetailsModal(props: Props) {
     setShowEditModal(false);
     // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
     const cardName = isSetMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
-    localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été modifiée avec succès`, type: 'success' }));
+    localStorage.setItem(
+      'toast',
+      JSON.stringify({ message: `${cardName} a été modifiée avec succès`, type: 'success' })
+    );
     window.location.reload();
   };
 
@@ -402,7 +417,10 @@ export default function UnifiedCardDetailsModal(props: Props) {
       onClose();
       // Stocker le message pour l'afficher après le reload (avec le nom de la carte)
       const cardName = isSetMode ? props.card.name : isPortfolioMode ? props.entry.name : 'Carte';
-      localStorage.setItem('toast', JSON.stringify({ message: `${cardName} a été supprimée du portfolio`, type: 'success' }));
+      localStorage.setItem(
+        'toast',
+        JSON.stringify({ message: `${cardName} a été supprimée du portfolio`, type: 'success' })
+      );
       window.location.reload();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -896,24 +914,16 @@ export default function UnifiedCardDetailsModal(props: Props) {
                     {portfolioData ? (
                       // Carte possédée: Modifier + Supprimer
                       <>
-                        <Button
-                          variant="warning"
-                          onClick={() => setShowEditModal(true)}
-                        >
+                        <Button variant="warning" onClick={() => setShowEditModal(true)}>
                           Modifier
                         </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => setShowDeleteConfirm(true)}
-                        >
+                        <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
                           Supprimer
                         </Button>
                       </>
                     ) : (
                       // Carte non possédée: Ajouter
-                      <Button
-                        onClick={() => setShowQuickAddModal(true)}
-                      >
+                      <Button onClick={() => setShowQuickAddModal(true)}>
                         + Ajouter au portfolio
                       </Button>
                     )}
@@ -1001,7 +1011,7 @@ export default function UnifiedCardDetailsModal(props: Props) {
       {/* Modal d'édition (mode set) */}
       {showEditModal && portfolioData && (
         <EditCardModal
-          entry={portfolioData}
+          card={portfolioData}
           onClose={() => setShowEditModal(false)}
           onSuccess={handleEditSuccess}
         />

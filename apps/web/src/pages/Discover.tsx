@@ -406,7 +406,7 @@ export default function Discover() {
         setId: setId,
         setName: card.set?.name,
         setLogo: card.set?.logo,
-        setCardCount: card.set?.total,
+        setCardCount: card.set?.cardCount?.total,
         rarity: card.rarity,
         imageUrl: card.image || card.images?.small,
         imageUrlHiRes: card.images?.large,

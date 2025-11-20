@@ -9,6 +9,8 @@ export interface CardSet {
   id: string;
   name?: string;
   logo?: string;
+  symbol?: string;
+  releaseDate?: string;
   cardCount?: {
     total?: number;
     official?: number;
