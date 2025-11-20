@@ -79,15 +79,15 @@ export function Register() {
       {loading && <FullScreenLoader message="Création du compte..." />}
       <div className={styles.container} aria-hidden={loading}>
         <ColorBends
-          colors={['#ff5c7a', '#8a5cff', '#00ffd1']}
-          rotation={30}
-          speed={0.3}
-          scale={1.2}
-          frequency={1.4}
-          warpStrength={1.2}
-          mouseInfluence={0.8}
-          parallax={0.6}
-          noise={0.08}
+          colors={['#ff3366', '#ff6b35', '#f7c52d', '#2dd4bf', '#38bdf8', '#a855f7', '#ec4899']}
+          rotation={25}
+          speed={0.4}
+          scale={1.5}
+          frequency={1.8}
+          warpStrength={1.5}
+          mouseInfluence={0.9}
+          parallax={0.7}
+          noise={0}
           transparent={false}
         />
         <Card className={styles.card}>
