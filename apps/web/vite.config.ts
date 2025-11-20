@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: { enabled: true }, // utile en dev; tu peux le passer à false plus tard
-      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'PokéFolio',
         short_name: 'PokéFolio',
