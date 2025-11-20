@@ -1,4 +1,4 @@
-/* ========= Animated Background ========= */
+/* ========= Container with ColorBends Background ========= */
 .container {
   min-height: 100vh;
   display: flex;
@@ -8,77 +8,6 @@
   position: relative;
   overflow: hidden;
   background: var(--bg);
-}
-
-/* Animated gradient background */
-.container::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 60% 60%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
-  animation: gradientMove 20s ease-in-out infinite;
-  z-index: 0;
-}
-
-/* Floating orbs for depth */
-.container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(circle at 10% 10%, rgba(124, 243, 255, 0.15) 0%, transparent 30%),
-    radial-gradient(circle at 90% 90%, rgba(167, 139, 250, 0.15) 0%, transparent 30%);
-  animation: orbFloat 15s ease-in-out infinite reverse;
-  z-index: 0;
-}
-
-@keyframes gradientMove {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  25% {
-    transform: translate(-5%, 5%) rotate(5deg);
-  }
-  50% {
-    transform: translate(5%, -5%) rotate(-5deg);
-  }
-  75% {
-    transform: translate(-3%, -3%) rotate(3deg);
-  }
-}
-
-@keyframes orbFloat {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-20px) scale(1.05);
-  }
-}
-
-/* Light mode background adjustments */
-:root[data-theme='light'] .container::before {
-  background:
-    radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 60% 60%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
-}
-
-:root[data-theme='light'] .container::after {
-  background:
-    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.1) 0%, transparent 30%),
-    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1) 0%, transparent 30%);
 }
 
 /* ========= Glassmorphism Card ========= */
@@ -399,8 +328,6 @@
 
 /* ========= Reduced Motion ========= */
 @media (prefers-reduced-motion: reduce) {
-  .container::before,
-  .container::after,
   .card,
   .title,
   .error {

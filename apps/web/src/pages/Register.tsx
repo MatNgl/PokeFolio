@@ -9,6 +9,7 @@ import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { Button } from '../components/ui/Button';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
+import ColorBends from '../components/ui/ColorBends';
 import styles from './Auth.module.css';
 
 import { UserPlus } from 'lucide-react';
@@ -77,6 +78,18 @@ export function Register() {
     <>
       {loading && <FullScreenLoader message="Création du compte..." />}
       <div className={styles.container} aria-hidden={loading}>
+        <ColorBends
+          colors={['#7cf3ff', '#a78bfa', '#60a5fa']}
+          rotation={30}
+          speed={0.3}
+          scale={1.2}
+          frequency={1.4}
+          warpStrength={1.2}
+          mouseInfluence={0.8}
+          parallax={0.6}
+          noise={0.08}
+          transparent
+        />
         <Card className={styles.card}>
           <div className={styles.header}>
             <h1 className={styles.title}>Inscription</h1>
