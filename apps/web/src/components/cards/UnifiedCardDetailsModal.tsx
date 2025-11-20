@@ -740,46 +740,62 @@ export default function UnifiedCardDetailsModal(props: Props) {
               ) : portfolioData ? (
                 <>
                   {/* Carte unique (quantité = 1) */}
-                  {qty === 1 && !hasVariants ? (
+                  {qty === 1 ? (
                     <section className={styles.block}>
                       <h4 className={styles.blockTitle}>Informations de la carte</h4>
                       <div className={styles.grid}>
-                        {portfolioData.purchaseDate && (
-                          <div className={styles.item}>
-                            <span className={styles.label}>Date d&apos;achat</span>
-                            <span className={styles.value}>
-                              {new Date(portfolioData.purchaseDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                        {unit !== null && (
-                          <div className={styles.item}>
-                            <span className={styles.label}>Prix d&apos;achat</span>
-                            <span className={styles.value}>{euro(unit)}</span>
-                          </div>
-                        )}
-                        {isGraded && (
-                          <>
-                            {gradeCompany && (
-                              <div className={styles.item}>
-                                <span className={styles.label}>Société de gradation</span>
-                                <span className={styles.value}>{gradeCompany}</span>
-                              </div>
-                            )}
-                            {typeof gradeScore !== 'undefined' && (
-                              <div className={styles.item}>
-                                <span className={styles.label}>Note</span>
-                                <span className={styles.value}>{gradeScore}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {portfolioData.notes && (
-                          <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
-                            <span className={styles.label}>Notes</span>
-                            <p className={styles.noteText}>{portfolioData.notes}</p>
-                          </div>
-                        )}
+                        {(() => {
+                          // Prendre les données de la première variante si elle existe, sinon des champs directs
+                          const firstVariant = sortedVariants?.[0];
+                          const displayDate =
+                            firstVariant?.purchaseDate ?? portfolioData.purchaseDate;
+                          const displayPrice = firstVariant?.purchasePrice ?? unit;
+                          const displayGraded = firstVariant?.isGraded ?? isGraded;
+                          const displayCompany = firstVariant?.gradeCompany ?? gradeCompany;
+                          const displayScore = firstVariant?.gradeScore ?? gradeScore;
+                          const displayNotes = firstVariant?.notes ?? portfolioData.notes;
+
+                          return (
+                            <>
+                              {displayDate && (
+                                <div className={styles.item}>
+                                  <span className={styles.label}>Date d&apos;achat</span>
+                                  <span className={styles.value}>
+                                    {new Date(displayDate).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              )}
+                              {displayPrice !== null && displayPrice !== undefined && (
+                                <div className={styles.item}>
+                                  <span className={styles.label}>Prix d&apos;achat</span>
+                                  <span className={styles.value}>{euro(displayPrice)}</span>
+                                </div>
+                              )}
+                              {displayGraded && (
+                                <>
+                                  {displayCompany && (
+                                    <div className={styles.item}>
+                                      <span className={styles.label}>Société de gradation</span>
+                                      <span className={styles.value}>{displayCompany}</span>
+                                    </div>
+                                  )}
+                                  {typeof displayScore !== 'undefined' && (
+                                    <div className={styles.item}>
+                                      <span className={styles.label}>Note</span>
+                                      <span className={styles.value}>{displayScore}</span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              {displayNotes && (
+                                <div className={styles.item} style={{ gridColumn: '1 / -1' }}>
+                                  <span className={styles.label}>Notes</span>
+                                  <p className={styles.noteText}>{displayNotes}</p>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </section>
                   ) : (
