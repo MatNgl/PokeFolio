@@ -7,7 +7,11 @@
   padding: var(--spacing-xl);
   position: relative;
   overflow: hidden;
-  background: transparent;
+  background: #0f172a;
+}
+
+:root[data-theme='light'] .container {
+  background: #ffffff;
 }
 
 /* ========= Glassmorphism Card ========= */
