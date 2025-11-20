@@ -174,7 +174,7 @@ export default function Discover() {
             // Vérifier si toutes les requêtes sont terminées
             loadedCount++;
             if (loadedCount >= selected.length) {
-              setAllCards(loadedCards);
+              setAllCards([]); // Ne pas stocker les cartes aléatoires dans allCards
               setCurrentPage(1);
               setHasMore(true);
               setLoading(false);
@@ -185,7 +185,7 @@ export default function Discover() {
             loadedCount++;
             // Retirer le loader même si certaines requêtes échouent
             if (loadedCount >= selected.length) {
-              setAllCards(loadedCards);
+              setAllCards([]); // Ne pas stocker les cartes aléatoires dans allCards
               setCurrentPage(1);
               setHasMore(true);
               setLoading(false);

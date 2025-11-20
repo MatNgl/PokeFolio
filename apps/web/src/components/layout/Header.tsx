@@ -103,7 +103,7 @@ export function Header() {
               aria-current={activeTab === 'portfolio' ? 'page' : undefined}
               className={styles.tab}
             >
-              Portfolio
+              Collection
             </Link>
             <Link
               to="/dashboard"
@@ -199,7 +199,7 @@ export function Header() {
               aria-current={activeTab === 'portfolio' ? 'page' : undefined}
               onClick={() => setMenuOpen(false)}
             >
-              Portfolio
+              Collection
             </Link>
           </li>
           <li>

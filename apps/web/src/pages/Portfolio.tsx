@@ -624,7 +624,7 @@ export default function Portfolio() {
                 ? 'Ma Wishlist'
                 : portfolioSection === 'sets'
                   ? 'Mes Sets'
-                  : 'Mon Portfolio'}
+                  : 'Collection'}
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
