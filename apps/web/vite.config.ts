@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: { enabled: true }, // utile en dev; tu peux le passer à false plus tard
-      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'robots.txt'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'PokéFolio',
         short_name: 'PokéFolio',
@@ -21,17 +21,11 @@ export default defineConfig({
         background_color: '#0b0f1a',
         orientation: 'portrait',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/icon-1024.png', sizes: '1024x1024', type: 'image/png' },
+          { src: '/favicon.png', sizes: '192x192', type: 'image/png' },
+          { src: '/favicon.png', sizes: '512x512', type: 'image/png' },
+          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
           {
-            src: '/icons/maskable-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-          {
-            src: '/icons/maskable-512.png',
+            src: '/favicon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
